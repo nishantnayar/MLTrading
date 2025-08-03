@@ -14,7 +14,8 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.utils.logging_config import get_ui_logger
-from src.dashboard.archive.services.data_service import MarketDataService
+from src.dashboard.services.data_service import MarketDataService
+from src.dashboard.layouts.help_layout import create_help_layout
 
 # Initialize logger and data service
 logger = get_ui_logger("dashboard")
@@ -111,6 +112,9 @@ app = dash.Dash(
 
 # Simple layout with navigation and header
 app.layout = dbc.Container([
+    # Location component for navigation
+    dcc.Location(id='url', refresh=False),
+    
     # Interval to trigger initial callbacks
     dcc.Interval(id="initial-interval", interval=1000, n_intervals=0),
     
@@ -119,10 +123,10 @@ app.layout = dbc.Container([
         dbc.Container([
             dbc.NavbarBrand("ML Trading", className="text-white"),
             dbc.Nav([
-                dbc.NavItem(dbc.NavLink("Dashboard", href="#", className="text-white")),
-                dbc.NavItem(dbc.NavLink("Logs", href="#", className="text-white")),
-                dbc.NavItem(dbc.NavLink("Settings", href="#", className="text-white")),
-                dbc.NavItem(dbc.NavLink("Help", href="#", className="text-white"))
+                dbc.NavItem(dbc.NavLink("Dashboard", href="#", id="nav-dashboard", className="text-white")),
+                dbc.NavItem(dbc.NavLink("Logs", href="#", id="nav-logs", className="text-white")),
+                dbc.NavItem(dbc.NavLink("Settings", href="#", id="nav-settings", className="text-white")),
+                dbc.NavItem(dbc.NavLink("Help", href="#", id="nav-help", className="text-white"))
             ], className="me-auto")
         ]),
         color="primary",
@@ -140,125 +144,10 @@ app.layout = dbc.Container([
         ])
     ], className="mb-4"),
     
-    # Main Content Area with Tabs
+    # Main Content Area
     dbc.Row([
         dbc.Col([
-            dbc.Tabs([
-                dbc.Tab(
-                    dbc.Card([
-                        dbc.CardHeader("Overview", className="text-center p-2"),
-                        dbc.CardBody([
-                            html.Div([
-                                html.H5("Market Overview", className="text-center mb-3"),
-                                html.P("Real-time market data and analysis will be displayed here.", className="text-center text-muted")
-                            ], className="p-4")
-                        ], className="p-0")
-                    ], style={"border": "none", "box-shadow": "none"}),
-                    label="Overview",
-                    tab_id="overview-tab"
-                ),
-                dbc.Tab(
-                    dbc.Card([
-                        dbc.CardBody([
-                            # Distribution Charts Row
-                            dbc.Row([
-                                dbc.Col([
-                                    create_chart_card("sector-chart", "450px")
-                                ], width=6),
-                                dbc.Col([
-                                    create_chart_card("industry-chart", "450px")
-                                ], width=6)
-                            ], className="mb-3"),
-                            
-                            # Filter Display Row
-                            dbc.Row([
-                                dbc.Col([
-                                    html.Div([
-                                        html.Span("Current Filters: ", className="text-muted"),
-                                        html.Span("Sector: ", className="text-muted"),
-                                        html.Span("All Sectors", id="current-sector-filter", className="badge bg-primary me-2"),
-                                        html.Span("Industry: ", className="text-muted"),
-                                        html.Span("All Industries", id="current-industry-filter", className="badge bg-info")
-                                    ], className="text-center")
-                                ], width=12)
-                            ], className="mb-3"),
-                            
-                            # Chart Controls Row
-                            dbc.Row([
-                                dbc.Col([
-                                    dbc.Card([
-                                        dbc.CardBody([
-                                            html.H6("Chart Controls", className="text-center mb-3"),
-                                            dbc.Row([
-                                                dbc.Col([
-                                                    html.Label("Select Symbol:", className="form-label"),
-                                                    dcc.Dropdown(
-                                                        id="symbol-dropdown",
-                                                        options=[],
-                                                        value="AAPL",
-                                                        className="mb-3"
-                                                    )
-                                                ], width=6),
-                                                dbc.Col([
-                                                    html.Label("Time Range:", className="form-label"),
-                                                    dcc.Dropdown(
-                                                        id="time-range-dropdown",
-                                                        options=[
-                                                            {"label": "1 Day", "value": "1d"},
-                                                            {"label": "1 Week", "value": "1w"},
-                                                            {"label": "1 Month", "value": "1m"},
-                                                            {"label": "3 Months", "value": "3m"},
-                                                            {"label": "1 Year", "value": "1y"}
-                                                        ],
-                                                        value="1m",
-                                                        className="mb-3"
-                                                    )
-                                                ], width=6)
-                                            ]),
-                                            dbc.Button("Refresh Data", id="refresh-data-btn", color="primary", className="w-100")
-                                        ], className="p-3")
-                                    ], style={"border": "none", "box-shadow": "none"})
-                                ], width=12)
-                            ], className="mb-3"),
-                            
-                            # Price Chart Row
-                            dbc.Row([
-                                dbc.Col([
-                                    create_chart_card("price-chart", "400px")
-                                ], width=12)
-                            ], className="mb-3")
-                        ], className="p-0")
-                    ], style={"border": "none", "box-shadow": "none"}),
-                    label="Charts",
-                    tab_id="charts-tab"
-                ),
-                dbc.Tab(
-                    dbc.Card([
-                        dbc.CardHeader("Analysis", className="text-center p-2"),
-                        dbc.CardBody([
-                            html.Div([
-                                html.H5("Trading Analysis", className="text-center mb-3"),
-                                html.P("Advanced trading analysis and insights will be displayed here.", className="text-center text-muted")
-                            ], className="p-4")
-                        ], className="p-0")
-                    ], style={"border": "none", "box-shadow": "none"}),
-                    label="Analysis",
-                    tab_id="analysis-tab"
-                ),
-                dbc.Tab(
-                    dbc.Card([
-                        dbc.CardHeader("Settings", className="text-center p-2"),
-                        dbc.CardBody([
-                            html.Div([
-                                html.H5("Dashboard Settings", className="text-center mb-3"),
-                                html.P("Configure your dashboard preferences and trading parameters.", className="text-center text-muted")
-                            ], className="p-4")
-                        ], className="p-0")
-                    ], style={"border": "none", "box-shadow": "none"}),
-                    label="Settings",
-                    tab_id="settings-tab"
-                )
-            ], id="dashboard-tabs", active_tab="overview-tab")
+            html.Div(id="page-content")
         ])
     ], className="mb-3"),
     
@@ -273,6 +162,161 @@ app.layout = dbc.Container([
     ], className="mt-5")
     
 ], fluid=True)
+
+# Helper function to create dashboard content
+def create_dashboard_content():
+    """Create the main dashboard content with tabs"""
+    return dbc.Tabs([
+        dbc.Tab(
+            dbc.Card([
+                dbc.CardHeader("Overview", className="text-center p-2"),
+                dbc.CardBody([
+                    html.Div([
+                        html.H5("Market Overview", className="text-center mb-3"),
+                        html.P("Real-time market data and analysis will be displayed here.", className="text-center text-muted")
+                    ], className="p-4")
+                ], className="p-0")
+            ], style={"border": "none", "box-shadow": "none"}),
+            label="Overview",
+            tab_id="overview-tab"
+        ),
+        dbc.Tab(
+            dbc.Card([
+                dbc.CardBody([
+                    # Distribution Charts Row
+                    dbc.Row([
+                        dbc.Col([
+                            create_chart_card("sector-chart", "450px")
+                        ], width=6),
+                        dbc.Col([
+                            create_chart_card("industry-chart", "450px")
+                        ], width=6)
+                    ], className="mb-3"),
+                    
+                    # Filter Display Row
+                    dbc.Row([
+                        dbc.Col([
+                            html.Div([
+                                html.Span("Current Filters: ", className="text-muted"),
+                                html.Span("Sector: ", className="text-muted"),
+                                html.Span("All Sectors", id="current-sector-filter", className="badge bg-primary me-2"),
+                                html.Span("Industry: ", className="text-muted"),
+                                html.Span("All Industries", id="current-industry-filter", className="badge bg-info")
+                            ], className="text-center")
+                        ], width=12)
+                    ], className="mb-3"),
+                    
+                    # Chart Controls Row
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Card([
+                                dbc.CardBody([
+                                    html.H6("Chart Controls", className="text-center mb-3"),
+                                    dbc.Row([
+                                        dbc.Col([
+                                            html.Label("Select Symbol:", className="form-label"),
+                                            dcc.Dropdown(
+                                                id="symbol-dropdown",
+                                                options=[],
+                                                value="AAPL",
+                                                className="mb-3"
+                                            )
+                                        ], width=6),
+                                        dbc.Col([
+                                            html.Label("Time Range:", className="form-label"),
+                                            dcc.Dropdown(
+                                                id="time-range-dropdown",
+                                                options=[
+                                                    {"label": "1 Day", "value": "1d"},
+                                                    {"label": "1 Week", "value": "1w"},
+                                                    {"label": "1 Month", "value": "1m"},
+                                                    {"label": "3 Months", "value": "3m"},
+                                                    {"label": "1 Year", "value": "1y"}
+                                                ],
+                                                value="1m",
+                                                className="mb-3"
+                                            )
+                                        ], width=6)
+                                    ]),
+                                    dbc.Button("Refresh Data", id="refresh-data-btn", color="primary", className="w-100")
+                                ], className="p-3")
+                            ], style={"border": "none", "box-shadow": "none"})
+                        ], width=12)
+                    ], className="mb-3"),
+                    
+                    # Price Chart Row
+                    dbc.Row([
+                        dbc.Col([
+                            create_chart_card("price-chart", "400px")
+                        ], width=12)
+                    ], className="mb-3")
+                ], className="p-0")
+            ], style={"border": "none", "box-shadow": "none"}),
+            label="Charts",
+            tab_id="charts-tab"
+        ),
+        dbc.Tab(
+            dbc.Card([
+                dbc.CardHeader("Analysis", className="text-center p-2"),
+                dbc.CardBody([
+                    html.Div([
+                        html.H5("Trading Analysis", className="text-center mb-3"),
+                        html.P("Advanced trading analysis and insights will be displayed here.", className="text-center text-muted")
+                    ], className="p-4")
+                ], className="p-0")
+            ], style={"border": "none", "box-shadow": "none"}),
+            label="Analysis",
+            tab_id="analysis-tab"
+        ),
+        dbc.Tab(
+            dbc.Card([
+                dbc.CardHeader("Settings", className="text-center p-2"),
+                dbc.CardBody([
+                    html.Div([
+                        html.H5("Dashboard Settings", className="text-center mb-3"),
+                        html.P("Configure your dashboard preferences and trading parameters.", className="text-center text-muted")
+                    ], className="p-4")
+                ], className="p-0")
+            ], style={"border": "none", "box-shadow": "none"}),
+            label="Settings",
+            tab_id="settings-tab"
+        )
+    ], id="dashboard-tabs", active_tab="overview-tab")
+
+# Navigation callback
+@app.callback(
+    Output("page-content", "children"),
+    [Input("url", "pathname"),
+     Input("nav-dashboard", "n_clicks"),
+     Input("nav-help", "n_clicks"),
+     Input("nav-settings", "n_clicks"),
+     Input("nav-logs", "n_clicks")]
+)
+def display_page(pathname, nav_dashboard, nav_help, nav_settings, nav_logs):
+    """Display different pages based on navigation"""
+    ctx = callback_context
+    
+    if not ctx.triggered:
+        # Default to dashboard
+        return create_dashboard_content()
+    
+    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    
+    if button_id == "nav-help" or pathname == "/help":
+        return create_help_layout()
+    elif button_id == "nav-settings" or pathname == "/settings":
+        return html.Div([
+            html.H3("Settings", className="text-center"),
+            html.P("Settings page coming soon...", className="text-center text-muted")
+        ])
+    elif button_id == "nav-logs" or pathname == "/logs":
+        return html.Div([
+            html.H3("Logs", className="text-center"),
+            html.P("Logs page coming soon...", className="text-center text-muted")
+        ])
+    else:
+        # Default to dashboard
+        return create_dashboard_content()
 
 # Callbacks
 @app.callback(
@@ -406,7 +450,7 @@ def update_sector_chart(refresh_clicks):
     except Exception as e:
         logger.error(f"Error updating sector chart: {e}")
         # Return empty chart on error
-        return go.Figure()
+        return create_empty_chart("Error Loading Sector Data")
 
 @app.callback(
     Output("industry-chart", "figure"),
@@ -503,7 +547,7 @@ def update_industry_chart(sector_click, refresh_clicks):
     except Exception as e:
         logger.error(f"Error updating industry chart: {e}")
         # Return empty chart on error
-        return go.Figure()
+        return create_empty_chart("Error Loading Industry Data")
 
 @app.callback(
     [Output("symbol-dropdown", "options"),
