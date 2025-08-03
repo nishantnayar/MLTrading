@@ -207,8 +207,13 @@ class TestAPIIntegration:
         if not sectors_data["sectors"]:
             pytest.skip("No sectors available for testing")
         
-        # Test with first available sector
-        sector = sectors_data["sectors"][0]
+        # Find first non-empty sector
+        sectors = [s for s in sectors_data["sectors"] if s.strip()]
+        if not sectors:
+            pytest.skip("No valid sectors available for testing")
+        
+        # Test with first available non-empty sector
+        sector = sectors[0]
         
         response = requests.post(f"{base_url}/data/sectors/{sector}/stocks")
         
@@ -228,8 +233,13 @@ class TestAPIIntegration:
         if not industries_data["industries"]:
             pytest.skip("No industries available for testing")
         
-        # Test with first available industry
-        industry = industries_data["industries"][0]
+        # Find first non-empty industry
+        industries = [i for i in industries_data["industries"] if i.strip()]
+        if not industries:
+            pytest.skip("No valid industries available for testing")
+        
+        # Test with first available non-empty industry
+        industry = industries[0]
         
         response = requests.post(f"{base_url}/data/industries/{industry}/stocks")
         

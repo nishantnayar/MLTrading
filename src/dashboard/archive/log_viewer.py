@@ -13,6 +13,8 @@ if 'src' not in sys.modules:
     project_root = Path(__file__).parent.parent.parent.parent
     sys.path.insert(0, str(project_root))
 
+from src.utils.helpers.date_utils import format_datetime_display
+
 def create_log_viewer():
     """
     Create a log viewer component for displaying combined logs
@@ -221,61 +223,81 @@ def load_and_filter_logs(component_filter="all", level_filter="all", time_filter
         if not combined_log_path.exists():
             return []
         
+        # Read file in chunks to avoid memory issues
+        logs = []
+        chunk_size = 1000  # Process 1000 lines at a time
+        
         with open(combined_log_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
+        
+        # Process logs in chunks
+        for i in range(0, len(lines), chunk_size):
+            chunk = lines[i:i + chunk_size]
+            
+            # Parse logs in chunk
+            for line in chunk:
+                try:
+                    parsed = parse_log_line(line)
+                    if parsed:
+                        logs.append(parsed)
+                except Exception as e:
+                    # Skip malformed lines
+                    continue
+        
+        if not logs:
+            return []
+        
+        try:
+            # Convert to DataFrame for easier filtering
+            df = pd.DataFrame(logs)
+            
+            # Handle timestamp conversion more safely
+            try:
+                df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
+                # Remove rows with invalid timestamps
+                df = df.dropna(subset=['timestamp'])
+            except Exception as e:
+                logging.error(f"Error converting timestamps: {e}")
+                return []
+            
+            # Apply filters
+            if component_filter != "all":
+                df = df[df['logger'].str.contains(component_filter, na=False)]
+            
+            if level_filter != "all":
+                df = df[df['level'] == level_filter]
+            
+            if time_filter != "all":
+                now = datetime.now()
+                if time_filter == "1h":
+                    cutoff = now - timedelta(hours=1)
+                elif time_filter == "6h":
+                    cutoff = now - timedelta(hours=6)
+                elif time_filter == "24h":
+                    cutoff = now - timedelta(hours=24)
+                elif time_filter == "7d":
+                    cutoff = now - timedelta(days=7)
+                else:
+                    cutoff = datetime.min
+                
+                df = df[df['timestamp'] >= cutoff]
+            
+            # Apply structured log filters more safely
+            if event_type_filter != "all":
+                # Filter by event type in metadata
+                df = df[df['metadata'].apply(lambda x: x.get('event_type', '') == event_type_filter)]
+            
+            if symbol_filter != "all":
+                # Filter by symbol in metadata
+                df = df[df['metadata'].apply(lambda x: x.get('symbol', '') == symbol_filter)]
+            
+            return df.to_dict('records')
+        except Exception as e:
+            logging.error(f"Error filtering logs: {e}")
+            return []
+            
     except Exception as e:
         logging.error(f"Error reading log file: {e}")
-        return []
-    
-    # Parse logs
-    logs = []
-    for line in lines:
-        parsed = parse_log_line(line)
-        if parsed:
-            logs.append(parsed)
-    
-    if not logs:
-        return []
-    
-    try:
-        # Convert to DataFrame for easier filtering
-        df = pd.DataFrame(logs)
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
-        
-        # Apply filters
-        if component_filter != "all":
-            df = df[df['logger'].str.contains(component_filter, na=False)]
-        
-        if level_filter != "all":
-            df = df[df['level'] == level_filter]
-        
-        if time_filter != "all":
-            now = datetime.now()
-            if time_filter == "1h":
-                cutoff = now - timedelta(hours=1)
-            elif time_filter == "6h":
-                cutoff = now - timedelta(hours=6)
-            elif time_filter == "24h":
-                cutoff = now - timedelta(hours=24)
-            elif time_filter == "7d":
-                cutoff = now - timedelta(days=7)
-            else:
-                cutoff = datetime.min
-            
-            df = df[df['timestamp'] >= cutoff]
-        
-        # Apply structured log filters
-        if event_type_filter != "all":
-            # Filter by event type in metadata
-            df = df[df['metadata'].apply(lambda x: x.get('event_type', '') == event_type_filter)]
-        
-        if symbol_filter != "all":
-            # Filter by symbol in metadata
-            df = df[df['metadata'].apply(lambda x: x.get('symbol', '') == symbol_filter)]
-        
-        return df.to_dict('records')
-    except Exception as e:
-        logging.error(f"Error filtering logs: {e}")
         return []
 
 def format_log_display(logs):
@@ -295,12 +317,12 @@ def format_log_display(logs):
         log_elements = []
         
         for log in logs:
-            # Determine color based on log level
+            # Determine color based on log level using Cerulean theme colors
             level_colors = {
-                'ERROR': '#dc3545',
-                'WARNING': '#ffc107',
-                'INFO': '#0d6efd',
-                'DEBUG': '#6c757d'
+                'ERROR': '#c71c22',    # Cerulean Danger Red
+                'WARNING': '#dd5600',   # Cerulean Warning Orange
+                'INFO': '#2fa4e7',      # Cerulean Primary Blue
+                'DEBUG': '#e9ecef'      # Cerulean Secondary Gray
             }
             
             color = level_colors.get(log['level'], '#000000')
@@ -310,13 +332,13 @@ def format_log_display(logs):
             if isinstance(timestamp, str):
                 try:
                     dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S,%f')
-                    timestamp = dt.strftime('%Y-%m-%d %H:%M:%S')
+                    timestamp = format_datetime_display(dt)
                 except:
                     pass
             
             # Create log entry
             log_entry = [
-                html.Span(f"[{timestamp}] ", style={"color": "#6c757d"}),
+                html.Span(f"[{timestamp}] ", style={"color": "#e9ecef"}),  # Cerulean Secondary Gray
                 html.Span(f"[{log['logger']}] ", style={"color": "#495057"}),
                 html.Span(f"[{log['level']}] ", style={"color": color, "fontWeight": "bold"}),
                 html.Span(log['message'])

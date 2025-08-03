@@ -29,8 +29,7 @@ def run_integration_tests():
         sys.executable, "-m", "pytest", 
         "tests/integration/", 
         "-v", 
-        "--tb=short",
-        "-m", "integration"
+        "--tb=short"
     ], cwd=Path(__file__).parent)
     return result.returncode == 0
 
@@ -42,8 +41,7 @@ def run_api_tests():
         sys.executable, "-m", "pytest", 
         "tests/integration/test_api_integration.py", 
         "-v", 
-        "--tb=short",
-        "-m", "api"
+        "--tb=short"
     ], cwd=Path(__file__).parent)
     return result.returncode == 0
 

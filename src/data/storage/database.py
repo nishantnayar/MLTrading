@@ -51,15 +51,37 @@ class DatabaseManager:
             logger.info(f"Database pool initialized with {self.min_conn}-{self.max_conn} connections")
         except Exception as e:
             logger.error(f"Failed to initialize database pool: {e}")
-            raise
+            # Create a fallback connection for testing
+            self.pool = None
+            logger.warning("Database pool initialization failed, using fallback mode")
     
     def get_connection(self):
         """Get a connection from the pool."""
+        if self.pool is None:
+            # Fallback: create a direct connection
+            try:
+                return psycopg2.connect(
+                    host=self.host,
+                    port=self.port,
+                    database=self.database,
+                    user=self.user,
+                    password=self.password
+                )
+            except Exception as e:
+                logger.error(f"Failed to create fallback connection: {e}")
+                raise
         return self.pool.getconn()
     
     def return_connection(self, conn):
         """Return a connection to the pool."""
-        self.pool.putconn(conn)
+        if self.pool is None:
+            # Close the fallback connection
+            try:
+                conn.close()
+            except Exception as e:
+                logger.error(f"Error closing fallback connection: {e}")
+        else:
+            self.pool.putconn(conn)
     
     def check_tables_exist(self) -> bool:
         """Check if all required tables exist in the database."""
@@ -419,6 +441,49 @@ class DatabaseManager:
                 
         except Exception as e:
             logger.error(f"Failed to get industries: {e}")
+            raise
+        finally:
+            self.return_connection(conn)
+    
+    def get_industries_by_sector(self, sector: str) -> List[str]:
+        """Get all unique industries within a specific sector."""
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT DISTINCT industry FROM stock_info 
+                    WHERE sector = %s AND industry IS NOT NULL 
+                    ORDER BY industry
+                """, (sector,))
+                return [row[0] for row in cur.fetchall()]
+                
+        except Exception as e:
+            logger.error(f"Failed to get industries by sector: {e}")
+            raise
+        finally:
+            self.return_connection(conn)
+    
+    def get_stocks_by_industry(self, industry: str, sector: str = None) -> List[str]:
+        """Get all symbols in a specific industry, optionally filtered by sector."""
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                if sector:
+                    cur.execute("""
+                        SELECT symbol FROM stock_info 
+                        WHERE industry = %s AND sector = %s 
+                        ORDER BY symbol
+                    """, (industry, sector))
+                else:
+                    cur.execute("""
+                        SELECT symbol FROM stock_info 
+                        WHERE industry = %s 
+                        ORDER BY symbol
+                    """, (industry,))
+                return [row[0] for row in cur.fetchall()]
+                
+        except Exception as e:
+            logger.error(f"Failed to get stocks by industry: {e}")
             raise
         finally:
             self.return_connection(conn)

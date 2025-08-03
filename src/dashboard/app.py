@@ -1,321 +1,580 @@
 import dash
-from dash import html, dcc, callback_context, Input, Output, State
+from dash import dcc, html, callback_context
 import dash_bootstrap_components as dbc
+from dash.dependencies import Input, Output
+import plotly.graph_objs as go
+import plotly.express as px
+import pandas as pd
+import numpy as np
 import sys
 from pathlib import Path
 
-# Add the project root to Python path
+# Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.utils.logging_config import get_ui_logger, log_dashboard_event
-from src.dashboard.pages.home import layout as home_layout, register_callbacks as register_home_callbacks
-from src.dashboard.pages.logs import create_layout, register_callbacks as register_logs_callbacks
-from src.dashboard.pages.settings import layout as settings_layout
+from src.utils.logging_config import get_ui_logger
+from src.dashboard.archive.services.data_service import MarketDataService
 
-# Initialize logger
+# Initialize logger and data service
 logger = get_ui_logger("dashboard")
+data_service = MarketDataService()
 
-# Debug: Print layout types
-print(f"Home layout type: {type(home_layout)}")
-print(f"Logs layout type: {type(create_layout())}")
-print(f"Settings layout type: {type(settings_layout)}")
+# Constants
+CHART_COLORS = {
+    'primary': '#2fa4e7',  # Cerulean Primary Blue
+    'success': '#73a839',  # Cerulean Success Green
+    'info': '#033c73'      # Cerulean Info Dark Blue
+}
 
-# Initialize the Dash app
+# Helper functions
+def create_empty_chart(title="No Data Available"):
+    """Create an empty chart with a message"""
+    return go.Figure(
+        data=[],
+        layout=go.Layout(
+            title=title,
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            annotations=[{
+                'text': 'No data available',
+                'xref': 'paper',
+                'yref': 'paper',
+                'showarrow': False,
+                'font': {'size': 14}
+            }],
+            template='plotly_white',
+            margin=dict(l=40, r=40, t=60, b=40),
+            plot_bgcolor='white',
+            paper_bgcolor='white'
+        )
+    )
+
+def create_horizontal_bar_chart(data, title, color=CHART_COLORS['primary']):
+    """Create a horizontal bar chart"""
+    if not data or not data.get('categories') or not data.get('counts'):
+        return create_empty_chart(title)
+    
+    # Sort by count in descending order
+    sorted_data = sorted(zip(data['categories'], data['counts']), 
+                        key=lambda x: x[1], reverse=True)
+    categories, counts = zip(*sorted_data)
+    
+    fig = go.Figure()
+    
+    fig.add_trace(go.Bar(
+        x=counts,
+        y=categories,
+        orientation='h',
+        marker_color='blue',
+        hovertemplate='<b>%{y}</b><br>Count: %{x}<extra></extra>'
+    ))
+    
+    fig.update_layout(
+        title=title,
+        xaxis=dict(
+            title="",
+            showgrid=False,
+            zeroline=False,
+            showticklabels=True
+        ),
+        yaxis=dict(
+            title="",
+            showgrid=False,
+            zeroline=False
+        ),
+        margin=dict(l=40, r=40, t=60, b=40),
+        height=300,
+        plot_bgcolor='white',
+        paper_bgcolor='white'
+    )
+    
+    return fig
+
+def create_chart_card(chart_id, height="400px"):
+    """Create a card container for charts"""
+    return dbc.Card([
+        dbc.CardBody([
+            dcc.Graph(id=chart_id, style={'height': height})
+        ], className="p-0")
+    ], style={"border": "none", "box-shadow": "none"})
+
+# Initialize Dash app with Bootstrap Cerulean theme
 app = dash.Dash(
     __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    external_stylesheets=[
+        dbc.themes.CERULEAN,
+        "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    ],
     suppress_callback_exceptions=True
 )
 
-# Add custom JavaScript for theme switching
-app.index_string = '''
-<!DOCTYPE html>
-<html>
-    <head>
-        {%metas%}
-        <title>{%title%}</title>
-        {%favicon%}
-        {%css%}
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    </head>
-    <body>
-        {%app_entry%}
-        <footer>
-            {%config%}
-            {%scripts%}
-            {%renderer%}
-        </footer>
-                <script>
-            // Theme switching functionality
-            function toggleTheme() {
-                const body = document.body;
-                const currentTheme = body.getAttribute('data-theme');
-                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-                body.setAttribute('data-theme', newTheme);
-                
-                // Store theme preference in localStorage
-                localStorage.setItem('theme', newTheme);
-            }
-            
-            // Sidebar functionality
-            function toggleSidebar() {
-                const sidebar = document.getElementById('sidebar-container');
-                const mainContent = document.getElementById('main-content');
-                const toggleIcon = document.getElementById('sidebar-toggle-icon');
-                
-                if (sidebar.classList.contains('sidebar-collapsed')) {
-                    sidebar.classList.remove('sidebar-collapsed');
-                    sidebar.classList.add('sidebar-expanded');
-                    mainContent.classList.add('expanded');
-                    toggleIcon.className = 'fas fa-chevron-left';
-                    localStorage.setItem('sidebar', 'expanded');
-                } else {
-                    sidebar.classList.remove('sidebar-expanded');
-                    sidebar.classList.add('sidebar-collapsed');
-                    mainContent.classList.remove('expanded');
-                    toggleIcon.className = 'fas fa-chevron-right';
-                    localStorage.setItem('sidebar', 'collapsed');
-                }
-            }
-            
-            // Apply saved theme and sidebar state on page load
-            document.addEventListener('DOMContentLoaded', function() {
-                // Theme setup
-                const savedTheme = localStorage.getItem('theme') || 'light';
-                document.body.setAttribute('data-theme', savedTheme);
-                
-                // Update theme toggle button icon
-                const themeToggle = document.getElementById('theme-toggle');
-                if (themeToggle) {
-                    const icon = themeToggle.querySelector('i');
-                    if (icon) {
-                        icon.className = savedTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
-                    }
-                }
-                
-                // Sidebar setup (default to collapsed)
-                const savedSidebar = localStorage.getItem('sidebar') || 'collapsed';
-                const sidebar = document.getElementById('sidebar-container');
-                const mainContent = document.getElementById('main-content');
-                const toggleIcon = document.getElementById('sidebar-toggle-icon');
-                
-                if (savedSidebar === 'expanded') {
-                    sidebar.classList.remove('sidebar-collapsed');
-                    sidebar.classList.add('sidebar-expanded');
-                    mainContent.classList.add('expanded');
-                    toggleIcon.className = 'fas fa-chevron-left';
-                } else {
-                    sidebar.classList.remove('sidebar-expanded');
-                    sidebar.classList.add('sidebar-collapsed');
-                    mainContent.classList.remove('expanded');
-                    toggleIcon.className = 'fas fa-chevron-right';
-                }
-            });
-            
-            // Listen for button clicks
-            document.addEventListener('click', function(e) {
-                if (e.target.closest('#theme-toggle')) {
-                    toggleTheme();
-                }
-                if (e.target.closest('#sidebar-toggle')) {
-                    toggleSidebar();
-                }
-            });
-            
-            // Mobile sidebar handling
-            function handleMobileSidebar() {
-                const sidebar = document.getElementById('sidebar-container');
-                const isMobile = window.innerWidth <= 768;
-                
-                if (isMobile) {
-                    sidebar.classList.add('mobile-open');
-                } else {
-                    sidebar.classList.remove('mobile-open');
-                }
-            }
-            
-            // Handle window resize
-            window.addEventListener('resize', handleMobileSidebar);
-            
-            // Initial mobile check
-            document.addEventListener('DOMContentLoaded', function() {
-                handleMobileSidebar();
-            });
-        </script>
-    </body>
-</html>
-'''
-
-
-
-# Define the main layout with navigation
-app.layout = html.Div([
-    # Theme Toggle Button
-    html.Div([
-        html.Button([
-            html.I(className="fas fa-sun", id="theme-icon")
-        ], id="theme-toggle", className="theme-toggle", n_clicks=0)
-    ]),
+# Simple layout with navigation and header
+app.layout = dbc.Container([
+    # Interval to trigger initial callbacks
+    dcc.Interval(id="initial-interval", interval=1000, n_intervals=0),
     
-    # Collapsible Sidebar
-    html.Div([
-        # Sidebar Toggle Button
-        html.Button([
-            html.I(className="fas fa-chevron-right", id="sidebar-toggle-icon")
-        ], id="sidebar-toggle", className="sidebar-toggle", n_clicks=0),
-        
-        # Sidebar Content
-        html.Div([
-            html.Ul([
-                html.Li([
-                    html.A([
-                        html.I(className="fas fa-chart-line sidebar-nav-icon"),
-                        html.Span("Dashboard", className="sidebar-nav-text")
-                    ], href="#", id="nav-dashboard", className="sidebar-nav-link active", **{"data-tooltip": "Dashboard"})
-                ], className="sidebar-nav-item"),
-                html.Li([
-                    html.A([
-                        html.I(className="fas fa-file-alt sidebar-nav-icon"),
-                        html.Span("Logs", className="sidebar-nav-text")
-                    ], href="#", id="nav-logs", className="sidebar-nav-link", **{"data-tooltip": "Logs"})
-                ], className="sidebar-nav-item"),
-                html.Li([
-                    html.A([
-                        html.I(className="fas fa-cog sidebar-nav-icon"),
-                        html.Span("Settings", className="sidebar-nav-text")
-                    ], href="#", id="nav-settings", className="sidebar-nav-link", **{"data-tooltip": "Settings"})
-                ], className="sidebar-nav-item")
-            ], className="sidebar-nav")
-        ], className="sidebar-content")
-    ], id="sidebar-container", className="sidebar-container sidebar-collapsed"),
+    # Navigation Bar
+    dbc.Navbar(
+        dbc.Container([
+            dbc.NavbarBrand("ML Trading", className="text-white"),
+            dbc.Nav([
+                dbc.NavItem(dbc.NavLink("Dashboard", href="#", className="text-white")),
+                dbc.NavItem(dbc.NavLink("Logs", href="#", className="text-white")),
+                dbc.NavItem(dbc.NavLink("Settings", href="#", className="text-white")),
+                dbc.NavItem(dbc.NavLink("Help", href="#", className="text-white"))
+            ], className="me-auto")
+        ]),
+        color="primary",
+        dark=True,
+        className="mb-4"
+    ),
     
-    # Main Content Area
-    html.Div([
-        # Header
-        html.Div([
-            html.H1("ML Trading Dashboard", className="text-center mb-2"),
+    # Header
+    dbc.Row([
+        dbc.Col([
             html.Div([
-                html.Span("●", className="status-indicator status-online"),
-                html.Span("System Online", className="ms-2")
-            ], className="text-center text-muted")
-        ], className="dashboard-header"),
-        
-        # Page Content
-        html.Div(id="page-content")
-        
-    ], id="main-content", className="main-content")
-])
+                html.H2("ML Trading Dashboard", className="text-center mb-2"),
+                html.P("Welcome Nishant, Good Evening", className="text-center text-muted mb-0")
+            ])
+        ])
+    ], className="mb-4"),
+    
+    # Main Content Area with Tabs
+    dbc.Row([
+        dbc.Col([
+            dbc.Tabs([
+                dbc.Tab(
+                    dbc.Card([
+                        dbc.CardHeader("Overview", className="text-center p-2"),
+                        dbc.CardBody([
+                            html.Div([
+                                html.H5("Market Overview", className="text-center mb-3"),
+                                html.P("Real-time market data and analysis will be displayed here.", className="text-center text-muted")
+                            ], className="p-4")
+                        ], className="p-0")
+                    ], style={"border": "none", "box-shadow": "none"}),
+                    label="Overview",
+                    tab_id="overview-tab"
+                ),
+                dbc.Tab(
+                    dbc.Card([
+                        dbc.CardBody([
+                            # Distribution Charts Row
+                            dbc.Row([
+                                dbc.Col([
+                                    create_chart_card("sector-chart", "450px")
+                                ], width=6),
+                                dbc.Col([
+                                    create_chart_card("industry-chart", "450px")
+                                ], width=6)
+                            ], className="mb-3"),
+                            
+                            # Filter Display Row
+                            dbc.Row([
+                                dbc.Col([
+                                    html.Div([
+                                        html.Span("Current Filters: ", className="text-muted"),
+                                        html.Span("Sector: ", className="text-muted"),
+                                        html.Span("All Sectors", id="current-sector-filter", className="badge bg-primary me-2"),
+                                        html.Span("Industry: ", className="text-muted"),
+                                        html.Span("All Industries", id="current-industry-filter", className="badge bg-info")
+                                    ], className="text-center")
+                                ], width=12)
+                            ], className="mb-3"),
+                            
+                            # Chart Controls Row
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Card([
+                                        dbc.CardBody([
+                                            html.H6("Chart Controls", className="text-center mb-3"),
+                                            dbc.Row([
+                                                dbc.Col([
+                                                    html.Label("Select Symbol:", className="form-label"),
+                                                    dcc.Dropdown(
+                                                        id="symbol-dropdown",
+                                                        options=[],
+                                                        value="AAPL",
+                                                        className="mb-3"
+                                                    )
+                                                ], width=6),
+                                                dbc.Col([
+                                                    html.Label("Time Range:", className="form-label"),
+                                                    dcc.Dropdown(
+                                                        id="time-range-dropdown",
+                                                        options=[
+                                                            {"label": "1 Day", "value": "1d"},
+                                                            {"label": "1 Week", "value": "1w"},
+                                                            {"label": "1 Month", "value": "1m"},
+                                                            {"label": "3 Months", "value": "3m"},
+                                                            {"label": "1 Year", "value": "1y"}
+                                                        ],
+                                                        value="1m",
+                                                        className="mb-3"
+                                                    )
+                                                ], width=6)
+                                            ]),
+                                            dbc.Button("Refresh Data", id="refresh-data-btn", color="primary", className="w-100")
+                                        ], className="p-3")
+                                    ], style={"border": "none", "box-shadow": "none"})
+                                ], width=12)
+                            ], className="mb-3"),
+                            
+                            # Price Chart Row
+                            dbc.Row([
+                                dbc.Col([
+                                    create_chart_card("price-chart", "400px")
+                                ], width=12)
+                            ], className="mb-3")
+                        ], className="p-0")
+                    ], style={"border": "none", "box-shadow": "none"}),
+                    label="Charts",
+                    tab_id="charts-tab"
+                ),
+                dbc.Tab(
+                    dbc.Card([
+                        dbc.CardHeader("Analysis", className="text-center p-2"),
+                        dbc.CardBody([
+                            html.Div([
+                                html.H5("Trading Analysis", className="text-center mb-3"),
+                                html.P("Advanced trading analysis and insights will be displayed here.", className="text-center text-muted")
+                            ], className="p-4")
+                        ], className="p-0")
+                    ], style={"border": "none", "box-shadow": "none"}),
+                    label="Analysis",
+                    tab_id="analysis-tab"
+                ),
+                dbc.Tab(
+                    dbc.Card([
+                        dbc.CardHeader("Settings", className="text-center p-2"),
+                        dbc.CardBody([
+                            html.Div([
+                                html.H5("Dashboard Settings", className="text-center mb-3"),
+                                html.P("Configure your dashboard preferences and trading parameters.", className="text-center text-muted")
+                            ], className="p-4")
+                        ], className="p-0")
+                    ], style={"border": "none", "box-shadow": "none"}),
+                    label="Settings",
+                    tab_id="settings-tab"
+                )
+            ], id="dashboard-tabs", active_tab="overview-tab")
+        ])
+    ], className="mb-3"),
+    
+    # Footer
+    dbc.Row([
+        dbc.Col([
+            html.Div([
+                html.Span("Last Updated: ", className="text-muted"),
+                html.Span("2nd Aug, 2025 5:54 PM", className="text-muted")
+            ], className="text-center")
+        ])
+    ], className="mt-5")
+    
+], fluid=True)
 
-# Callback to update page content
+# Callbacks
 @app.callback(
-    Output("page-content", "children"),
-    [Input("nav-dashboard", "n_clicks"),
-     Input("nav-logs", "n_clicks"),
-     Input("nav-settings", "n_clicks")]
+    Output("price-chart", "figure"),
+    [Input("symbol-dropdown", "value"),
+     Input("time-range-dropdown", "value"),
+     Input("refresh-data-btn", "n_clicks")],
+    prevent_initial_call=False
 )
-def update_page_content(dashboard_clicks, logs_clicks, settings_clicks):
+def update_price_chart(symbol, time_range, refresh_clicks):
+    """Update price chart based on symbol and time range"""
     try:
-        ctx = callback_context
-        if not ctx.triggered:
-            return home_layout
+        # Convert time range to days
+        time_range_days = {
+            '1d': 1,
+            '1w': 7,
+            '1m': 30,
+            '3m': 90,
+            '1y': 365
+        }
         
-        button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+        days = time_range_days.get(time_range, 30)  # Default to 30 days
         
-        if button_id == "nav-dashboard":
-            return home_layout
-        elif button_id == "nav-logs":
-            return create_layout()
-        elif button_id == "nav-settings":
-            return settings_layout
-        else:
-            return home_layout
+        # Get real market data
+        df = data_service.get_market_data(symbol, days=days, source='yahoo', hourly=False)
+        
+        if df.empty:
+            logger.warning(f"No market data available for {symbol}")
+            return create_empty_chart(f"No Data Available for {symbol}")
+        
+        # Create candlestick chart with real data
+        fig = go.Figure(data=[
+            go.Candlestick(
+                x=df['timestamp'],
+                open=df['open'],
+                high=df['high'],
+                low=df['low'],
+                close=df['close'],
+                name=f'{symbol}',
+                increasing_line_color=CHART_COLORS['success'],
+                decreasing_line_color='#dc3545'
+            )
+        ])
+        
+        fig.update_layout(
+            title=f"{symbol} Price Chart ({time_range})",
+            xaxis_title="Date",
+            yaxis_title="Price ($)",
+            height=350,
+            margin=dict(l=40, r=40, t=40, b=40),
+            showlegend=False,
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            xaxis=dict(
+                rangeslider=dict(visible=False),
+                type='date',
+                rangebreaks=[
+                    # Hide weekends
+                    dict(bounds=["sat", "mon"]),
+                    # Hide holidays (example dates)
+                    dict(values=["2025-01-01", "2025-07-04"]),
+                    # Hide gaps outside trading hours (if intraday data)
+                    dict(bounds=[17, 9], pattern='hour')
+                ]
+            )
+        )
+        
+        logger.info(f"Updated candlestick chart for {symbol} with {len(df)} data points")
+        return fig
+        
     except Exception as e:
-        logger.error(f"Page content callback error: {e}")
-        return home_layout
+        logger.error(f"Error updating price chart for {symbol}: {e}")
+        return create_empty_chart(f"Error Loading Data for {symbol}")
 
-# Callback to update navigation active states
 @app.callback(
-    [Output("nav-dashboard", "className"),
-     Output("nav-logs", "className"),
-     Output("nav-settings", "className")],
-    [Input("nav-dashboard", "n_clicks"),
-     Input("nav-logs", "n_clicks"),
-     Input("nav-settings", "n_clicks")]
+    Output("sector-chart", "figure"),
+    [Input("refresh-data-btn", "n_clicks")],
+    prevent_initial_call=False
 )
-def update_nav_active_states(dashboard_clicks, logs_clicks, settings_clicks):
+def update_sector_chart(refresh_clicks):
+    """Update sector distribution chart with real data"""
     try:
-        ctx = callback_context
-        if not ctx.triggered:
-            return "sidebar-nav-link active", "sidebar-nav-link", "sidebar-nav-link"
+        # Get real sector distribution data
+        sector_data = data_service.get_sector_distribution()
         
-        button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+        if not sector_data or not sector_data.get('sectors') or not sector_data.get('counts'):
+            # No data available - return empty chart with error message
+            logger.warning("No sector distribution data available")
+            return create_empty_chart("No Sector Data Available")
         
-        if button_id == "nav-dashboard":
-            return "sidebar-nav-link active", "sidebar-nav-link", "sidebar-nav-link"
-        elif button_id == "nav-logs":
-            return "sidebar-nav-link", "sidebar-nav-link active", "sidebar-nav-link"
-        elif button_id == "nav-settings":
-            return "sidebar-nav-link", "sidebar-nav-link", "sidebar-nav-link active"
-        else:
-            return "sidebar-nav-link active", "sidebar-nav-link", "sidebar-nav-link"
+        sectors = sector_data['sectors']
+        counts = sector_data['counts']
+        
+        # Reverse the order so highest appears at top
+        sectors = sectors[::-1]
+        counts = counts[::-1]
+        
+        fig = go.Figure(data=[
+            go.Bar(
+                x=counts,
+                y=sectors,
+                orientation='h',
+                marker_color=CHART_COLORS['primary'],
+                hovertemplate='<b>%{y}</b><br>Count: %{x}<extra></extra>'
+            )
+        ])
+        
+        fig.update_layout(
+            title="Sector Distribution",
+            xaxis=dict(
+                title="",
+                showgrid=False,
+                zeroline=False,
+                showticklabels=True
+            ),
+            yaxis=dict(
+                title="",
+                showgrid=False,
+                zeroline=False
+            ),
+            height=400,
+            margin=dict(l=40, r=40, t=60, b=40),
+            bargap=0.2,
+            bargroupgap=0.1,
+            plot_bgcolor='white',
+            paper_bgcolor='white'
+        )
+        
+        return fig
+        
     except Exception as e:
-        logger.error(f"Navigation active states callback error: {e}")
-        return "sidebar-nav-link active", "sidebar-nav-link", "sidebar-nav-link"
+        logger.error(f"Error updating sector chart: {e}")
+        # Return empty chart on error
+        return go.Figure()
 
-# Configure app to suppress callback exceptions
-app.config.suppress_callback_exceptions = True
-
-# Sidebar toggle callback
 @app.callback(
-    [Output("sidebar-container", "className"),
-     Output("main-content", "className"),
-     Output("sidebar-toggle-icon", "className")],
-    [Input("sidebar-toggle", "n_clicks")],
-    prevent_initial_call=True
+    Output("industry-chart", "figure"),
+    [Input("sector-chart", "clickData"),
+     Input("refresh-data-btn", "n_clicks")],
+    prevent_initial_call=False
 )
-def toggle_sidebar(n_clicks):
+def update_industry_chart(sector_click, refresh_clicks):
+    """Update industry distribution chart based on sector selection with real data"""
     try:
-        if n_clicks is None:
-            n_clicks = 0
-        
-        # Toggle between collapsed and expanded
-        if n_clicks % 2 == 0:
-            # Collapsed (default)
-            return "sidebar-container sidebar-collapsed", "main-content", "fas fa-chevron-right"
+        if sector_click:
+            selected_sector = sector_click['points'][0]['y']
+            # Get real industry data for the selected sector
+            industry_data = data_service.get_industry_distribution(selected_sector)
+            
+            if not industry_data or not industry_data.get('industries') or not industry_data.get('counts'):
+                # No data available - return empty chart with error message
+                logger.warning(f"No industry distribution data available for sector: {selected_sector}")
+                return create_empty_chart(f"No Industry Data Available for {selected_sector}")
+            
+            industries = industry_data['industries']
+            counts = industry_data['counts']
+            
+            # Reverse the order so highest appears at top
+            industries = industries[::-1]
+            counts = counts[::-1]
+            
+            # Create chart with industry data
+            fig = go.Figure(data=[
+                go.Bar(
+                    x=counts,
+                    y=industries,
+                    orientation='h',
+                    marker_color=CHART_COLORS['info'],
+                    hovertemplate='<b>%{y}</b><br>Count: %{x}<extra></extra>'
+                )
+            ])
+            
+            fig.update_layout(
+                title="Industry Distribution",
+                xaxis=dict(
+                    title="",
+                    showgrid=False,
+                    zeroline=False,
+                    showticklabels=True
+                ),
+                yaxis=dict(
+                    title="",
+                    showgrid=False,
+                    zeroline=False
+                ),
+                height=400,
+                margin=dict(l=40, r=40, t=60, b=40),
+                bargap=0.2,
+                bargroupgap=0.1,
+                plot_bgcolor='white',
+                paper_bgcolor='white'
+            )
+            
+            return fig
         else:
-            # Expanded
-            return "sidebar-container sidebar-expanded", "main-content expanded", "fas fa-chevron-left"
+            # Show message when no sector is selected
+            fig = go.Figure()
+            
+            fig.update_layout(
+                title="Industry Distribution",
+                xaxis=dict(
+                    showgrid=False,
+                    zeroline=False,
+                    showticklabels=False
+                ),
+                yaxis=dict(
+                    showgrid=False,
+                    zeroline=False,
+                    showticklabels=False
+                ),
+                height=400,
+                margin=dict(l=40, r=40, t=60, b=40),
+                plot_bgcolor='white',
+                paper_bgcolor='white',
+                annotations=[{
+                    'text': 'Please select a sector',
+                    'xref': 'paper',
+                    'yref': 'paper',
+                    'showarrow': False,
+                    'font': {'size': 16, 'color': '#666666'},
+                    'x': 0.5,
+                    'y': 0.5
+                }]
+            )
+            
+            return fig
+        
     except Exception as e:
-        logger.error(f"Sidebar toggle callback error: {e}")
-        return "sidebar-container sidebar-collapsed", "main-content", "fas fa-chevron-right"
+        logger.error(f"Error updating industry chart: {e}")
+        # Return empty chart on error
+        return go.Figure()
 
-# Theme toggle callback - simplified to avoid conflicts
 @app.callback(
-    Output("theme-icon", "className"),
-    [Input("theme-toggle", "n_clicks")],
-    prevent_initial_call=True
+    [Output("symbol-dropdown", "options"),
+     Output("symbol-dropdown", "value")],
+    [Input("refresh-data-btn", "n_clicks"),
+     Input("current-sector-filter", "children"),
+     Input("current-industry-filter", "children")],
+    prevent_initial_call=False
 )
-def toggle_theme(n_clicks):
+def update_symbol_options(refresh_clicks, selected_sector, selected_industry):
+    """Update symbol dropdown based on selected sector and industry filters"""
     try:
-        if n_clicks is None:
-            n_clicks = 0
-        
-        # Toggle between light and dark themes
-        if n_clicks % 2 == 0:
-            # Light theme (default)
-            return "fas fa-sun"
+        # Determine which filter to use
+        if selected_industry and selected_industry != "All Industries":
+            # Filter by specific industry
+            symbols_data = data_service.get_symbols_by_industry(selected_industry)
+            logger.info(f"Filtering symbols by industry: {selected_industry}")
+        elif selected_sector and selected_sector != "All Sectors":
+            # Filter by sector (shows all symbols from that sector)
+            symbols_data = data_service.get_symbols_by_sector(selected_sector)
+            logger.info(f"Filtering symbols by sector: {selected_sector}")
         else:
-            # Dark theme
-            return "fas fa-moon"
+            # No filter - get all available symbols
+            symbols_data = data_service.get_available_symbols()
+            logger.info("Showing all available symbols")
+        
+        if not symbols_data:
+            # No data available - return empty options with error message
+            logger.warning(f"No symbols data available for filters: sector={selected_sector}, industry={selected_industry}")
+            options = []
+            selected_value = None
+        else:
+            # Convert real data to dropdown options
+            options = [
+                {"label": f"{symbol['symbol']} - {symbol['company_name']}", "value": symbol['symbol']}
+                for symbol in symbols_data
+            ]
+            # Set the value to the first option if options exist
+            selected_value = options[0]["value"] if options else None
+        
+        logger.info(f"Updated symbol dropdown with {len(options)} options")
+        
+        # Set the value to the first option if options exist
+        selected_value = options[0]["value"] if options else "AAPL"
+        
+        return options, selected_value
+        
     except Exception as e:
-        logger.error(f"Theme toggle callback error: {e}")
-        return "fas fa-sun"  # Default to light theme
+        logger.error(f"Error updating symbol options: {e}")
+        # Return empty options on error
+        return [], None
 
-# Register page-specific callbacks
-register_home_callbacks(app)
-register_logs_callbacks(app)
+@app.callback(
+    [Output("current-sector-filter", "children"),
+     Output("current-industry-filter", "children")],
+    [Input("sector-chart", "clickData"),
+     Input("industry-chart", "clickData")]
+)
+def update_filters(sector_click, industry_click):
+    """Update filter display based on chart clicks"""
+    sector_filter = "All Sectors"
+    industry_filter = "All Industries"
+    
+    if sector_click:
+        sector_filter = sector_click['points'][0]['y']
+    
+    if industry_click:
+        industry_filter = industry_click['points'][0]['y']
+    
+    return sector_filter, industry_filter
 
 if __name__ == '__main__':
-    logger.info("Starting Dash dashboard on 0.0.0.0:8050")
-    app.run(debug=True, host='0.0.0.0', port=8050)
+    print("Starting simple Dash dashboard...")
+    app.run(debug=True, host='0.0.0.0', port=8050) 
