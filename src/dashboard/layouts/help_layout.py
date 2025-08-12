@@ -40,15 +40,7 @@ def create_help_layout():
                             dbc.Col([
                                 html.H1("Help & Documentation", className="mb-0 text-primary fw-bold"),
                                 html.P("Complete guide to using the ML Trading Dashboard", className="text-muted mb-0")
-                            ], width=8),
-                            dbc.Col([
-                                html.Div([
-                                    dbc.Button([
-                                        html.I(className="fas fa-arrow-left me-2"),
-                                        "Back to Dashboard"
-                                    ], color="outline-primary", size="sm", href="/", id="back-to-dashboard")
-                                ], className="text-end")
-                            ], width=4)
+                            ], width=12)
                         ])
                     ], style={'padding': '15px 20px'})
                 ], style={"border": "none", "box-shadow": "0 2px 4px rgba(0,0,0,0.1)", "margin-bottom": "20px"})

@@ -1,5 +1,6 @@
 import dash
 from dash import html, dcc, Input, Output, State
+import dash_bootstrap_components as dbc
 import pandas as pd
 from pathlib import Path
 import re
@@ -22,12 +23,16 @@ def create_log_viewer():
     Returns:
         Dash layout for log viewer
     """
-    return html.Div([
-        html.H3("System Logs", className="mb-3"),
+    return dbc.Container([
+        dbc.Row([
+            dbc.Col([
+                html.H3("System Logs", className="mb-3")
+            ], width=12)
+        ]),
         
         # Filters
-        html.Div([
-            html.Div([
+        dbc.Row([
+            dbc.Col([
                 html.Label("Component Filter:", className="form-label"),
                 dcc.Dropdown(
                     id="log-component-filter",
@@ -46,9 +51,9 @@ def create_log_viewer():
                     clearable=False,
                     className="mb-2"
                 )
-            ], className="col-md-4"),
+            ], width=4),
             
-            html.Div([
+            dbc.Col([
                 html.Label("Log Level:", className="form-label"),
                 dcc.Dropdown(
                     id="log-level-filter",
@@ -63,9 +68,9 @@ def create_log_viewer():
                     clearable=False,
                     className="mb-2"
                 )
-            ], className="col-md-4"),
+            ], width=4),
             
-            html.Div([
+            dbc.Col([
                 html.Label("Time Range:", className="form-label"),
                 dcc.Dropdown(
                     id="log-time-filter",
@@ -80,12 +85,12 @@ def create_log_viewer():
                     clearable=False,
                     className="mb-2"
                 )
-            ], className="col-md-4")
-        ], className="row mb-3"),
+            ], width=4)
+        ], className="mb-3"),
         
         # Additional filters for structured logs
-        html.Div([
-            html.Div([
+        dbc.Row([
+            dbc.Col([
                 html.Label("Event Type:", className="form-label"),
                 dcc.Dropdown(
                     id="log-event-type-filter",
@@ -100,9 +105,9 @@ def create_log_viewer():
                     clearable=False,
                     className="mb-2"
                 )
-            ], className="col-md-6"),
+            ], width=6),
             
-            html.Div([
+            dbc.Col([
                 html.Label("Symbol Filter:", className="form-label"),
                 dcc.Dropdown(
                     id="log-symbol-filter",
@@ -118,12 +123,12 @@ def create_log_viewer():
                     clearable=False,
                     className="mb-2"
                 )
-            ], className="col-md-6")
-        ], className="row mb-3"),
+            ], width=6)
+        ], className="mb-3"),
         
         # Log display area
-        html.Div([
-            html.Div([
+        dbc.Row([
+            dbc.Col([
                 html.Div(id="log-stats", className="mb-2"),
                 html.Div(id="log-analytics", className="mb-3"),
                 dcc.Loading(
@@ -133,18 +138,21 @@ def create_log_viewer():
                     ],
                     type="default"
                 )
-            ], className="col-12")
-        ], className="row"),
+            ], width=12)
+        ]),
         
         # Refresh button
-        html.Div([
-            html.Button(
-                "Refresh Logs",
-                id="refresh-logs-btn",
-                className="btn btn-primary"
-            )
-        ], className="text-center mt-3")
-    ])
+        dbc.Row([
+            dbc.Col([
+                dbc.Button(
+                    "Refresh Logs",
+                    id="refresh-logs-btn",
+                    color="primary",
+                    className="w-100"
+                )
+            ], width=12)
+        ], className="mt-3")
+    ], fluid=True)
 
 def parse_log_line(line):
     """
@@ -157,12 +165,12 @@ def parse_log_line(line):
         dict: Parsed log entry with timestamp, level, component, message, etc.
     """
     try:
-        # Standard log format: 2025-01-15 10:30:45,123 - INFO - component - message
-        pattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),(\d{3}) - (\w+) - ([^-]+) - (.+)'
+        # Actual log format: 2025-08-01 18:41:14,948 - mltrading.ui.dashboard - INFO - MarketDataService initialized
+        pattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),(\d{3}) - ([^-]+) - (\w+) - (.+)'
         match = re.match(pattern, line.strip())
         
         if match:
-            timestamp_str, milliseconds, level, component, message = match.groups()
+            timestamp_str, milliseconds, component, level, message = match.groups()
             timestamp = datetime.strptime(f"{timestamp_str},{milliseconds}", "%Y-%m-%d %H:%M:%S,%f")
             
             return {
@@ -173,7 +181,7 @@ def parse_log_line(line):
                 'raw': line.strip()
             }
         
-        # Try alternative format: 2025-01-15 10:30:45 - INFO - message
+        # Try alternative format: 2025-01-15 10:30:45 - INFO - message (no component)
         alt_pattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (\w+) - (.+)'
         alt_match = re.match(alt_pattern, line.strip())
         
@@ -184,7 +192,7 @@ def parse_log_line(line):
             return {
                 'timestamp': timestamp,
                 'level': level,
-                'component': 'unknown',
+                'component': 'yahoo_extraction',
                 'message': message.strip(),
                 'raw': line.strip()
             }
@@ -225,11 +233,12 @@ def load_and_filter_logs(component_filter="all", level_filter="all", time_filter
     try:
         # Define log file paths
         log_files = [
-            "logs/system.log",
-            "logs/dashboard.log", 
-            "logs/api.log",
-            "logs/trading.log",
-            "logs/performance.log"
+            "logs/ui_dashboard.log",
+            "logs/ui_api.log",
+            "logs/ui_launcher.log",
+            "logs/ui_utils.log",
+            "logs/yahoo_extraction.log",
+            "logs/mltrading_combined.log"
         ]
         
         all_logs = []
@@ -239,11 +248,38 @@ def load_and_filter_logs(component_filter="all", level_filter="all", time_filter
             try:
                 log_path = Path(log_file)
                 if log_path.exists():
-                    with open(log_path, 'r', encoding='utf-8') as f:
-                        for line in f:
-                            if line.strip():
-                                log_entry = parse_log_line(line)
-                                all_logs.append(log_entry)
+                    # Try different encodings
+                    encodings = ['utf-8', 'latin-1', 'cp1252']
+                    for encoding in encodings:
+                        try:
+                            with open(log_path, 'r', encoding=encoding) as f:
+                                current_message = ""
+                                for line in f:
+                                    line = line.strip()
+                                    if not line:
+                                        continue
+                                    
+                                    # Check if this line starts with a timestamp (new log entry)
+                                    # Look for the pattern: YYYY-MM-DD HH:MM:SS,mmm - COMPONENT - LEVEL - MESSAGE
+                                    if re.match(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} - [^-]+ - \w+ -', line):
+                                        # If we have a previous message, save it
+                                        if current_message:
+                                            log_entry = parse_log_line(current_message)
+                                            all_logs.append(log_entry)
+                                        current_message = line
+                                    else:
+                                        # This is a continuation of the previous message
+                                        current_message += "\n" + line
+                                
+                                # Don't forget the last message
+                                if current_message:
+                                    log_entry = parse_log_line(current_message)
+                                    all_logs.append(log_entry)
+                            break  # If successful, break out of encoding loop
+                        except UnicodeDecodeError:
+                            continue  # Try next encoding
+                    else:
+                        print(f"Could not read {log_file} with any encoding")
             except Exception as e:
                 print(f"Error reading log file {log_file}: {e}")
         

@@ -23,7 +23,12 @@ def create_empty_chart(title="No Data Available"):
     return go.Figure(
         data=[],
         layout=go.Layout(
-            title=title,
+            title=dict(
+                text=title,
+                font=dict(size=20, color='#2fa4e7'),  # H3 styling with Cerulean blue
+                x=0.5,
+                xanchor='center'
+            ),
             xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             annotations=[{
@@ -34,7 +39,7 @@ def create_empty_chart(title="No Data Available"):
                 'font': {'size': 14}
             }],
             template='plotly_white',
-            margin=dict(l=40, r=40, t=60, b=40),
+            margin=dict(l=40, r=40, t=80, b=40),  # Top margin for H3 title
             plot_bgcolor='white',
             paper_bgcolor='white'
         )
@@ -61,7 +66,12 @@ def create_horizontal_bar_chart(data, title, color=CHART_COLORS['primary']):
     ])
     
     fig.update_layout(
-        title=title,
+        title=dict(
+            text=title,
+            font=dict(size=20, color='#2fa4e7'),  # H3 styling with Cerulean blue
+            x=0.5,
+            xanchor='center'
+        ),
         xaxis=dict(
             title="",
             showgrid=False,
@@ -77,7 +87,7 @@ def create_horizontal_bar_chart(data, title, color=CHART_COLORS['primary']):
             ticklen=0,
             ticklabelstandoff=5
         ),
-        margin=dict(l=40, r=40, t=60, b=40),
+        margin=dict(l=40, r=40, t=80, b=40),  # Top margin for H3 title
         template='plotly_white',
         height=400,
         plot_bgcolor='white',
@@ -164,11 +174,16 @@ def create_candlestick_chart(data, symbol="", time_range=""):
     ])
     
     fig.update_layout(
-        title=f"{symbol} Price Chart ({time_range})",
+        title=dict(
+            text=f"{symbol} Price Chart ({time_range})",
+            font=dict(size=20, color='#2fa4e7'),  # H3 styling with Cerulean blue
+            x=0.5,
+            xanchor='center'
+        ),
         xaxis_title="Date",
         yaxis_title="Price ($)",
         height=350,
-        margin=dict(l=40, r=40, t=40, b=40),
+        margin=dict(l=40, r=40, t=80, b=40),  # Top margin for H3 title
         showlegend=False,
         plot_bgcolor='white',
         paper_bgcolor='white',

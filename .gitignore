@@ -98,3 +98,4 @@ Thumbs.db
 # Cursor
 .cursor/
 /src/dashboard/archive
+*.npy

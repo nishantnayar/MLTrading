@@ -89,7 +89,7 @@ def fetch_stock_info(symbol: str) -> Dict[str, Any]:
         }
 
 
-def fetch_yahoo_data(symbol: str, period: str = '1y', interval: str = '1h') -> pd.DataFrame:
+def fetch_yahoo_data(symbol: str, period: str = '2y', interval: str = '1h') -> pd.DataFrame:
     """Fetch data from Yahoo Finance."""
     try:
         ticker = yf.Ticker(symbol)

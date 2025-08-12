@@ -451,6 +451,159 @@ class MarketDataService:
                 'sector': sector
             }
 
+    def get_market_overview(self) -> Dict[str, Any]:
+        """Get market overview data for the overview chart."""
+        try:
+            # Get market index data (using SPY as proxy for market)
+            df = self.get_market_data('SPY', days=30, source='yahoo', hourly=False)
+            
+            if df.empty:
+                logger.warning("No market overview data available")
+                return None
+            
+            return {
+                'dates': df['timestamp'].dt.strftime('%Y-%m-%d').tolist(),
+                'values': df['close'].tolist()
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to get market overview: {e}")
+            return None
+
+    def get_top_performers(self) -> List[Dict[str, Any]]:
+        """Get top performing stocks."""
+        try:
+            # Get list of available symbols
+            symbols = self.get_available_symbols()
+            
+            performers = []
+            for symbol_data in symbols[:10]:  # Check top 10 symbols
+                symbol = symbol_data['symbol']
+                latest_data = self.get_latest_data(symbol)
+                
+                if latest_data:
+                    # Calculate daily change
+                    df = self.get_market_data(symbol, days=2, source='yahoo', hourly=False)
+                    if len(df) >= 2:
+                        current_price = df.iloc[-1]['close']
+                        previous_price = df.iloc[-2]['close']
+                        change_percent = ((current_price - previous_price) / previous_price) * 100
+                        
+                        performers.append({
+                            'symbol': symbol,
+                            'change': round(change_percent, 2),
+                            'price': round(current_price, 2)
+                        })
+            
+            # Sort by change percentage descending
+            performers.sort(key=lambda x: x['change'], reverse=True)
+            
+            return performers[:5]  # Return top 5
+            
+        except Exception as e:
+            logger.error(f"Failed to get top performers: {e}")
+            return []
+
+    def get_recent_activity(self) -> List[Dict[str, Any]]:
+        """Get recent trading activity."""
+        try:
+            # This would typically come from a trading log or activity table
+            # For now, return mock data
+            activities = [
+                {
+                    'time': '09:30 AM',
+                    'action': 'BUY',
+                    'symbol': 'AAPL',
+                    'price': 150.25
+                },
+                {
+                    'time': '10:15 AM',
+                    'action': 'SELL',
+                    'symbol': 'GOOGL',
+                    'price': 2750.50
+                },
+                {
+                    'time': '11:00 AM',
+                    'action': 'BUY',
+                    'symbol': 'MSFT',
+                    'price': 320.75
+                },
+                {
+                    'time': '02:30 PM',
+                    'action': 'SELL',
+                    'symbol': 'TSLA',
+                    'price': 850.00
+                },
+                {
+                    'time': '03:45 PM',
+                    'action': 'BUY',
+                    'symbol': 'AMZN',
+                    'price': 3400.25
+                }
+            ]
+            
+            return activities
+            
+        except Exception as e:
+            logger.error(f"Failed to get recent activity: {e}")
+            return []
+
+    def get_summary_statistics(self) -> Dict[str, Any]:
+        """Get summary statistics for the overview tab."""
+        try:
+            # Get total symbols
+            symbols = self.get_available_symbols()
+            total_symbols = len(symbols)
+            
+            # Mock data for other statistics
+            # In a real implementation, these would come from portfolio/trading systems
+            stats = {
+                'total_symbols': total_symbols,
+                'active_trades': 12,
+                'portfolio_value': 45678,
+                'daily_pnl': 1234
+            }
+            
+            return stats
+            
+        except Exception as e:
+            logger.error(f"Failed to get summary statistics: {e}")
+            return {
+                'total_symbols': 0,
+                'active_trades': 0,
+                'portfolio_value': 0,
+                'daily_pnl': 0
+            }
+
+    def get_data_date_range(self) -> str:
+        """Get the date range of available data in the database."""
+        try:
+            # Get the earliest and latest dates from the market_data table
+            earliest_date = self.db_manager.get_earliest_data_date()
+            latest_date = self.db_manager.get_latest_data_date()
+            
+            if earliest_date and latest_date:
+                # Format dates for display
+                earliest_str = earliest_date.strftime("%b %Y")
+                latest_str = latest_date.strftime("%b %Y")
+                
+                if earliest_date.year == latest_date.year:
+                    if earliest_date.month == latest_date.month:
+                        # Same month and year
+                        return f"{earliest_str}"
+                    else:
+                        # Same year, different months
+                        return f"{earliest_str} - {latest_str}"
+                else:
+                    # Different years
+                    return f"{earliest_str} - {latest_str}"
+            else:
+                return "No data available"
+                
+        except Exception as e:
+            logger.error(f"Failed to get data date range: {e}")
+            return "Error retrieving date range"
+
 # Global data service instance
 data_service = None
 

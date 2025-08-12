@@ -710,7 +710,7 @@ progress {
   color: #868e96;
 }
 .blockquote-footer::before {
-  content: "— ";
+  content: "— ";
 }
 
 .img-fluid {
@@ -1692,6 +1692,154 @@ progress {
   .gy-xl-5 {
     --bs-gutter-y: 3rem;
   }
+}
+
+/* Custom LinkedIn-like Author Page Styles */
+.author-profile-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.author-profile-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.author-profile-image {
+    transition: all 0.3s ease;
+}
+
+.author-profile-image:hover {
+    transform: scale(1.05);
+}
+
+.skill-progress {
+    transition: all 0.3s ease;
+}
+
+.skill-progress:hover {
+    transform: scale(1.02);
+}
+
+.experience-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.experience-card:hover {
+    border-left-color: var(--bs-primary);
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+
+.project-card {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+}
+
+.project-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12) !important;
+}
+
+.contact-link {
+    transition: all 0.3s ease;
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.contact-link:hover {
+    background-color: var(--bs-light);
+    transform: translateX(3px);
+}
+
+.vision-section {
+    background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-info) 100%);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.tech-badge {
+    transition: all 0.2s ease;
+}
+
+.tech-badge:hover {
+    transform: scale(1.1);
+    background-color: var(--bs-primary) !important;
+    color: white !important;
+}
+
+.author-hero-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+}
+
+.profile-stats {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.stat-item {
+    padding: 0.5rem;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--bs-primary);
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--bs-secondary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .author-profile-card {
+        margin-bottom: 1rem;
+    }
+    
+    .contact-buttons {
+        flex-direction: column;
+    }
+    
+    .contact-buttons .btn {
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+}
+
+/* Animation for skill bars */
+@keyframes skillFill {
+    from { width: 0%; }
+    to { width: var(--skill-percentage); }
+}
+
+.skill-progress .progress-bar {
+    animation: skillFill 1.5s ease-out;
+}
+
+/* Custom scrollbar for author page */
+.author-page-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.author-page-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.author-page-container::-webkit-scrollbar-thumb {
+    background: var(--bs-primary);
+    border-radius: 4px;
+}
+
+.author-page-container::-webkit-scrollbar-thumb:hover {
+    background: var(--bs-info);
 }
 @media (min-width: 1400px) {
   .col-xxl {

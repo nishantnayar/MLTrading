@@ -488,6 +488,40 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
     
+    def get_earliest_data_date(self, source: str = 'yahoo') -> Optional[datetime]:
+        """Get the earliest date in the market_data table."""
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT MIN(timestamp) FROM market_data WHERE source = %s
+                """, (source,))
+                result = cur.fetchone()
+                return result[0] if result and result[0] else None
+                
+        except Exception as e:
+            logger.error(f"Failed to get earliest data date: {e}")
+            return None
+        finally:
+            self.return_connection(conn)
+    
+    def get_latest_data_date(self, source: str = 'yahoo') -> Optional[datetime]:
+        """Get the latest date in the market_data table."""
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT MAX(timestamp) FROM market_data WHERE source = %s
+                """, (source,))
+                result = cur.fetchone()
+                return result[0] if result and result[0] else None
+                
+        except Exception as e:
+            logger.error(f"Failed to get latest data date: {e}")
+            return None
+        finally:
+            self.return_connection(conn)
+    
     def close(self):
         """Close the connection pool."""
         if self.pool:

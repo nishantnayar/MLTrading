@@ -737,6 +737,7 @@ The UI is built with:
 - [ ] Test Alpaca API connectivity
 - [ ] Set up Alpaca real-time data collectors
 - [ ] Implement Alpaca market data collectors
+- [ ] Integrate Alpaca market hours API for accurate market open/close times (replaces calculated market hours)
 
 #### 2.3 Data Processing with Prefect
 - [ ] Create Prefect data collection workflows for both sources
@@ -1033,6 +1034,7 @@ The UI is built with:
   - **Training/Backtesting**: Yahoo Finance (free, high-quality historical data)
   - **Live Trading**: Alpaca Markets (real-time execution data)
 - **Trading**: Alpaca Markets (paper trading free, real trading)
+- **Market Hours**: Currently using calculated market hours (9:30 AM - 4:00 PM EST, Monday-Friday). When Alpaca connectivity is implemented, market open and close times will be sourced directly from Alpaca's real-time market data for more accurate information including holidays and early closures.
 - **Hosting**: Heroku, Railway, or local deployment
 
 ---
@@ -1514,13 +1516,13 @@ python -c "from src.data.storage.redis_manager import get_redis_manager; redis =
 
 ### 📋 Next Steps
 
-1. **Move MarketDataService**: Move from archive to proper location and update imports
+1. **Settings Page**: Complete the settings page with full functionality
 2. **Archive Cleanup**: Delete archive folder after moving necessary code
 3. **Redis Integration**: Complete real-time caching implementation
 4. **Alpaca Setup**: Implement Alpaca Markets integration
 5. **ML Pipeline**: Develop feature engineering and model training
 6. **Trading Engine**: Build signal generation and order management
-7. **Dashboard Enhancement**: Add more tabs (Overview, Analysis, Settings) with real functionality
+7. **Dashboard Enhancement**: Add more tabs (Overview, Analysis) with real functionality
 8. **Monitoring**: Implement automated monitoring and alerts
 9. **Testing**: Validate with Alpaca paper trading
 10. **Small Capital**: Start with small amounts on Alpaca
@@ -1539,6 +1541,8 @@ python -c "from src.data.storage.redis_manager import get_redis_manager; redis =
 - **Interactive Filtering**: Dynamic symbol dropdown based on sector/industry selection
 - **Data Integration**: Real market data from database with proper error handling
 - **Help System**: Comprehensive help page with documentation and user guides
+- **Logs System**: Advanced log viewing and filtering with analytics
+- **Author Page**: Information about the project developer and creator
 
 #### 🔄 What's Being Developed
 - **Real-time Data**: Redis caching for live market data

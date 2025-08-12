@@ -21,6 +21,7 @@ plotly>=5.17.0
 # Data Processing
 pandas>=2.0.0
 numpy>=1.24.0
+pytz>=2023.3
 
 # Data Collection
 yfinance>=0.2.65 
