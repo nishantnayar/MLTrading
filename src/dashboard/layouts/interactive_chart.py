@@ -69,9 +69,10 @@ class InteractiveChartBuilder:
                 row_heights.append(0.2)
             
             if oscillator_indicators:
-                total_rows += len(oscillator_indicators)
-                row_heights.extend([0.2 / len(oscillator_indicators)] * len(oscillator_indicators))
-                subplot_titles.extend([self.chart_config[ind]['name'] for ind in oscillator_indicators])
+                # Add one subplot for all oscillators (they can share Y-axis scaling)
+                total_rows += 1
+                row_heights.append(0.2)
+                subplot_titles.append("Technical Oscillators")
             
             # Normalize row heights
             row_heights = [h / sum(row_heights) for h in row_heights]
@@ -100,9 +101,9 @@ class InteractiveChartBuilder:
                 self._add_volume_chart(fig, df, indicator_data, current_row)
                 current_row += 1
             
-            # Add oscillator charts
-            for indicator in oscillator_indicators:
-                self._add_oscillator_chart(fig, df, indicator_data, indicator, current_row)
+            # Add oscillator charts (all in one subplot)
+            if oscillator_indicators:
+                self._add_oscillator_charts(fig, df, indicator_data, oscillator_indicators, current_row)
                 current_row += 1
             
             # Update layout with advanced features
@@ -391,6 +392,123 @@ class InteractiveChartBuilder:
             # Add overbought/oversold lines
             fig.add_hline(y=80, line_dash="dash", line_color="red", opacity=0.5, row=row, col=1)
             fig.add_hline(y=20, line_dash="dash", line_color="green", opacity=0.5, row=row, col=1)
+    
+    def _add_oscillator_charts(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, indicators: List[str], row: int):
+        """Add multiple oscillator charts in one subplot with normalized scaling."""
+        # We'll normalize oscillators to 0-100 range for better visualization
+        for indicator in indicators:
+            config = self.chart_config.get(indicator, {})
+            
+            if indicator == 'rsi' and 'rsi' in indicator_data:
+                # RSI is already 0-100, add directly
+                fig.add_trace(
+                    go.Scatter(
+                        x=df['timestamp'],
+                        y=indicator_data['rsi'],
+                        mode='lines',
+                        name='RSI(14)',
+                        line=dict(color=config['color'], width=2),
+                        yaxis=f'y{row}' if row > 1 else 'y'
+                    ),
+                    row=row, col=1
+                )
+                
+                # Add RSI reference lines
+                fig.add_hline(y=70, line_dash="dash", line_color="red", opacity=0.5, row=row, col=1)
+                fig.add_hline(y=30, line_dash="dash", line_color="green", opacity=0.5, row=row, col=1)
+                fig.add_hline(y=50, line_dash="dot", line_color="gray", opacity=0.3, row=row, col=1)
+            
+            elif indicator == 'stochastic' and 'stochastic' in indicator_data:
+                # Stochastic is already 0-100, add directly
+                stoch_data = indicator_data['stochastic']
+                colors = config['colors']
+                
+                fig.add_trace(
+                    go.Scatter(
+                        x=df['timestamp'],
+                        y=stoch_data['k_percent'],
+                        mode='lines',
+                        name='%K',
+                        line=dict(color=colors['k'], width=1.5),
+                        yaxis=f'y{row}' if row > 1 else 'y'
+                    ),
+                    row=row, col=1
+                )
+                
+                fig.add_trace(
+                    go.Scatter(
+                        x=df['timestamp'],
+                        y=stoch_data['d_percent'],
+                        mode='lines',
+                        name='%D',
+                        line=dict(color=colors['d'], width=1.5),
+                        yaxis=f'y{row}' if row > 1 else 'y'
+                    ),
+                    row=row, col=1
+                )
+                
+                # Add Stochastic reference lines
+                fig.add_hline(y=80, line_dash="dash", line_color="red", opacity=0.5, row=row, col=1)
+                fig.add_hline(y=20, line_dash="dash", line_color="green", opacity=0.5, row=row, col=1)
+        
+        # Handle MACD separately if present (it has different scaling)
+        has_macd = 'macd' in indicators and 'macd' in indicator_data
+        has_other_oscillators = any(ind in ['rsi', 'stochastic'] for ind in indicators)
+        
+        if has_macd:
+            macd_data = indicator_data['macd']
+            colors = self.chart_config.get('macd', {}).get('colors', {})
+            
+            # Add MACD line
+            fig.add_trace(
+                go.Scatter(
+                    x=df['timestamp'],
+                    y=macd_data['macd'],
+                    mode='lines',
+                    name='MACD',
+                    line=dict(color=colors.get('macd', '#6f42c1'), width=2),
+                    yaxis=f'y{row}2' if has_other_oscillators else f'y{row}' if row > 1 else 'y'
+                ),
+                row=row, col=1
+            )
+            
+            # Add Signal line
+            fig.add_trace(
+                go.Scatter(
+                    x=df['timestamp'],
+                    y=macd_data['signal'],
+                    mode='lines',
+                    name='Signal',
+                    line=dict(color=colors.get('signal', '#e83e8c'), width=1.5),
+                    yaxis=f'y{row}2' if has_other_oscillators else f'y{row}' if row > 1 else 'y'
+                ),
+                row=row, col=1
+            )
+            
+            # Add Histogram as bar chart
+            fig.add_trace(
+                go.Bar(
+                    x=df['timestamp'],
+                    y=macd_data['histogram'],
+                    name='Histogram',
+                    marker_color=colors.get('histogram', '#20c997'),
+                    opacity=0.7,
+                    yaxis=f'y{row}2' if has_other_oscillators else f'y{row}' if row > 1 else 'y'
+                ),
+                row=row, col=1
+            )
+            
+            # Add zero line for MACD
+            fig.add_hline(y=0, line_dash="solid", line_color="gray", opacity=0.5, row=row, col=1)
+        
+        # Set appropriate Y-axis range
+        if has_other_oscillators and not has_macd:
+            # Only RSI/Stochastic - use 0-100 range
+            fig.update_yaxes(range=[0, 100], row=row, col=1)
+        elif has_macd and not has_other_oscillators:
+            # Only MACD - let it auto-scale
+            pass
+        # If both, they'll share the space with different y-axes
     
     def _update_chart_layout(self, fig: go.Figure, symbol: str, total_rows: int):
         """Update chart layout with advanced features."""

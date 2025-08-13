@@ -10,7 +10,8 @@ CHART_COLORS = {
     'danger': '#c71c22',       # Cerulean Danger Red
     'secondary': '#e9ecef',    # Cerulean Secondary Gray
     'warning': '#dd5600',      # Cerulean Warning Orange
-    'info': '#033c73'          # Cerulean Info Dark Blue
+    'info': '#033c73',         # Cerulean Info Dark Blue
+    'light': '#f8f9fa'         # Light gray background
 }
 
 # Time Range Configurations

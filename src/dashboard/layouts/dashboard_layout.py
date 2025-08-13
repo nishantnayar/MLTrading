@@ -99,88 +99,164 @@ def create_overview_tab():
 
 
 def create_charts_tab():
-    """Create the charts tab content"""
+    """Create the charts tab content with interactive charts"""
     return dbc.Tab(
         dbc.Card([
             dbc.CardBody([
-                # Distribution Charts Row
+                # Distribution Charts Row (at top to drive symbol selection)
                 dbc.Row([
                     dbc.Col([
-                        create_chart_card("sector-chart", "450px")
+                        html.H5("Sector Distribution", className="text-center mb-2"),
+                        create_chart_card("sector-chart", "300px")
                     ], width=6),
                     dbc.Col([
-                        create_chart_card("industry-chart", "450px")
+                        html.H5("Industry Distribution", className="text-center mb-2"),
+                        create_chart_card("industry-chart", "300px")
                     ], width=6)
                 ], className="mb-3"),
                 
                 # Filter Display Row
                 dbc.Row([
                     dbc.Col([
-                        html.Div([
-                            html.Span("Current Filters: ", className="text-muted"),
-                            html.Span("Sector: ", className="text-muted"),
-                            html.Span("All Sectors", id="current-sector-filter", className="badge bg-primary me-2"),
-                            html.Span("Industry: ", className="text-muted"),
-                            html.Span("All Industries", id="current-industry-filter", className="badge bg-info")
-                        ], className="text-center")
+                        dbc.Card([
+                            dbc.CardBody([
+                                html.Div([
+                                    html.H6("Current Selection", className="text-muted mb-2"),
+                                    html.Div([
+                                        html.Span("Sector: ", className="text-muted me-1"),
+                                        html.Span("All Sectors", id="current-sector-filter", className="badge bg-primary me-3"),
+                                        html.Span("Industry: ", className="text-muted me-1"),
+                                        html.Span("All Industries", id="current-industry-filter", className="badge bg-info")
+                                    ], className="d-flex align-items-center justify-content-center")
+                                ], className="text-center")
+                            ], className="py-2")
+                        ], style=CARD_STYLE_NONE)
                     ], width=12)
-                ], className="mb-3"),
+                ], className="mb-4"),
                 
-                # Chart Controls Row
+                # Interactive Chart Controls Row
                 dbc.Row([
                     dbc.Col([
                         dbc.Card([
                             dbc.CardBody([
-                                html.H3("Chart Controls", className="text-center mb-3"),
+                                html.H3("Interactive Chart Controls", className="text-center mb-3"),
                                 dbc.Row([
+                                    # Symbol Selection
                                     dbc.Col([
-                                        dbc.Row([
-                                            dbc.Col([
-                                                html.P("Select Symbol:", className="text-primary-emphasis mb-0")
-                                            ], width=3),
-                                            dbc.Col([
-                                                dcc.Dropdown(
-                                                    id="symbol-dropdown",
-                                                    options=[],
-                                                    value=DEFAULT_SYMBOL,
-                                                    className="mb-0"
-                                                )
-                                            ], width=9)
-                                        ], className="align-items-center")
-                                    ], width=5),
+                                        html.Label("Select Symbol:", className="text-primary-emphasis mb-1"),
+                                        dcc.Dropdown(
+                                            id="symbol-dropdown",
+                                            options=[],
+                                            value=DEFAULT_SYMBOL,
+                                            className="mb-2"
+                                        )
+                                    ], width=4),
+                                    
+                                    # Chart Type
                                     dbc.Col([
-                                        dbc.Row([
-                                            dbc.Col([
-                                                html.P("Time Range:", className="text-primary-emphasis mb-0")
-                                            ], width=5),
-                                            dbc.Col([
-                                                dcc.Dropdown(
-                                                    id="time-range-dropdown",
-                                                    options=TIME_RANGE_OPTIONS,
-                                                    value=DEFAULT_TIME_RANGE,
-                                                    className="mb-0"
-                                                )
-                                            ], width=7)
-                                        ], className="align-items-center")
+                                        html.Label("Chart Type:", className="text-primary-emphasis mb-1"),
+                                        dcc.Dropdown(
+                                            id="chart-type-dropdown",
+                                            options=[
+                                                {"label": "Candlestick", "value": "candlestick"},
+                                                {"label": "OHLC", "value": "ohlc"},
+                                                {"label": "Line", "value": "line"}
+                                            ],
+                                            value="candlestick",
+                                            className="mb-2"
+                                        )
+                                    ], width=2),
+                                    
+                                    # Technical Indicators
+                                    dbc.Col([
+                                        html.Label("Indicators:", className="text-primary-emphasis mb-1"),
+                                        dcc.Dropdown(
+                                            id="indicators-dropdown",
+                                            options=[
+                                                {"label": "SMA (20)", "value": "sma"},
+                                                {"label": "EMA (12,26)", "value": "ema"},
+                                                {"label": "Bollinger Bands", "value": "bollinger"},
+                                                {"label": "RSI", "value": "rsi"},
+                                                {"label": "MACD", "value": "macd"},
+                                                {"label": "Stochastic", "value": "stochastic"},
+                                                {"label": "VWAP", "value": "vwap"},
+                                                {"label": "ATR", "value": "atr"}
+                                            ],
+                                            value=["sma", "rsi"],
+                                            multi=True,
+                                            className="mb-2"
+                                        )
                                     ], width=3),
+                                    
+                                    # Volume Toggle & Controls
                                     dbc.Col([
-                                        dbc.Button("Refresh Data", id="refresh-data-btn", color="primary", size="sm", className="w-75")
-                                    ], width=4, className="d-flex align-items-end justify-content-center")
+                                        html.Label("Options:", className="text-primary-emphasis mb-1"),
+                                        dbc.Row([
+                                            dbc.Col([
+                                                dbc.Checklist(
+                                                    options=[{"label": "Show Volume", "value": "volume"}],
+                                                    value=["volume"],
+                                                    id="volume-checkbox",
+                                                    inline=True,
+                                                    className="mb-1"
+                                                )
+                                            ], width=12),
+                                            dbc.Col([
+                                                dbc.Button("Refresh", id="refresh-chart-btn", color="primary", size="sm", className="w-100")
+                                            ], width=12)
+                                        ])
+                                    ], width=2)
                                 ], className="align-items-end")
                             ], className="p-3")
                         ], style=CARD_STYLE_NONE)
                     ], width=12)
                 ], className="mb-3"),
                 
-                # Price Chart Row
+                # Main Interactive Chart Row
                 dbc.Row([
                     dbc.Col([
-                        create_chart_card("price-chart", DEFAULT_CHART_HEIGHT)
+                        dbc.Card([
+                            dbc.CardBody([
+                                dcc.Graph(
+                                    id="interactive-price-chart",
+                                    style={'height': '600px'},
+                                    config={
+                                        'displayModeBar': True,
+                                        'displaylogo': False,
+                                        'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
+                                        'toImageButtonOptions': {
+                                            'format': 'png',
+                                            'filename': 'chart',
+                                            'height': 600,
+                                            'width': 1200,
+                                            'scale': 1
+                                        }
+                                    }
+                                )
+                            ], className="p-1")
+                        ], style=CARD_STYLE_NONE)
+                    ], width=12)
+                ], className="mb-3"),
+                
+                # Technical Analysis Summary Row
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardHeader([
+                                html.H5("Technical Analysis Summary", className="mb-0"),
+                                dbc.Button("View Detailed Analysis", id="analysis-modal-btn", color="outline-primary", size="sm")
+                            ], className="d-flex justify-content-between align-items-center"),
+                            dbc.CardBody([
+                                html.Div(id="technical-analysis-summary", children=[
+                                    html.P("Select a symbol to view technical analysis.", className="text-muted text-center")
+                                ])
+                            ])
+                        ], style=CARD_STYLE_NONE)
                     ], width=12)
                 ], className="mb-3")
             ], className="p-0")
         ], style=CARD_STYLE_NONE),
-        label="Charts",
+        label="Interactive Charts",
         tab_id="charts-tab"
     )
 

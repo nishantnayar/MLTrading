@@ -4,7 +4,7 @@ Handles price charts, sector/industry distribution charts, and symbol filtering.
 """
 
 import plotly.graph_objs as go
-from dash import Input, Output
+from dash import Input, Output, State, callback_context
 
 from ..config import CHART_COLORS, TIME_RANGE_DAYS
 from ..layouts.chart_components import create_empty_chart, create_error_chart
@@ -20,88 +20,24 @@ data_service = MarketDataService()
 def register_chart_callbacks(app):
     """Register all chart-related callbacks with the app"""
     
-    @app.callback(
-        Output("price-chart", "figure"),
-        [Input("symbol-dropdown", "value"),
-         Input("time-range-dropdown", "value"),
-         Input("refresh-data-btn", "n_clicks")],
-        prevent_initial_call=False
-    )
-    def update_price_chart(symbol, time_range, refresh_clicks):
-        """Update price chart based on symbol and time range"""
-        try:
-            # Validate inputs
-            if symbol:
-                is_valid, error = InputValidator.validate_symbol(symbol)
-                if not is_valid:
-                    return create_error_chart('validation_error', error, symbol)
-            
-            if time_range:
-                is_valid, error = InputValidator.validate_time_range(time_range)
-                if not is_valid:
-                    return create_error_chart('validation_error', error)
-            
-            days = TIME_RANGE_DAYS.get(time_range, 30)  # Default to 30 days
-            
-            # Get real market data
-            df = data_service.get_market_data(symbol, days=days, source='yahoo', hourly=False)
-            
-            if df.empty:
-                logger.warning(f"No market data available for {symbol}")
-                return create_empty_chart(f"No Data Available for {symbol}")
-            
-            # Create candlestick chart with real data
-            fig = go.Figure(data=[
-                go.Candlestick(
-                    x=df['timestamp'],
-                    open=df['open'],
-                    high=df['high'],
-                    low=df['low'],
-                    close=df['close'],
-                    name=f'{symbol}',
-                    increasing_line_color=CHART_COLORS['success'],
-                    decreasing_line_color='#dc3545'
-                )
-            ])
-            
-            fig.update_layout(
-                title=dict(
-                    text=f"{symbol} Price Chart ({time_range})",
-                    font=dict(size=20, color=CHART_COLORS['primary']),
-                    x=0.5,
-                    xanchor='center'
-                ),
-                xaxis_title="Date",
-                yaxis_title="Price ($)",
-                height=350,
-                margin=dict(l=40, r=40, t=80, b=40),
-                showlegend=False,
-                plot_bgcolor='white',
-                paper_bgcolor='white',
-                xaxis=dict(
-                    rangeslider=dict(visible=False),
-                    type='date',
-                    rangebreaks=[
-                        # Hide weekends
-                        dict(bounds=["sat", "mon"]),
-                        # Hide holidays (example dates)
-                        dict(values=["2025-01-01", "2025-07-04"]),
-                        # Hide gaps outside trading hours (if intraday data)
-                        dict(bounds=[17, 9], pattern='hour')
-                    ]
-                )
-            )
-            
-            logger.info(f"Updated candlestick chart for {symbol} with {len(df)} data points")
-            return fig
-            
-        except Exception as e:
-            logger.error(f"Error updating price chart for {symbol}: {e}")
-            return create_empty_chart(f"Error Loading Data for {symbol}")
+    # Note: This callback is disabled because we now use the interactive chart system
+    # The interactive-price-chart is handled by interactive_chart_callbacks.py
+    
+    # @app.callback(
+    #     Output("price-chart", "figure"),
+    #     [Input("symbol-dropdown", "value"),
+    #      Input("time-range-dropdown", "value"),
+    #      Input("refresh-chart-btn", "n_clicks")],
+    #     prevent_initial_call=False
+    # )
+    # def update_price_chart(symbol, time_range, refresh_clicks):
+    #     """Update price chart based on symbol and time range"""
+    #     # This function is disabled - using interactive chart system instead
+    pass
 
     @app.callback(
         Output("sector-chart", "figure"),
-        [Input("refresh-data-btn", "n_clicks")],
+        [Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
     def update_sector_chart(refresh_clicks):
@@ -168,7 +104,7 @@ def register_chart_callbacks(app):
     @app.callback(
         Output("industry-chart", "figure"),
         [Input("sector-chart", "clickData"),
-         Input("refresh-data-btn", "n_clicks")],
+         Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
     def update_industry_chart(sector_click, refresh_clicks):
@@ -270,7 +206,7 @@ def register_chart_callbacks(app):
     @app.callback(
         [Output("symbol-dropdown", "options"),
          Output("symbol-dropdown", "value")],
-        [Input("refresh-data-btn", "n_clicks"),
+        [Input("refresh-stats-btn", "n_clicks"),
          Input("current-sector-filter", "children"),
          Input("current-industry-filter", "children")],
         prevent_initial_call=False
@@ -322,17 +258,29 @@ def register_chart_callbacks(app):
         [Output("current-sector-filter", "children"),
          Output("current-industry-filter", "children")],
         [Input("sector-chart", "clickData"),
-         Input("industry-chart", "clickData")]
+         Input("industry-chart", "clickData")],
+        [State("current-sector-filter", "children"),
+         State("current-industry-filter", "children")]
     )
-    def update_filters(sector_click, industry_click):
+    def update_filters(sector_click, industry_click, current_sector, current_industry):
         """Update filter display based on chart clicks"""
-        sector_filter = "All Sectors"
-        industry_filter = "All Industries"
         
-        if sector_click:
-            sector_filter = sector_click['points'][0]['y']
+        # Preserve current filters
+        sector_filter = current_sector or "All Sectors"
+        industry_filter = current_industry or "All Industries"
         
-        if industry_click:
-            industry_filter = industry_click['points'][0]['y']
+        # Determine which chart was clicked
+        ctx = callback_context
+        if ctx.triggered:
+            trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+            
+            if trigger_id == "sector-chart" and sector_click:
+                sector_filter = sector_click['points'][0]['y']
+                # Reset industry filter when sector is selected
+                industry_filter = "All Industries"
+            elif trigger_id == "industry-chart" and industry_click:
+                industry_filter = industry_click['points'][0]['y']
+                # Reset sector filter when industry is selected
+                sector_filter = "All Sectors"
         
         return sector_filter, industry_filter

@@ -26,6 +26,7 @@ from src.dashboard.layouts.help_layout import create_help_layout
 from src.dashboard.layouts.logs_layout import create_logs_layout, register_logs_callbacks
 from src.dashboard.layouts.author_layout import create_author_layout
 from src.dashboard.callbacks import register_chart_callbacks, register_overview_callbacks
+from src.dashboard.callbacks.interactive_chart_callbacks import register_interactive_chart_callbacks
 
 # Initialize logger
 logger = get_ui_logger("dashboard")
@@ -175,6 +176,7 @@ def handle_initial_load(n_intervals):
 # Register all callback modules
 register_chart_callbacks(app)
 register_overview_callbacks(app)
+register_interactive_chart_callbacks(app)
 register_logs_callbacks(app)
 
 
