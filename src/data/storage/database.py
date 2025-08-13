@@ -210,7 +210,8 @@ class DatabaseManager:
             
         except Exception as e:
             logger.error(f"Failed to get market data: {e}")
-            raise
+            # Return empty DataFrame instead of raising to prevent crashes
+            return pd.DataFrame()
         finally:
             self.return_connection(conn)
     

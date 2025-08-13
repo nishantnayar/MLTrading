@@ -8,15 +8,8 @@ import plotly.express as px
 from dash import html, dcc
 import pandas as pd
 
-# Constants
-CHART_COLORS = {
-    'primary': '#2fa4e7',  # Cerulean Primary Blue
-    'success': '#73a839',  # Cerulean Success Green
-    'danger': '#c71c22',   # Cerulean Danger Red
-    'secondary': '#e9ecef', # Cerulean Secondary Gray
-    'warning': '#dd5600',  # Cerulean Warning Orange
-    'info': '#033c73'      # Cerulean Info Dark Blue
-}
+# Import colors from centralized configuration
+from ..config import CHART_COLORS
 
 def create_empty_chart(title="No Data Available"):
     """Create an empty chart with a message"""
@@ -25,7 +18,7 @@ def create_empty_chart(title="No Data Available"):
         layout=go.Layout(
             title=dict(
                 text=title,
-                font=dict(size=20, color='#2fa4e7'),  # H3 styling with Cerulean blue
+                font=dict(size=20, color=CHART_COLORS['primary']),
                 x=0.5,
                 xanchor='center'
             ),
@@ -39,9 +32,98 @@ def create_empty_chart(title="No Data Available"):
                 'font': {'size': 14}
             }],
             template='plotly_white',
-            margin=dict(l=40, r=40, t=80, b=40),  # Top margin for H3 title
+            margin=dict(l=40, r=40, t=80, b=40),
             plot_bgcolor='white',
             paper_bgcolor='white'
+        )
+    )
+
+
+def create_loading_chart(message="Loading market data..."):
+    """Create a loading chart with spinner animation"""
+    return go.Figure(
+        data=[],
+        layout=go.Layout(
+            title=dict(
+                text="",
+                font=dict(size=16, color=CHART_COLORS['primary']),
+                x=0.5,
+                xanchor='center'
+            ),
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            annotations=[{
+                'text': f'<i class="fas fa-spinner fa-spin"></i> {message}',
+                'xref': 'paper',
+                'yref': 'paper',
+                'showarrow': False,
+                'font': {'size': 16, 'color': CHART_COLORS['primary']},
+                'x': 0.5,
+                'y': 0.5
+            }],
+            template='plotly_white',
+            margin=dict(l=40, r=40, t=80, b=40),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            height=400
+        )
+    )
+
+
+def create_error_chart(error_type="unknown", details="", symbol=""):
+    """Create informative error charts based on error type"""
+    error_messages = {
+        'no_data': f'No market data available for {symbol}' if symbol else 'No market data available',
+        'db_error': 'Database connection issue - please try refreshing',
+        'timeout': 'Request timed out - check your connection',
+        'network_error': 'Network error - please check your internet connection',
+        'api_error': 'External API error - please try again later',
+        'validation_error': 'Invalid input parameters provided'
+    }
+    
+    main_message = error_messages.get(error_type, "An unexpected error occurred")
+    
+    # Choose appropriate icon and color based on error type
+    error_styles = {
+        'no_data': {'icon': 'fas fa-chart-line', 'color': CHART_COLORS['secondary']},
+        'db_error': {'icon': 'fas fa-database', 'color': CHART_COLORS['warning']},
+        'timeout': {'icon': 'fas fa-clock', 'color': CHART_COLORS['warning']},
+        'network_error': {'icon': 'fas fa-wifi', 'color': CHART_COLORS['danger']},
+        'api_error': {'icon': 'fas fa-exclamation-triangle', 'color': CHART_COLORS['danger']},
+        'validation_error': {'icon': 'fas fa-times-circle', 'color': CHART_COLORS['danger']}
+    }
+    
+    style = error_styles.get(error_type, {'icon': 'fas fa-question-circle', 'color': CHART_COLORS['secondary']})
+    
+    annotation_text = f'<i class="{style["icon"]}"></i><br>{main_message}'
+    if details:
+        annotation_text += f'<br><small>{details}</small>'
+    
+    return go.Figure(
+        data=[],
+        layout=go.Layout(
+            title=dict(
+                text="Error Loading Data",
+                font=dict(size=18, color=style['color']),
+                x=0.5,
+                xanchor='center'
+            ),
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            annotations=[{
+                'text': annotation_text,
+                'xref': 'paper',
+                'yref': 'paper',
+                'showarrow': False,
+                'font': {'size': 14, 'color': style['color']},
+                'x': 0.5,
+                'y': 0.5
+            }],
+            template='plotly_white',
+            margin=dict(l=40, r=40, t=80, b=40),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            height=400
         )
     )
 
@@ -68,7 +150,7 @@ def create_horizontal_bar_chart(data, title, color=CHART_COLORS['primary']):
     fig.update_layout(
         title=dict(
             text=title,
-            font=dict(size=20, color='#2fa4e7'),  # H3 styling with Cerulean blue
+            font=dict(size=20, color=CHART_COLORS['primary']),  # H3 styling with Cerulean blue
             x=0.5,
             xanchor='center'
         ),
@@ -176,7 +258,7 @@ def create_candlestick_chart(data, symbol="", time_range=""):
     fig.update_layout(
         title=dict(
             text=f"{symbol} Price Chart ({time_range})",
-            font=dict(size=20, color='#2fa4e7'),  # H3 styling with Cerulean blue
+            font=dict(size=20, color=CHART_COLORS['primary']),  # H3 styling with Cerulean blue
             x=0.5,
             xanchor='center'
         ),

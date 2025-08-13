@@ -99,3 +99,5 @@ Thumbs.db
 .cursor/
 /src/dashboard/archive
 *.npy
+/notebooks/fig
+*.jpg

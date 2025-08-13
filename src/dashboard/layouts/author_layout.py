@@ -18,6 +18,7 @@ from src.utils.logging_config import get_ui_logger
 # Initialize logger
 logger = get_ui_logger("dashboard")
 
+
 def create_skill_progress_bar(skill_name, percentage, color="primary"):
     """Create a skill progress bar component."""
     return dbc.Row([
@@ -29,6 +30,7 @@ def create_skill_progress_bar(skill_name, percentage, color="primary"):
             dbc.Progress(value=percentage, color=color, className="mb-3 skill-progress")
         ], width=12)
     ])
+
 
 def create_experience_card(title, company, duration, description, icon="fas fa-briefcase"):
     """Create an experience card component."""
@@ -48,10 +50,11 @@ def create_experience_card(title, company, duration, description, icon="fas fa-b
         ])
     ], className="mb-3 border-0 shadow-sm experience-card")
 
+
 def create_project_card(title, description, technologies, link=None, icon="fas fa-code"):
     """Create a project card component."""
     tech_tags = [dbc.Badge(tech, color="light", className="me-1 mb-1 tech-badge") for tech in technologies]
-    
+
     card_content = [
         dbc.CardBody([
             dbc.Row([
@@ -66,7 +69,7 @@ def create_project_card(title, description, technologies, link=None, icon="fas f
             ])
         ])
     ]
-    
+
     if link:
         card_content.append(
             dbc.CardFooter([
@@ -76,8 +79,9 @@ def create_project_card(title, description, technologies, link=None, icon="fas f
                 ], href=link, target="_blank", className="text-decoration-none")
             ], className="bg-transparent border-0")
         )
-    
+
     return dbc.Card(card_content, className="mb-3 border-0 shadow-sm h-100 project-card")
+
 
 def create_author_layout():
     """Create the LinkedIn-like author page layout with real data from Nishant Nayar's profile"""
@@ -98,7 +102,7 @@ def create_author_layout():
                                     )
                                 ], className="text-center mb-3")
                             ], width=12, md=3),
-                            
+
                             # Profile Info Column
                             dbc.Col([
                                 html.H1("Nishant Nayar", className="mb-2 fw-bold text-primary"),
@@ -107,7 +111,7 @@ def create_author_layout():
                                     "Passionate software engineer with expertise in machine learning, data science, and full-stack development. ",
                                     "Specializing in building scalable applications and innovative solutions for complex business problems."
                                 ], className="mb-3"),
-                                
+
                                 # Profile Stats
                                 html.Div([
                                     html.Div([
@@ -123,29 +127,29 @@ def create_author_layout():
                                         html.Div("Technologies", className="stat-label")
                                     ], className="stat-item")
                                 ], className="profile-stats"),
-                                
+
                                 # Contact Buttons
                                 dbc.Row([
                                     dbc.Col([
                                         dbc.Button([
                                             html.I(className="fab fa-linkedin me-2"),
                                             "Connect on LinkedIn"
-                                        ], color="primary", className="me-2 mb-2", 
-                                        href="https://www.linkedin.com/in/nishantnayar/", target="_blank")
+                                        ], color="primary", className="me-2 mb-2",
+                                            href="https://www.linkedin.com/in/nishantnayar/", target="_blank")
                                     ], width="auto"),
                                     dbc.Col([
                                         dbc.Button([
                                             html.I(className="fab fa-github me-2"),
                                             "View GitHub"
                                         ], color="outline-primary", className="me-2 mb-2",
-                                        href="https://github.com/nishantnayar", target="_blank")
+                                            href="https://github.com/nishantnayar", target="_blank")
                                     ], width="auto"),
                                     dbc.Col([
                                         dbc.Button([
                                             html.I(className="fas fa-envelope me-2"),
                                             "Contact"
                                         ], color="outline-secondary", className="mb-2",
-                                        href="mailto:nishant.nayar@gmail.com")
+                                            href="mailto:nishant.nayar@gmail.com")
                                     ], width="auto")
                                 ], className="contact-buttons")
                             ], width=12, md=9)
@@ -154,7 +158,7 @@ def create_author_layout():
                 ], className="border-0 shadow-lg mb-4 author-profile-card author-hero-section")
             ], width=12)
         ]),
-        
+
         # Main Content
         dbc.Row([
             # Left Column - About, Experience, Education
@@ -178,7 +182,7 @@ def create_author_layout():
                         ])
                     ])
                 ], className="mb-4 author-profile-card"),
-                
+
                 # Experience Section
                 dbc.Card([
                     dbc.CardHeader([
@@ -215,7 +219,7 @@ def create_author_layout():
                         )
                     ])
                 ], className="mb-4 author-profile-card"),
-                
+
                 # Education Section
                 dbc.Card([
                     dbc.CardHeader([
@@ -223,24 +227,24 @@ def create_author_layout():
                     ], className="bg-light"),
                     dbc.CardBody([
                         create_experience_card(
-                            "Master of Science in Computer Science",
-                            "Stanford University",
-                            "2013 - 2015",
+                            "Master of Science in Analytics",
+                            "University of Chicago, Chicago, IL",
+                            "2020 - 2022",
                             "Specialized in Artificial Intelligence and Machine Learning. ",
                             "Completed research in distributed systems and data science applications."
                         ),
                         create_experience_card(
-                            "Bachelor of Science in Computer Science",
-                            "University of California, Berkeley",
-                            "2009 - 2013",
-                            "Major in Computer Science with focus on software engineering and algorithms. ",
+                            "Master of Business Administration",
+                            "Punjabi University, Patiala, India",
+                            "1998 - 2000",
+                            "Major in Finance and Marketing. ",
                             "Graduated with honors and completed multiple research projects."
                         )
                     ])
                 ], className="mb-4 author-profile-card")
-                
+
             ], width=12, lg=8),
-            
+
             # Right Column - Skills, Projects, Contact
             dbc.Col([
                 # Skills Section
@@ -255,7 +259,7 @@ def create_author_layout():
                         create_skill_progress_bar("Java", 85, "info"),
                         create_skill_progress_bar("C++", 80, "warning"),
                         create_skill_progress_bar("Go", 75, "danger"),
-                        
+
                         html.Hr(),
                         html.H6("Technologies & Frameworks", className="mb-3"),
                         create_skill_progress_bar("Machine Learning", 90, "primary"),
@@ -263,7 +267,7 @@ def create_author_layout():
                         create_skill_progress_bar("Web Development", 85, "info"),
                         create_skill_progress_bar("Data Engineering", 82, "warning"),
                         create_skill_progress_bar("DevOps & CI/CD", 80, "danger"),
-                        
+
                         html.Hr(),
                         html.H6("Specialized Skills", className="mb-3"),
                         create_skill_progress_bar("Distributed Systems", 85, "primary"),
@@ -272,7 +276,7 @@ def create_author_layout():
                         create_skill_progress_bar("API Development", 90, "warning")
                     ])
                 ], className="mb-4 author-profile-card"),
-                
+
                 # Projects Section
                 dbc.Card([
                     dbc.CardHeader([
@@ -302,7 +306,7 @@ def create_author_layout():
                         )
                     ])
                 ], className="mb-4 author-profile-card"),
-                
+
                 # Contact Section
                 dbc.Card([
                     dbc.CardHeader([
@@ -311,30 +315,30 @@ def create_author_layout():
                     dbc.CardBody([
                         html.Div([
                             html.I(className="fab fa-linkedin fa-lg text-primary me-3"),
-                            html.A("LinkedIn Profile", href="https://www.linkedin.com/in/nishantnayar/", 
+                            html.A("LinkedIn Profile", href="https://www.linkedin.com/in/nishantnayar/",
                                    target="_blank", className="text-decoration-none contact-link")
                         ], className="mb-3"),
                         html.Div([
                             html.I(className="fab fa-github fa-lg text-dark me-3"),
-                            html.A("GitHub Portfolio", href="https://github.com/nishantnayar", 
+                            html.A("GitHub Portfolio", href="https://github.com/nishantnayar",
                                    target="_blank", className="text-decoration-none contact-link")
                         ], className="mb-3"),
                         html.Div([
                             html.I(className="fas fa-envelope fa-lg text-success me-3"),
-                            html.A("nishant.nayar@gmail.com", href="mailto:nishant.nayar@gmail.com", 
+                            html.A("nishant.nayar@gmail.com", href="mailto:nishant.nayar@gmail.com",
                                    className="text-decoration-none contact-link")
                         ], className="mb-3"),
                         html.Div([
                             html.I(className="fas fa-globe fa-lg text-info me-3"),
-                            html.A("Personal Website", href="https://nishantnayar.dev", 
+                            html.A("Personal Website", href="https://nishantnayar.dev",
                                    target="_blank", className="text-decoration-none contact-link")
                         ])
                     ])
                 ], className="author-profile-card")
-                
+
             ], width=12, lg=4)
         ]),
-        
+
         # Bottom Section - Vision & Goals
         dbc.Row([
             dbc.Col([
@@ -371,5 +375,5 @@ def create_author_layout():
                 ], className="vision-section")
             ], width=12)
         ])
-        
-    ], fluid=True, className="py-4 author-page-container") 
+
+    ], fluid=True, className="py-4 author-page-container")
