@@ -25,13 +25,22 @@ class InteractiveChartBuilder:
         self.indicator_service = TechnicalIndicatorService()
         self.market_service = MarketDataService()
         self.chart_config = self.indicator_service.get_indicator_config()
+        
+        # Debug: Check chart configuration
+        logger.info(f"Chart configuration loaded: {list(self.chart_config.keys())}")
+        if 'bollinger' in self.chart_config:
+            logger.info(f"Bollinger Bands config: {self.chart_config['bollinger']}")
+        else:
+            logger.warning("Bollinger Bands config not found!")
     
     def create_advanced_price_chart(self, 
                                   df: pd.DataFrame, 
                                   symbol: str,
                                   indicators: List[str] = None,
                                   show_volume: bool = True,
-                                  chart_type: str = 'candlestick') -> go.Figure:
+                                  chart_type: str = 'candlestick',
+                                  volume_display: str = 'bars_ma',
+                                  color_by_price: bool = True) -> go.Figure:
         """
         Create advanced price chart with technical indicators and volume.
         
@@ -41,6 +50,8 @@ class InteractiveChartBuilder:
             indicators: List of indicators to display
             show_volume: Whether to show volume subplot
             chart_type: Type of chart ('candlestick', 'ohlc', 'line')
+            volume_display: Volume display mode ('bars', 'bars_ma', 'profile')
+            color_by_price: Whether to color volume bars by price direction
         
         Returns:
             Plotly figure with advanced features
@@ -52,30 +63,34 @@ class InteractiveChartBuilder:
             # Calculate technical indicators
             indicator_data = self.indicator_service.calculate_all_indicators(df)
             
-            # Determine subplot configuration
+            # Determine subplot configuration with better height allocation
             subplot_titles = [f"{symbol} Price Chart"]
-            row_heights = [0.6]  # Main chart takes 60% height
             
             oscillator_indicators = []
             if indicators:
                 oscillator_indicators = [ind for ind in indicators 
                                        if self.chart_config.get(ind, {}).get('type') == 'oscillator']
             
-            # Add subplots for oscillators and volume
+            # Improved height allocation with more generous space for volume
             total_rows = 1
-            if show_volume:
-                total_rows += 1
+            if show_volume and oscillator_indicators:
+                # Price: 60%, Volume: 25%, Oscillators: 15% (more volume space)
+                row_heights = [0.60, 0.25, 0.15]
+                total_rows = 3
+                subplot_titles.extend(["Volume", "Technical Oscillators"])
+            elif show_volume:
+                # Price: 70%, Volume: 30% (even more space for volume when no oscillators)
+                row_heights = [0.70, 0.30]
+                total_rows = 2
                 subplot_titles.append("Volume")
-                row_heights.append(0.2)
-            
-            if oscillator_indicators:
-                # Add one subplot for all oscillators (they can share Y-axis scaling)
-                total_rows += 1
-                row_heights.append(0.2)
+            elif oscillator_indicators:
+                # Price: 75%, Oscillators: 25%
+                row_heights = [0.75, 0.25]
+                total_rows = 2
                 subplot_titles.append("Technical Oscillators")
-            
-            # Normalize row heights
-            row_heights = [h / sum(row_heights) for h in row_heights]
+            else:
+                # Price only: 100%
+                row_heights = [1.0]
             
             # Create subplots
             fig = make_subplots(
@@ -93,12 +108,15 @@ class InteractiveChartBuilder:
             
             # Add technical indicators overlays
             if indicators:
+                logger.info(f"Adding overlay indicators: {indicators}")
                 self._add_overlay_indicators(fig, df, indicator_data, indicators, 1)
+            else:
+                logger.info("No indicators specified for overlay")
             
             # Add volume chart
             current_row = 2
             if show_volume:
-                self._add_volume_chart(fig, df, indicator_data, current_row)
+                self._add_volume_chart(fig, df, indicator_data, current_row, volume_display, color_by_price)
                 current_row += 1
             
             # Add oscillator charts (all in one subplot)
@@ -162,9 +180,15 @@ class InteractiveChartBuilder:
     
     def _add_overlay_indicators(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, indicators: List[str], row: int):
         """Add overlay indicators (SMA, EMA, Bollinger Bands, etc.)."""
+        logger.info(f"Adding overlay indicators: {indicators}")
+        logger.info(f"Available indicator data: {list(indicator_data.keys())}")
+        
         for indicator in indicators:
             config = self.chart_config.get(indicator, {})
+            logger.info(f"Processing indicator: {indicator}, config: {config}")
+            
             if config.get('type') != 'overlay':
+                logger.info(f"Skipping {indicator} - not an overlay indicator")
                 continue
             
             if indicator == 'sma':
@@ -201,7 +225,17 @@ class InteractiveChartBuilder:
             
             elif indicator == 'bollinger' and 'bollinger' in indicator_data:
                 bb = indicator_data['bollinger']
-                colors = config['colors']
+                colors = config.get('colors', {})
+                
+                # Debug logging
+                logger.info(f"Adding Bollinger Bands: {bb.keys()}")
+                logger.info(f"Bollinger Bands data sample: upper={bb['upper'].iloc[-5:].tolist() if not bb['upper'].empty else 'empty'}")
+                logger.info(f"Bollinger Bands colors: {colors}")
+                
+                # Check if we have valid data
+                if bb['upper'].empty or bb['lower'].empty or bb['middle'].empty:
+                    logger.warning("Bollinger Bands data is empty, skipping")
+                    continue
                 
                 # Add Bollinger Bands
                 fig.add_trace(
@@ -210,7 +244,7 @@ class InteractiveChartBuilder:
                         y=bb['upper'],
                         mode='lines',
                         name='BB Upper',
-                        line=dict(color=colors['upper'], width=1),
+                        line=dict(color=colors.get('upper', '#dc3545'), width=1),
                         opacity=0.6
                     ),
                     row=row, col=1
@@ -222,7 +256,7 @@ class InteractiveChartBuilder:
                         y=bb['lower'],
                         mode='lines',
                         name='BB Lower',
-                        line=dict(color=colors['lower'], width=1),
+                        line=dict(color=colors.get('lower', '#dc3545'), width=1),
                         fill='tonexty',
                         fillcolor='rgba(220, 53, 69, 0.1)',
                         opacity=0.6
@@ -236,7 +270,7 @@ class InteractiveChartBuilder:
                         y=bb['middle'],
                         mode='lines',
                         name='BB Middle',
-                        line=dict(color=colors['middle'], width=1, dash='dash'),
+                        line=dict(color=colors.get('middle', '#6c757d'), width=1, dash='dash'),
                         opacity=0.8
                     ),
                     row=row, col=1
@@ -255,18 +289,23 @@ class InteractiveChartBuilder:
                     row=row, col=1
                 )
     
-    def _add_volume_chart(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, row: int):
-        """Add volume chart with volume SMA overlay."""
-        # Color volume bars based on price movement
-        colors = []
-        for i in range(len(df)):
-            if i == 0:
-                colors.append(CHART_COLORS['primary'])
-            else:
-                color = CHART_COLORS['success'] if df.iloc[i]['close'] >= df.iloc[i-1]['close'] else CHART_COLORS['danger']
-                colors.append(color)
+    def _add_volume_chart(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, row: int, volume_display: str = 'bars_ma', color_by_price: bool = True):
+        """Add volume chart with configurable display options."""
+        # Color volume bars based on price movement if enabled
+        if color_by_price:
+            colors = []
+            for i in range(len(df)):
+                if i == 0:
+                    colors.append(CHART_COLORS['primary'])
+                else:
+                    # Color based on price direction
+                    color = CHART_COLORS['success'] if df.iloc[i]['close'] >= df.iloc[i-1]['close'] else CHART_COLORS['danger']
+                    colors.append(color)
+        else:
+            # Use single color for all bars
+            colors = CHART_COLORS['info']
         
-        # Add volume bars
+        # Add volume bars (always show for now)
         fig.add_trace(
             go.Bar(
                 x=df['timestamp'],
@@ -274,13 +313,14 @@ class InteractiveChartBuilder:
                 name='Volume',
                 marker_color=colors,
                 opacity=0.7,
-                showlegend=False
+                showlegend=False,
+                hovertemplate='<b>%{x}</b><br>Volume: %{y:,.0f}<extra></extra>'
             ),
             row=row, col=1
         )
         
-        # Add volume SMA if available
-        if 'volume_sma' in indicator_data:
+        # Add volume SMA if available and requested
+        if volume_display in ['bars_ma'] and 'volume_sma' in indicator_data:
             fig.add_trace(
                 go.Scatter(
                     x=df['timestamp'],
@@ -288,7 +328,8 @@ class InteractiveChartBuilder:
                     mode='lines',
                     name='Volume SMA(20)',
                     line=dict(color=CHART_COLORS['warning'], width=2),
-                    opacity=0.8
+                    opacity=0.8,
+                    hovertemplate='<b>%{x}</b><br>Volume SMA: %{y:,.0f}<extra></extra>'
                 ),
                 row=row, col=1
             )

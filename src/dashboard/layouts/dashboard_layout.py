@@ -78,19 +78,7 @@ def create_overview_tab():
                             ])
                         ], style=CARD_STYLE)
                     ], width=6)
-                ], className="mb-4"),
-                
-                # Refresh Button
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Button(
-                            "Refresh Statistics",
-                            id="refresh-stats-btn",
-                            color="primary",
-                            className="w-100"
-                        )
-                    ], width=12)
-                ], className="mb-3")
+                ], className="mb-4")
             ], className="p-4")
         ], style=CARD_STYLE_NONE),
         label="Overview",
@@ -103,6 +91,18 @@ def create_charts_tab():
     return dbc.Tab(
         dbc.Card([
             dbc.CardBody([
+                # Refresh Button Row
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Button(
+                            "Refresh Statistics",
+                            id="refresh-stats-btn",
+                            color="primary",
+                            className="w-100"
+                        )
+                    ], width=12)
+                ], className="mb-3"),
+                
                 # Distribution Charts Row (at top to drive symbol selection)
                 dbc.Row([
                     dbc.Col([
@@ -190,55 +190,39 @@ def create_charts_tab():
                                     
                                     # Volume Toggle & Controls
                                     dbc.Col([
-                                        html.Label("Options:", className="text-primary-emphasis mb-1"),
-                                        dbc.Row([
-                                            dbc.Col([
-                                                dbc.Checklist(
-                                                    options=[{"label": "Show Volume", "value": "volume"}],
-                                                    value=["volume"],
-                                                    id="volume-checkbox",
-                                                    inline=True,
-                                                    className="mb-1"
-                                                )
-                                            ], width=12),
-                                            dbc.Col([
-                                                dbc.Button("Refresh", id="refresh-chart-btn", color="primary", size="sm", className="w-100")
-                                            ], width=12)
-                                        ])
-                                    ], width=2)
+                                        html.Label("Volume Display:", className="text-primary-emphasis mb-1"),
+                                        dcc.Dropdown(
+                                            id="volume-display-dropdown",
+                                            options=[
+                                                {"label": "Hide Volume", "value": "none"},
+                                                {"label": "Volume Bars", "value": "bars"},
+                                                {"label": "Volume + MA", "value": "bars_ma"},
+                                                {"label": "Volume Profile", "value": "profile"}
+                                            ],
+                                            value="bars_ma",
+                                            className="mb-2"
+                                        ),
+                                        dbc.Checklist(
+                                            options=[{"label": "Color by Price", "value": "color_price"}],
+                                            value=["color_price"],
+                                            id="volume-color-checkbox",
+                                            inline=True,
+                                            className="mb-1"
+                                        )
+                                    ], width=2),
+                                    
+                                    # Refresh Button
+                                    dbc.Col([
+                                        html.Label("", className="text-primary-emphasis mb-1"),  # Spacer
+                                        dbc.Button("Refresh", id="refresh-chart-btn", color="primary", size="sm", className="w-100")
+                                    ], width=1)
                                 ], className="align-items-end")
                             ], className="p-3")
                         ], style=CARD_STYLE_NONE)
                     ], width=12)
                 ], className="mb-3"),
                 
-                # Main Interactive Chart Row
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardBody([
-                                dcc.Graph(
-                                    id="interactive-price-chart",
-                                    style={'height': '600px'},
-                                    config={
-                                        'displayModeBar': True,
-                                        'displaylogo': False,
-                                        'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
-                                        'toImageButtonOptions': {
-                                            'format': 'png',
-                                            'filename': 'chart',
-                                            'height': 600,
-                                            'width': 1200,
-                                            'scale': 1
-                                        }
-                                    }
-                                )
-                            ], className="p-1")
-                        ], style=CARD_STYLE_NONE)
-                    ], width=12)
-                ], className="mb-3"),
-                
-                # Technical Analysis Summary Row
+                # Technical Analysis Summary Row (moved above chart for better space utilization)
                 dbc.Row([
                     dbc.Col([
                         dbc.Card([
@@ -249,8 +233,34 @@ def create_charts_tab():
                             dbc.CardBody([
                                 html.Div(id="technical-analysis-summary", children=[
                                     html.P("Select a symbol to view technical analysis.", className="text-muted text-center")
-                                ])
+                                ], className="py-2")  # Reduced padding for more compact layout
                             ])
+                        ], style=CARD_STYLE_NONE)
+                    ], width=12)
+                ], className="mb-2"),  # Reduced margin for more chart space
+                
+                # Main Interactive Chart Row (now gets maximum available space)
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardBody([
+                                dcc.Graph(
+                                    id="interactive-price-chart",
+                                    style={'height': '700px'},  # Increased height since we have more space
+                                    config={
+                                        'displayModeBar': True,
+                                        'displaylogo': False,
+                                        'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
+                                        'toImageButtonOptions': {
+                                            'format': 'png',
+                                            'filename': 'chart',
+                                            'height': 700,  # Updated to match new height
+                                            'width': 1200,
+                                            'scale': 1
+                                        }
+                                    }
+                                )
+                            ], className="p-1")
                         ], style=CARD_STYLE_NONE)
                     ], width=12)
                 ], className="mb-3")

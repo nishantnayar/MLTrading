@@ -121,7 +121,7 @@ class SymbolService(BaseDashboardService):
         """Get distribution of symbols by sector."""
         try:
             query = """
-                SELECT s.sector, COUNT(DISTINCT s.symbol) as count
+                SELECT DISTINCT s.sector, COUNT(DISTINCT s.symbol) as count
                 FROM stock_info s
                 INNER JOIN market_data md ON s.symbol = md.symbol
                 WHERE md.source = %s AND s.sector IS NOT NULL AND s.sector != ''
@@ -158,7 +158,7 @@ class SymbolService(BaseDashboardService):
                 return {'industries': [], 'counts': []}
             
             query = """
-                SELECT s.industry, COUNT(DISTINCT s.symbol) as count
+                SELECT DISTINCT s.industry, COUNT(DISTINCT s.symbol) as count
                 FROM stock_info s
                 INNER JOIN market_data md ON s.symbol = md.symbol
                 WHERE md.source = %s AND s.sector = %s 

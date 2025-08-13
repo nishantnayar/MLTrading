@@ -6,6 +6,7 @@ Contains reusable chart creation functions.
 import plotly.graph_objs as go
 import plotly.express as px
 from dash import html, dcc
+import dash_bootstrap_components as dbc
 import pandas as pd
 
 # Import colors from centralized configuration
@@ -210,27 +211,63 @@ def create_price_chart(data):
     return fig
 
 def create_volume_chart(data):
-    """Create a volume chart"""
+    """Create an enhanced volume chart with color coding and moving average"""
     if data.empty:
         return create_empty_chart("No Volume Data Available")
     
-    fig = go.Figure(data=[
-        go.Bar(
-            x=data.index,
-            y=data['volume'],
-            name='Volume',
-            marker=dict(color=CHART_COLORS['info']),
-            hovertemplate='<b>%{x}</b><br>Volume: %{y:,.0f}<extra></extra>'
-        )
-    ])
+    # Calculate volume moving average
+    volume_ma = data['volume'].rolling(window=20).mean()
+    
+    # Color code volume bars based on price direction and volume level
+    colors = []
+    for i in range(len(data)):
+        vol = data['volume'].iloc[i]
+        avg_vol = volume_ma.iloc[i] if not pd.isna(volume_ma.iloc[i]) else vol
+        
+        # Determine price direction if OHLC data available
+        if 'close' in data.columns and 'open' in data.columns:
+            price_up = data['close'].iloc[i] >= data['open'].iloc[i]
+        else:
+            price_up = True  # Default color
+        
+        # Determine volume level
+        high_volume = vol > (avg_vol * 1.5) if avg_vol > 0 else False
+        
+        if high_volume:
+            colors.append(CHART_COLORS['success'] if price_up else CHART_COLORS['danger'])
+        else:
+            colors.append(CHART_COLORS['info'] if price_up else CHART_COLORS['warning'])
+    
+    fig = go.Figure()
+    
+    # Add volume bars
+    fig.add_trace(go.Bar(
+        x=data.index,
+        y=data['volume'],
+        name='Volume',
+        marker=dict(color=colors),
+        hovertemplate='<b>%{x}</b><br>Volume: %{y:,.0f}<br>vs 20MA: %{customdata:.1f}x<extra></extra>',
+        customdata=[data['volume'].iloc[i] / volume_ma.iloc[i] if not pd.isna(volume_ma.iloc[i]) and volume_ma.iloc[i] > 0 else 1 for i in range(len(data))]
+    ))
+    
+    # Add volume moving average line
+    fig.add_trace(go.Scatter(
+        x=data.index,
+        y=volume_ma,
+        mode='lines',
+        name='20-Day MA',
+        line=dict(color=CHART_COLORS['secondary'], width=2, dash='dash'),
+        hovertemplate='<b>%{x}</b><br>20-Day MA: %{y:,.0f}<extra></extra>'
+    ))
     
     fig.update_layout(
-        title="Volume Chart",
+        title="Volume Chart with Moving Average",
         xaxis_title="Date",
         yaxis_title="Volume",
-        height=200,
+        height=250,  # Slightly taller for better visibility
         margin=dict(l=40, r=40, t=40, b=40),
-        showlegend=False,
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         plot_bgcolor='white',
         paper_bgcolor='white'
     )
@@ -316,6 +353,128 @@ def create_chart_card(title, chart_id, height="400px"):
             )
         ], className="card-body")
     ], className="card h-100")
+
+def create_volume_summary_card(data):
+    """Create a summary card for volume analysis"""
+    if data.empty or 'volume' not in data.columns:
+        return html.Div("No volume data available", className="text-muted")
+    
+    # Calculate volume metrics
+    current_volume = data['volume'].iloc[-1]
+    avg_volume_20 = data['volume'].rolling(window=20).mean().iloc[-1]
+    max_volume = data['volume'].max()
+    
+    # Volume ratio and status
+    volume_ratio = (current_volume / avg_volume_20) if avg_volume_20 > 0 else 0
+    volume_status = "High" if volume_ratio > 1.5 else "Normal" if volume_ratio > 0.8 else "Low"
+    volume_color = "success" if volume_ratio > 1.5 else "warning" if volume_ratio > 0.8 else "secondary"
+    
+    # Format volume function
+    def format_volume(vol):
+        if vol >= 1e9:
+            return f"{vol/1e9:.2f}B"
+        elif vol >= 1e6:
+            return f"{vol/1e6:.1f}M"
+        elif vol >= 1e3:
+            return f"{vol/1e3:.0f}K"
+        else:
+            return f"{vol:.0f}"
+    
+    return dbc.Card([
+        dbc.CardHeader(html.H6("Volume Analysis", className="mb-0")),
+        dbc.CardBody([
+            dbc.Row([
+                dbc.Col([
+                    html.Small("Current Volume", className="text-muted"),
+                    html.H5(format_volume(current_volume), className="mb-2")
+                ], width=6),
+                dbc.Col([
+                    html.Small("vs 20-Day Avg", className="text-muted"),
+                    html.H5([
+                        dbc.Badge(f"{volume_ratio:.1f}x", color=volume_color),
+                        " ", volume_status
+                    ], className="mb-2")
+                ], width=6)
+            ]),
+            dbc.Progress(
+                value=min(100, (current_volume / max_volume) * 100),
+                label=f"{(current_volume / max_volume) * 100:.0f}% of max",
+                style={"height": "20px"},
+                className="mb-2"
+            ),
+            html.Small([
+                "20-Day Avg: ", format_volume(avg_volume_20), " | ",
+                "Max: ", format_volume(max_volume)
+            ], className="text-muted")
+        ])
+    ], className="h-100")
+
+
+def create_volume_heatmap_chart(data, symbol=""):
+    """Create a volume heatmap showing volume by hour/day"""
+    if data.empty or 'volume' not in data.columns:
+        return create_empty_chart("No Volume Data Available")
+    
+    try:
+        # Create volume intensity chart
+        data_copy = data.copy()
+        data_copy['date'] = pd.to_datetime(data_copy.index).date
+        data_copy['hour'] = pd.to_datetime(data_copy.index).hour if len(data) > 50 else None
+        
+        # For daily data, create volume by day of week
+        if data_copy['hour'].isna().all():
+            data_copy['day_of_week'] = pd.to_datetime(data_copy.index).day_name()
+            volume_by_day = data_copy.groupby('day_of_week')['volume'].mean()
+            
+            fig = go.Figure(data=[
+                go.Bar(
+                    x=['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+                    y=[volume_by_day.get(day, 0) for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']],
+                    marker=dict(
+                        color=[volume_by_day.get(day, 0) for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']],
+                        colorscale='Viridis',
+                        showscale=True,
+                        colorbar=dict(title="Volume")
+                    ),
+                    hovertemplate='<b>%{x}</b><br>Avg Volume: %{y:,.0f}<extra></extra>'
+                )
+            ])
+            
+            fig.update_layout(
+                title=f"{symbol} Average Volume by Day of Week",
+                xaxis_title="Day of Week",
+                yaxis_title="Average Volume",
+                height=300
+            )
+        else:
+            # For intraday data, create heatmap
+            pivot_data = data_copy.pivot_table(
+                values='volume', 
+                index='date', 
+                columns='hour', 
+                aggfunc='mean'
+            )
+            
+            fig = go.Figure(data=go.Heatmap(
+                z=pivot_data.values,
+                x=pivot_data.columns,
+                y=pivot_data.index,
+                colorscale='Viridis',
+                hovertemplate='<b>%{y}</b> %{x}:00<br>Volume: %{z:,.0f}<extra></extra>'
+            ))
+            
+            fig.update_layout(
+                title=f"{symbol} Volume Heatmap",
+                xaxis_title="Hour of Day",
+                yaxis_title="Date",
+                height=400
+            )
+        
+        return fig
+        
+    except Exception:
+        return create_empty_chart("Volume Analysis Unavailable")
+
 
 def create_signals_html(signals):
     """Create HTML for recent signals"""

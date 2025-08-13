@@ -31,12 +31,13 @@ def register_interactive_chart_callbacks(app):
             Input("symbol-dropdown", "value"),
             Input("chart-type-dropdown", "value"),
             Input("indicators-dropdown", "value"),
-            Input("volume-checkbox", "value"),
+            Input("volume-display-dropdown", "value"),
+            Input("volume-color-checkbox", "value"),
             Input("refresh-chart-btn", "n_clicks")
         ],
         prevent_initial_call=False
     )
-    def update_interactive_chart(symbol, chart_type, indicators, volume_checkbox, refresh_clicks):
+    def update_interactive_chart(symbol, chart_type, indicators, volume_display, volume_color_options, refresh_clicks):
         """Update interactive chart with technical indicators."""
         try:
             # Validate inputs
@@ -52,8 +53,9 @@ def register_interactive_chart_callbacks(app):
             if df is None or df.empty:
                 return chart_builder._create_empty_chart(f"No data available for {symbol}")
             
-            # Check volume checkbox
-            show_volume = 'volume' in (volume_checkbox or [])
+            # Determine volume display settings
+            show_volume = volume_display and volume_display != "none"
+            color_by_price = 'color_price' in (volume_color_options or [])
             
             # Use indicators or default
             chart_indicators = indicators or []
@@ -64,7 +66,9 @@ def register_interactive_chart_callbacks(app):
                 symbol=symbol,
                 indicators=chart_indicators,
                 show_volume=show_volume,
-                chart_type=chart_type or 'candlestick'
+                chart_type=chart_type or 'candlestick',
+                volume_display=volume_display or 'bars_ma',
+                color_by_price=color_by_price
             )
             
             logger.info(f"Updated interactive chart for {symbol} with {len(chart_indicators)} indicators")
@@ -109,7 +113,7 @@ def register_interactive_chart_callbacks(app):
                             html.H5(f"${current_price:.2f}", className="text-primary mb-0")
                         ])
                     ])
-                ], width=3),
+                ], width=2),  # Reduced from 3 to 2 to make room for volume
                 dbc.Col([
                     dbc.Card([
                         dbc.CardBody([
@@ -118,7 +122,7 @@ def register_interactive_chart_callbacks(app):
                                    className="text-success" if price_change >= 0 else "text-danger")
                         ])
                     ])
-                ], width=3),
+                ], width=2),  # Reduced from 3 to 2 to make room for volume
             ]
             
             # Add RSI if available
@@ -133,7 +137,38 @@ def register_interactive_chart_callbacks(app):
                                 html.H5(f"{rsi_value:.1f}", className=f"{rsi_color} mb-0")
                             ])
                         ])
-                    ], width=3)
+                    ], width=2)  # Changed from 3 to 2 for consistency
+                )
+            
+            # Add volume analysis
+            if 'volume' in df.columns:
+                current_volume = df['volume'].iloc[-1]
+                avg_volume = df['volume'].rolling(window=20).mean().iloc[-1]
+                volume_ratio = (current_volume / avg_volume) if avg_volume > 0 else 0
+                
+                # Format volume in millions/billions
+                def format_volume(vol):
+                    if vol >= 1e9:
+                        return f"{vol/1e9:.1f}B"
+                    elif vol >= 1e6:
+                        return f"{vol/1e6:.1f}M"
+                    elif vol >= 1e3:
+                        return f"{vol/1e3:.1f}K"
+                    else:
+                        return f"{vol:.0f}"
+                
+                volume_color = "text-success" if volume_ratio > 1.5 else "text-warning" if volume_ratio > 0.8 else "text-muted"
+                
+                summary_items.append(
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardBody([
+                                html.H6("Volume", className="text-muted mb-1"),
+                                html.H5(format_volume(current_volume), className=f"{volume_color} mb-0"),
+                                html.Small(f"{volume_ratio:.1f}x avg", className="text-muted")
+                            ])
+                        ])
+                    ], width=2)
                 )
             
             # Add trend analysis
@@ -149,7 +184,7 @@ def register_interactive_chart_callbacks(app):
                                 html.H5(trend, className=f"{trend_color} mb-0")
                             ])
                         ])
-                    ], width=3)
+                    ], width=2)
                 )
             
             return dbc.Row(summary_items)

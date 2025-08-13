@@ -12,19 +12,20 @@ from pathlib import Path
 
 def run_unit_tests():
     """Run unit tests."""
-    print("🧪 Running Unit Tests...")
+    print("[UNIT] Running Unit Tests...")
     result = subprocess.run([
         sys.executable, "-m", "pytest", 
         "tests/unit/", 
         "-v", 
-        "--tb=short"
+        "--tb=short",
+        "--disable-warnings"  # Reduce noise from deprecation warnings
     ], cwd=Path(__file__).parent)
     return result.returncode == 0
 
 
 def run_integration_tests():
     """Run integration tests."""
-    print("🔗 Running Integration Tests...")
+    print("[INTEGRATION] Running Integration Tests...")
     result = subprocess.run([
         sys.executable, "-m", "pytest", 
         "tests/integration/", 
@@ -36,7 +37,7 @@ def run_integration_tests():
 
 def run_api_tests():
     """Run API integration tests."""
-    print("🌐 Running API Integration Tests...")
+    print("[API] Running API Integration Tests...")
     result = subprocess.run([
         sys.executable, "-m", "pytest", 
         "tests/integration/test_api_integration.py", 
@@ -48,7 +49,7 @@ def run_api_tests():
 
 def run_all_tests():
     """Run all tests."""
-    print("🚀 Running All Tests...")
+    print("[ALL] Running All Tests...")
     result = subprocess.run([
         sys.executable, "-m", "pytest", 
         "tests/", 
@@ -61,9 +62,23 @@ def run_all_tests():
     return result.returncode == 0
 
 
+def run_dashboard_tests():
+    """Run dashboard-specific unit tests."""
+    print("[DASHBOARD] Running Dashboard Tests...")
+    result = subprocess.run([
+        sys.executable, "-m", "pytest", 
+        "tests/unit/", 
+        "-k", "dashboard",
+        "-v", 
+        "--tb=short",
+        "--disable-warnings"
+    ], cwd=Path(__file__).parent)
+    return result.returncode == 0
+
+
 def run_quick_api_check():
     """Run a quick API health check."""
-    print("🔍 Quick API Health Check...")
+    print("[QUICK] Quick API Health Check...")
     try:
         from tests.integration.test_api_integration import run_api_tests
         return run_api_tests()
@@ -77,7 +92,7 @@ def main():
     parser = argparse.ArgumentParser(description="ML Trading Test Runner")
     parser.add_argument(
         "--type", 
-        choices=["unit", "integration", "api", "all", "quick"], 
+        choices=["unit", "integration", "api", "dashboard", "all", "quick"], 
         default="quick",
         help="Type of tests to run"
     )
@@ -89,7 +104,7 @@ def main():
     
     args = parser.parse_args()
     
-    print("🧪 ML Trading Test Runner")
+    print("ML Trading Test Runner")
     print("=" * 40)
     
     success = False
@@ -100,16 +115,18 @@ def main():
         success = run_integration_tests()
     elif args.type == "api":
         success = run_api_tests()
+    elif args.type == "dashboard":
+        success = run_dashboard_tests()
     elif args.type == "all":
         success = run_all_tests()
     elif args.type == "quick":
         success = run_quick_api_check()
     
     if success:
-        print("\n✅ All tests passed!")
+        print("\n[SUCCESS] All tests passed!")
         sys.exit(0)
     else:
-        print("\n❌ Some tests failed!")
+        print("\n[ERROR] Some tests failed!")
         sys.exit(1)
 
 

@@ -15,15 +15,45 @@ class TechnicalIndicatorService(BaseDashboardService):
     
     def __init__(self):
         super().__init__()
+        # Clear any existing cached calculations to ensure fresh data
+        self._clear_cache()
     
-    @cached(ttl=300, key_func=lambda self, df, period: f"sma_{len(df)}_{period}")
+    def _clear_cache(self):
+        """Clear cached calculations to ensure fresh data."""
+        try:
+            # Clear the cache by setting a new instance variable
+            self._cache_cleared = True
+            self.logger.info("Technical indicators cache cleared")
+        except Exception as e:
+            self.logger.warning(f"Could not clear cache: {e}")
+    
+    @cached(ttl=300, key_func=lambda self, df, period: f"sma_{df['close'].iloc[0]:.2f}_{df['close'].iloc[-1]:.2f}_{period}")
     def calculate_sma(self, df: pd.DataFrame, period: int = 20) -> pd.Series:
         """Calculate Simple Moving Average."""
         try:
             if 'close' not in df.columns or len(df) < period:
+                self.logger.warning(f"SMA calculation failed - missing 'close' column or insufficient data")
                 return pd.Series(index=df.index)
             
-            sma = df['close'].rolling(window=period, min_periods=1).mean()
+            # Debug: Check what data we're working with
+            close_data = df['close']
+            self.logger.info(f"SMA({period}) - Input data: length={len(close_data)}, range={close_data.min():.2f}-{close_data.max():.2f}, mean={close_data.mean():.2f}")
+            
+            # Check for any NaN or invalid values
+            if close_data.isna().any():
+                self.logger.warning(f"SMA calculation - Found {close_data.isna().sum()} NaN values in close data")
+            
+            sma = close_data.rolling(window=period, min_periods=1).mean()
+            
+            # Debug: Check the calculated SMA
+            if not sma.empty:
+                sma_last = sma.iloc[-1]
+                self.logger.info(f"SMA({period}) calculated - Last value: {sma_last:.2f}")
+                
+                # Check if SMA is reasonable compared to input data
+                if abs(sma_last - close_data.mean()) > 100:
+                    self.logger.warning(f"SMA({period}) seems out of range! Close mean: {close_data.mean():.2f}, but SMA: {sma_last:.2f}")
+            
             self.logger.debug(f"Calculated SMA({period}) for {len(df)} data points")
             return sma
             
@@ -47,32 +77,69 @@ class TechnicalIndicatorService(BaseDashboardService):
             return pd.Series(index=df.index)
     
     def calculate_bollinger_bands(self, df: pd.DataFrame, period: int = 20, std: float = 2) -> Dict[str, pd.Series]:
-        """Calculate Bollinger Bands."""
+        """Calculate Bollinger Bands with improved logic."""
         try:
-            if 'close' not in df.columns or len(df) < period:
+            if 'close' not in df.columns or len(df) < period + 1:
+                self.logger.warning(f"Bollinger Bands: insufficient data - columns: {list(df.columns)}, length: {len(df)}, period: {period}")
                 return {
                     'middle': pd.Series(index=df.index),
                     'upper': pd.Series(index=df.index),
                     'lower': pd.Series(index=df.index)
                 }
             
+            # Debug: Check the actual data ranges
+            close_min = df['close'].min()
+            close_max = df['close'].max()
+            close_mean = df['close'].mean()
+            close_dtype = df['close'].dtype
+            self.logger.info(f"Bollinger Bands - Close price range: min={close_min:.2f}, max={close_max:.2f}, mean={close_mean:.2f}, dtype={close_dtype}")
+            
+            # Debug: Check for any data type issues
+            if close_dtype == 'object':
+                self.logger.warning(f"Close prices are object type - checking for string conversion issues")
+                sample_prices = df['close'].head(5).tolist()
+                self.logger.info(f"Sample close prices: {sample_prices}")
+            
+            # Debug: Check for any extreme outliers
+            if close_max > 10000 or close_min < 0.01:
+                self.logger.warning(f"Close prices seem extreme: min={close_min:.2f}, max={close_max:.2f}")
+            
             # Calculate middle band (SMA)
             middle = self.calculate_sma(df, period)
             
-            # Calculate standard deviation
-            rolling_std = df['close'].rolling(window=period, min_periods=1).std()
+            # Calculate standard deviation of the same window
+            # This ensures consistency between SMA and std calculations
+            rolling_std = df['close'].rolling(window=period, min_periods=period).std()
             
             # Calculate upper and lower bands
             upper = middle + (rolling_std * std)
             lower = middle - (rolling_std * std)
             
-            self.logger.debug(f"Calculated Bollinger Bands({period}, {std}) for {len(df)} data points")
+            # Debug: Check the calculated band ranges
+            if not middle.empty and not upper.empty and not lower.empty:
+                middle_last = middle.iloc[-1]
+                upper_last = upper.iloc[-1]
+                lower_last = lower.iloc[-1]
+                self.logger.info(f"Bollinger Bands calculated - Middle: {middle_last:.2f}, Upper: {upper_last:.2f}, Lower: {lower_last:.2f}")
+                
+                # Check if bands are in reasonable range compared to close price
+                if abs(middle_last - close_mean) > 100 or abs(upper_last - close_mean) > 200 or abs(lower_last - close_mean) > 200:
+                    self.logger.warning(f"Bollinger Bands seem out of range! Close mean: {close_mean:.2f}, but bands are: M={middle_last:.2f}, U={upper_last:.2f}, L={lower_last:.2f}")
             
-            return {
+            # Price reality check - ensure bands make sense
+            if not upper.empty and not lower.empty:
+                # Upper band should generally be above lower band
+                if upper.iloc[-1] <= lower.iloc[-1]:
+                    self.logger.warning(f"Bollinger Bands: upper band ({upper.iloc[-1]:.2f}) <= lower band ({lower.iloc[-1]:.2f})")
+            
+            result = {
                 'middle': middle,
                 'upper': upper,
                 'lower': lower
             }
+            
+            self.logger.info(f"Bollinger Bands calculated successfully: middle={middle.iloc[-1] if not middle.empty else 'N/A'}, upper={upper.iloc[-1] if not middle.empty else 'N/A'}, lower={lower.iloc[-1] if not middle.empty else 'N/A'}")
+            return result
             
         except Exception as e:
             self.logger.error(f"Error calculating Bollinger Bands: {e}")

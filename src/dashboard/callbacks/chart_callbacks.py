@@ -69,12 +69,6 @@ def register_chart_callbacks(app):
             ])
             
             fig.update_layout(
-                title=dict(
-                    text="Sector Distribution",
-                    font=dict(size=20, color=CHART_COLORS['primary']),
-                    x=0.5,
-                    xanchor='center'
-                ),
                 xaxis=dict(
                     title="",
                     showgrid=False,
@@ -139,12 +133,6 @@ def register_chart_callbacks(app):
                 ])
                 
                 fig.update_layout(
-                    title=dict(
-                        text="Industry Distribution",
-                        font=dict(size=20, color=CHART_COLORS['primary']),
-                        x=0.5,
-                        xanchor='center'
-                    ),
                     xaxis=dict(
                         title="",
                         showgrid=False,
