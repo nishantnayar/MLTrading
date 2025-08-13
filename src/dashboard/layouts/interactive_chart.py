@@ -1,0 +1,596 @@
+"""
+Interactive chart components with technical indicators and advanced controls.
+Provides comprehensive chart analysis tools for trading dashboard.
+"""
+
+import plotly.graph_objs as go
+from plotly.subplots import make_subplots
+import dash_bootstrap_components as dbc
+from dash import html, dcc, Input, Output, State, callback_context
+import pandas as pd
+from typing import Dict, List, Any, Optional
+
+from ..config import CHART_COLORS
+from ..services.technical_indicators import TechnicalIndicatorService
+from ..services.market_data_service import MarketDataService
+from ...utils.logging_config import get_ui_logger
+
+logger = get_ui_logger("interactive_chart")
+
+
+class InteractiveChartBuilder:
+    """Builder for creating interactive charts with technical indicators."""
+    
+    def __init__(self):
+        self.indicator_service = TechnicalIndicatorService()
+        self.market_service = MarketDataService()
+        self.chart_config = self.indicator_service.get_indicator_config()
+    
+    def create_advanced_price_chart(self, 
+                                  df: pd.DataFrame, 
+                                  symbol: str,
+                                  indicators: List[str] = None,
+                                  show_volume: bool = True,
+                                  chart_type: str = 'candlestick') -> go.Figure:
+        """
+        Create advanced price chart with technical indicators and volume.
+        
+        Args:
+            df: Market data DataFrame
+            symbol: Stock symbol
+            indicators: List of indicators to display
+            show_volume: Whether to show volume subplot
+            chart_type: Type of chart ('candlestick', 'ohlc', 'line')
+        
+        Returns:
+            Plotly figure with advanced features
+        """
+        try:
+            if df.empty:
+                return self._create_empty_chart(f"No data available for {symbol}")
+            
+            # Calculate technical indicators
+            indicator_data = self.indicator_service.calculate_all_indicators(df)
+            
+            # Determine subplot configuration
+            subplot_titles = [f"{symbol} Price Chart"]
+            row_heights = [0.6]  # Main chart takes 60% height
+            
+            oscillator_indicators = []
+            if indicators:
+                oscillator_indicators = [ind for ind in indicators 
+                                       if self.chart_config.get(ind, {}).get('type') == 'oscillator']
+            
+            # Add subplots for oscillators and volume
+            total_rows = 1
+            if show_volume:
+                total_rows += 1
+                subplot_titles.append("Volume")
+                row_heights.append(0.2)
+            
+            if oscillator_indicators:
+                total_rows += len(oscillator_indicators)
+                row_heights.extend([0.2 / len(oscillator_indicators)] * len(oscillator_indicators))
+                subplot_titles.extend([self.chart_config[ind]['name'] for ind in oscillator_indicators])
+            
+            # Normalize row heights
+            row_heights = [h / sum(row_heights) for h in row_heights]
+            
+            # Create subplots
+            fig = make_subplots(
+                rows=total_rows,
+                cols=1,
+                shared_xaxes=True,
+                vertical_spacing=0.05,
+                subplot_titles=subplot_titles,
+                row_heights=row_heights,
+                specs=[[{"secondary_y": False}] for _ in range(total_rows)]
+            )
+            
+            # Add main price chart
+            self._add_price_chart(fig, df, symbol, chart_type, 1)
+            
+            # Add technical indicators overlays
+            if indicators:
+                self._add_overlay_indicators(fig, df, indicator_data, indicators, 1)
+            
+            # Add volume chart
+            current_row = 2
+            if show_volume:
+                self._add_volume_chart(fig, df, indicator_data, current_row)
+                current_row += 1
+            
+            # Add oscillator charts
+            for indicator in oscillator_indicators:
+                self._add_oscillator_chart(fig, df, indicator_data, indicator, current_row)
+                current_row += 1
+            
+            # Update layout with advanced features
+            self._update_chart_layout(fig, symbol, total_rows)
+            
+            return fig
+            
+        except Exception as e:
+            logger.error(f"Error creating advanced chart: {e}")
+            return self._create_empty_chart(f"Error loading chart for {symbol}")
+    
+    def _add_price_chart(self, fig: go.Figure, df: pd.DataFrame, symbol: str, chart_type: str, row: int):
+        """Add main price chart (candlestick, OHLC, or line)."""
+        if chart_type == 'candlestick':
+            fig.add_trace(
+                go.Candlestick(
+                    x=df['timestamp'],
+                    open=df['open'],
+                    high=df['high'],
+                    low=df['low'],
+                    close=df['close'],
+                    name=symbol,
+                    increasing_line_color=CHART_COLORS['success'],
+                    decreasing_line_color=CHART_COLORS['danger'],
+                    showlegend=False
+                ),
+                row=row, col=1
+            )
+        elif chart_type == 'ohlc':
+            fig.add_trace(
+                go.Ohlc(
+                    x=df['timestamp'],
+                    open=df['open'],
+                    high=df['high'],
+                    low=df['low'],
+                    close=df['close'],
+                    name=symbol,
+                    increasing_line_color=CHART_COLORS['success'],
+                    decreasing_line_color=CHART_COLORS['danger'],
+                    showlegend=False
+                ),
+                row=row, col=1
+            )
+        elif chart_type == 'line':
+            fig.add_trace(
+                go.Scatter(
+                    x=df['timestamp'],
+                    y=df['close'],
+                    mode='lines',
+                    name=f'{symbol} Close',
+                    line=dict(color=CHART_COLORS['primary'], width=2),
+                    showlegend=False
+                ),
+                row=row, col=1
+            )
+    
+    def _add_overlay_indicators(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, indicators: List[str], row: int):
+        """Add overlay indicators (SMA, EMA, Bollinger Bands, etc.)."""
+        for indicator in indicators:
+            config = self.chart_config.get(indicator, {})
+            if config.get('type') != 'overlay':
+                continue
+            
+            if indicator == 'sma':
+                # Add multiple SMA periods
+                for period in [20, 50]:
+                    if f'sma_{period}' in indicator_data:
+                        fig.add_trace(
+                            go.Scatter(
+                                x=df['timestamp'],
+                                y=indicator_data[f'sma_{period}'],
+                                mode='lines',
+                                name=f'SMA({period})',
+                                line=dict(color=config['color'], width=1.5),
+                                opacity=0.8
+                            ),
+                            row=row, col=1
+                        )
+            
+            elif indicator == 'ema':
+                # Add multiple EMA periods
+                for period in [12, 26]:
+                    if f'ema_{period}' in indicator_data:
+                        fig.add_trace(
+                            go.Scatter(
+                                x=df['timestamp'],
+                                y=indicator_data[f'ema_{period}'],
+                                mode='lines',
+                                name=f'EMA({period})',
+                                line=dict(color=config['color'], width=1.5, dash='dot'),
+                                opacity=0.8
+                            ),
+                            row=row, col=1
+                        )
+            
+            elif indicator == 'bollinger' and 'bollinger' in indicator_data:
+                bb = indicator_data['bollinger']
+                colors = config['colors']
+                
+                # Add Bollinger Bands
+                fig.add_trace(
+                    go.Scatter(
+                        x=df['timestamp'],
+                        y=bb['upper'],
+                        mode='lines',
+                        name='BB Upper',
+                        line=dict(color=colors['upper'], width=1),
+                        opacity=0.6
+                    ),
+                    row=row, col=1
+                )
+                
+                fig.add_trace(
+                    go.Scatter(
+                        x=df['timestamp'],
+                        y=bb['lower'],
+                        mode='lines',
+                        name='BB Lower',
+                        line=dict(color=colors['lower'], width=1),
+                        fill='tonexty',
+                        fillcolor='rgba(220, 53, 69, 0.1)',
+                        opacity=0.6
+                    ),
+                    row=row, col=1
+                )
+                
+                fig.add_trace(
+                    go.Scatter(
+                        x=df['timestamp'],
+                        y=bb['middle'],
+                        mode='lines',
+                        name='BB Middle',
+                        line=dict(color=colors['middle'], width=1, dash='dash'),
+                        opacity=0.8
+                    ),
+                    row=row, col=1
+                )
+            
+            elif indicator == 'vwap' and 'vwap' in indicator_data:
+                fig.add_trace(
+                    go.Scatter(
+                        x=df['timestamp'],
+                        y=indicator_data['vwap'],
+                        mode='lines',
+                        name='VWAP',
+                        line=dict(color=config['color'], width=2),
+                        opacity=0.8
+                    ),
+                    row=row, col=1
+                )
+    
+    def _add_volume_chart(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, row: int):
+        """Add volume chart with volume SMA overlay."""
+        # Color volume bars based on price movement
+        colors = []
+        for i in range(len(df)):
+            if i == 0:
+                colors.append(CHART_COLORS['primary'])
+            else:
+                color = CHART_COLORS['success'] if df.iloc[i]['close'] >= df.iloc[i-1]['close'] else CHART_COLORS['danger']
+                colors.append(color)
+        
+        # Add volume bars
+        fig.add_trace(
+            go.Bar(
+                x=df['timestamp'],
+                y=df['volume'],
+                name='Volume',
+                marker_color=colors,
+                opacity=0.7,
+                showlegend=False
+            ),
+            row=row, col=1
+        )
+        
+        # Add volume SMA if available
+        if 'volume_sma' in indicator_data:
+            fig.add_trace(
+                go.Scatter(
+                    x=df['timestamp'],
+                    y=indicator_data['volume_sma'],
+                    mode='lines',
+                    name='Volume SMA(20)',
+                    line=dict(color=CHART_COLORS['warning'], width=2),
+                    opacity=0.8
+                ),
+                row=row, col=1
+            )
+    
+    def _add_oscillator_chart(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, indicator: str, row: int):
+        """Add oscillator charts (RSI, MACD, Stochastic)."""
+        config = self.chart_config.get(indicator, {})
+        
+        if indicator == 'rsi' and 'rsi' in indicator_data:
+            # Add RSI line
+            fig.add_trace(
+                go.Scatter(
+                    x=df['timestamp'],
+                    y=indicator_data['rsi'],
+                    mode='lines',
+                    name='RSI(14)',
+                    line=dict(color=config['color'], width=2),
+                    showlegend=False
+                ),
+                row=row, col=1
+            )
+            
+            # Add overbought/oversold lines
+            fig.add_hline(y=70, line_dash="dash", line_color="red", opacity=0.5, row=row, col=1)
+            fig.add_hline(y=30, line_dash="dash", line_color="green", opacity=0.5, row=row, col=1)
+            fig.add_hline(y=50, line_dash="dot", line_color="gray", opacity=0.3, row=row, col=1)
+        
+        elif indicator == 'macd' and 'macd' in indicator_data:
+            macd_data = indicator_data['macd']
+            colors = config['colors']
+            
+            # Add MACD line
+            fig.add_trace(
+                go.Scatter(
+                    x=df['timestamp'],
+                    y=macd_data['macd'],
+                    mode='lines',
+                    name='MACD',
+                    line=dict(color=colors['macd'], width=2),
+                    showlegend=False
+                ),
+                row=row, col=1
+            )
+            
+            # Add Signal line
+            fig.add_trace(
+                go.Scatter(
+                    x=df['timestamp'],
+                    y=macd_data['signal'],
+                    mode='lines',
+                    name='Signal',
+                    line=dict(color=colors['signal'], width=1.5),
+                    showlegend=False
+                ),
+                row=row, col=1
+            )
+            
+            # Add Histogram
+            fig.add_trace(
+                go.Bar(
+                    x=df['timestamp'],
+                    y=macd_data['histogram'],
+                    name='Histogram',
+                    marker_color=colors['histogram'],
+                    opacity=0.6,
+                    showlegend=False
+                ),
+                row=row, col=1
+            )
+        
+        elif indicator == 'stochastic' and 'stochastic' in indicator_data:
+            stoch_data = indicator_data['stochastic']
+            colors = config['colors']
+            
+            # Add %K line
+            fig.add_trace(
+                go.Scatter(
+                    x=df['timestamp'],
+                    y=stoch_data['k_percent'],
+                    mode='lines',
+                    name='%K',
+                    line=dict(color=colors['k'], width=2),
+                    showlegend=False
+                ),
+                row=row, col=1
+            )
+            
+            # Add %D line
+            fig.add_trace(
+                go.Scatter(
+                    x=df['timestamp'],
+                    y=stoch_data['d_percent'],
+                    mode='lines',
+                    name='%D',
+                    line=dict(color=colors['d'], width=1.5),
+                    showlegend=False
+                ),
+                row=row, col=1
+            )
+            
+            # Add overbought/oversold lines
+            fig.add_hline(y=80, line_dash="dash", line_color="red", opacity=0.5, row=row, col=1)
+            fig.add_hline(y=20, line_dash="dash", line_color="green", opacity=0.5, row=row, col=1)
+    
+    def _update_chart_layout(self, fig: go.Figure, symbol: str, total_rows: int):
+        """Update chart layout with advanced features."""
+        fig.update_layout(
+            title=dict(
+                text=f"{symbol} - Advanced Technical Analysis",
+                font=dict(size=20, color=CHART_COLORS['primary']),
+                x=0.5,
+                xanchor='center'
+            ),
+            height=600 + (total_rows - 1) * 150,  # Dynamic height based on subplots
+            margin=dict(l=50, r=50, t=80, b=50),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            ),
+            hovermode='x unified',
+            # Advanced zoom and pan controls
+            dragmode='zoom',
+        )
+        
+        # Update x-axis for all subplots
+        for i in range(1, total_rows + 1):
+            fig.update_xaxes(
+                type='date',
+                rangeslider_visible=False,
+                rangebreaks=[
+                    dict(bounds=["sat", "mon"]),  # Hide weekends
+                    dict(bounds=[17, 9], pattern='hour')  # Hide non-trading hours
+                ],
+                row=i, col=1
+            )
+            
+            # Only show x-axis labels on bottom subplot
+            if i < total_rows:
+                fig.update_xaxes(showticklabels=False, row=i, col=1)
+        
+        # Add range selector buttons
+        fig.update_layout(
+            xaxis=dict(
+                rangeselector=dict(
+                    buttons=list([
+                        dict(count=1, label="1D", step="day", stepmode="backward"),
+                        dict(count=7, label="7D", step="day", stepmode="backward"),
+                        dict(count=30, label="1M", step="day", stepmode="backward"),
+                        dict(count=90, label="3M", step="day", stepmode="backward"),
+                        dict(count=180, label="6M", step="day", stepmode="backward"),
+                        dict(count=365, label="1Y", step="day", stepmode="backward"),
+                        dict(step="all", label="ALL")
+                    ]),
+                    bgcolor=CHART_COLORS['light'],
+                    activecolor=CHART_COLORS['primary']
+                ),
+                type="date"
+            )
+        )
+    
+    def _create_empty_chart(self, message: str) -> go.Figure:
+        """Create empty chart with message."""
+        fig = go.Figure()
+        fig.update_layout(
+            title=message,
+            xaxis={'visible': False},
+            yaxis={'visible': False},
+            annotations=[{
+                'text': message,
+                'xref': 'paper',
+                'yref': 'paper',
+                'showarrow': False,
+                'font': {'size': 16, 'color': '#666666'},
+                'x': 0.5,
+                'y': 0.5
+            }],
+            height=400
+        )
+        return fig
+
+
+def create_chart_controls() -> html.Div:
+    """Create interactive chart control panel."""
+    indicator_service = TechnicalIndicatorService()
+    chart_config = indicator_service.get_indicator_config()
+    
+    # Organize indicators by type
+    overlay_indicators = []
+    oscillator_indicators = []
+    
+    for key, config in chart_config.items():
+        option = {'label': config['name'], 'value': key}
+        if config['type'] == 'overlay':
+            overlay_indicators.append(option)
+        elif config['type'] == 'oscillator':
+            oscillator_indicators.append(option)
+    
+    return dbc.Card([
+        dbc.CardHeader([
+            html.H5("Chart Controls", className="mb-0")
+        ]),
+        dbc.CardBody([
+            dbc.Row([
+                # Chart Type Selection
+                dbc.Col([
+                    html.Label("Chart Type:", className="form-label"),
+                    dcc.Dropdown(
+                        id="chart-type-dropdown",
+                        options=[
+                            {'label': 'Candlestick', 'value': 'candlestick'},
+                            {'label': 'OHLC', 'value': 'ohlc'},
+                            {'label': 'Line', 'value': 'line'}
+                        ],
+                        value='candlestick',
+                        clearable=False
+                    )
+                ], width=3),
+                
+                # Overlay Indicators
+                dbc.Col([
+                    html.Label("Overlay Indicators:", className="form-label"),
+                    dcc.Dropdown(
+                        id="overlay-indicators-dropdown",
+                        options=overlay_indicators,
+                        value=['sma', 'ema'],
+                        multi=True,
+                        placeholder="Select overlays..."
+                    )
+                ], width=4),
+                
+                # Oscillator Indicators
+                dbc.Col([
+                    html.Label("Oscillators:", className="form-label"),
+                    dcc.Dropdown(
+                        id="oscillator-indicators-dropdown",
+                        options=oscillator_indicators,
+                        value=['rsi'],
+                        multi=True,
+                        placeholder="Select oscillators..."
+                    )
+                ], width=3),
+                
+                # Volume Toggle
+                dbc.Col([
+                    html.Label("Volume:", className="form-label"),
+                    dbc.Switch(
+                        id="volume-toggle",
+                        label="Show Volume",
+                        value=True
+                    )
+                ], width=2)
+            ], className="mb-3"),
+            
+            dbc.Row([
+                # Drawing Tools (Future Enhancement)
+                dbc.Col([
+                    html.Label("Drawing Tools:", className="form-label"),
+                    dbc.ButtonGroup([
+                        dbc.Button("Trend Line", id="trend-line-btn", size="sm", outline=True),
+                        dbc.Button("Support/Resistance", id="support-resistance-btn", size="sm", outline=True),
+                        dbc.Button("Clear All", id="clear-drawings-btn", size="sm", outline=True, color="secondary")
+                    ])
+                ], width=6),
+                
+                # Export Options
+                dbc.Col([
+                    html.Label("Export:", className="form-label"),
+                    dbc.ButtonGroup([
+                        dbc.Button("PNG", id="export-png-btn", size="sm", outline=True),
+                        dbc.Button("PDF", id="export-pdf-btn", size="sm", outline=True),
+                        dbc.Button("SVG", id="export-svg-btn", size="sm", outline=True)
+                    ])
+                ], width=6)
+            ])
+        ])
+    ], className="mb-4")
+
+
+def create_indicator_info_panel() -> html.Div:
+    """Create indicator information panel."""
+    indicator_service = TechnicalIndicatorService()
+    chart_config = indicator_service.get_indicator_config()
+    
+    indicator_cards = []
+    for key, config in chart_config.items():
+        card = dbc.Card([
+            dbc.CardBody([
+                html.H6(config['name'], className="card-title"),
+                html.P(config['description'], className="card-text text-muted small"),
+                html.Div([
+                    dbc.Badge(config['type'].title(), color="primary", className="me-1"),
+                    dbc.Badge(f"Color: {config.get('color', 'Various')}", color="secondary")
+                ])
+            ])
+        ], className="mb-2")
+        indicator_cards.append(card)
+    
+    return dbc.Collapse([
+        html.H5("Technical Indicators Guide", className="mb-3"),
+        html.Div(indicator_cards)
+    ], id="indicator-info-collapse", is_open=False)

@@ -5,32 +5,41 @@ Handles symbol metadata, sector/industry data, and symbol filtering.
 
 from typing import List, Dict, Any, Optional
 from .base_service import BaseDashboardService
+from .cache_service import cached
 
 
 class SymbolService(BaseDashboardService):
     """Service to handle symbol and company information operations."""
     
+    @cached(ttl=300, key_func=lambda self, source='yahoo': f"symbols_{source}")
     def get_available_symbols(self, source: str = 'yahoo') -> List[Dict[str, str]]:
-        """Get list of available symbols with market data and company names."""
+        """Get list of available symbols with market data and company names using batch query."""
         try:
-            symbols = self.db_manager.get_symbols_with_data(source)
-            symbol_data = []
+            # Use batch query to get symbols with company names in single DB call
+            query = """
+                SELECT DISTINCT s.symbol, COALESCE(si.company_name, s.symbol) as company_name
+                FROM (
+                    SELECT DISTINCT symbol FROM market_data WHERE source = %s
+                ) s
+                LEFT JOIN stock_info si ON s.symbol = si.symbol
+                ORDER BY s.symbol
+            """
             
-            for symbol in symbols:
-                stock_info = self.db_manager.get_stock_info(symbol)
-                if stock_info and stock_info.get('company_name'):
-                    symbol_data.append({
-                        'symbol': symbol,
-                        'company_name': stock_info['company_name']
-                    })
-                else:
-                    # Fallback if no company name found
-                    symbol_data.append({
-                        'symbol': symbol,
-                        'company_name': symbol
-                    })
+            results = self.execute_query(query, (source,))
             
-            self.logger.info(f"Retrieved {len(symbol_data)} symbols with company names from database")
+            if not results:
+                self.logger.warning("No symbols found with market data")
+                return self.get_fallback_data('symbols')
+            
+            symbol_data = [
+                {
+                    'symbol': row[0],
+                    'company_name': row[1]
+                }
+                for row in results
+            ]
+            
+            self.logger.info(f"Retrieved {len(symbol_data)} symbols with company names in single batch query")
             return symbol_data
             
         except Exception as e:
@@ -107,6 +116,7 @@ class SymbolService(BaseDashboardService):
             self.logger.error(f"Error getting symbols by industry {industry}: {e}")
             return self.get_fallback_data('symbols')
     
+    @cached(ttl=600, key_func=lambda self, source='yahoo': f"sectors_{source}")
     def get_sector_distribution(self, source: str = 'yahoo') -> Dict[str, Any]:
         """Get distribution of symbols by sector."""
         try:
@@ -139,6 +149,7 @@ class SymbolService(BaseDashboardService):
             self.logger.error(f"Error getting sector distribution: {e}")
             return self.get_fallback_data('sectors')
     
+    @cached(ttl=600, key_func=lambda self, sector, source='yahoo': f"industries_{sector}_{source}")
     def get_industry_distribution(self, sector: str, source: str = 'yahoo') -> Dict[str, Any]:
         """Get distribution of symbols by industry within a sector."""
         try:
