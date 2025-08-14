@@ -2,7 +2,7 @@
 Pydantic schemas for data extraction API endpoints.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from enum import Enum
@@ -21,6 +21,55 @@ class MarketDataRequest(BaseModel):
     start_date: datetime = Field(..., description="Start date for data range")
     end_date: datetime = Field(..., description="End date for data range")
     source: DataSource = Field(default=DataSource.YAHOO, description="Data source")
+    
+    @field_validator('symbol', mode='before')
+    @classmethod
+    def validate_symbol(cls, v):
+        """Validate symbol format but allow invalid symbols for graceful handling."""
+        if isinstance(v, str):
+            # Allow empty symbols for graceful handling in API route
+            # This maintains backward compatibility with existing tests
+            if not v:
+                return v  # Return empty string as-is
+            
+            # Basic validation - ensure it's a string
+            return v.strip().upper()
+        return v
+    
+    @field_validator('start_date', 'end_date', mode='before')
+    @classmethod
+    def validate_date_format(cls, v):
+        """Fast validation for date format before parsing."""
+        if isinstance(v, str):
+            # Quick check for obviously invalid formats
+            if v in ['invalid-date', 'null', 'undefined', '']:
+                raise ValueError(f"Invalid date format: {v}")
+            
+            # Try to parse with common formats for better performance
+            try:
+                # Try ISO format first (most common)
+                if 'T' in v or 'Z' in v:
+                    return datetime.fromisoformat(v.replace('Z', '+00:00'))
+                # Try simple date format
+                elif len(v) == 10 and v.count('-') == 2:
+                    return datetime.strptime(v, '%Y-%m-%d')
+                # Try other common formats
+                elif len(v) == 19 and v.count('-') == 2 and v.count(':') == 2:
+                    return datetime.strptime(v, '%Y-%m-%d %H:%M:%S')
+                else:
+                    # Fall back to standard parsing
+                    return datetime.fromisoformat(v)
+            except (ValueError, TypeError):
+                raise ValueError(f"Invalid date format: {v}")
+        return v
+    
+    @field_validator('end_date')
+    @classmethod
+    def validate_date_range(cls, v, info):
+        """Validate that end_date is after start_date."""
+        if 'start_date' in info.data and v <= info.data['start_date']:
+            raise ValueError("end_date must be after start_date")
+        return v
     
     model_config = {
         "json_schema_extra": {

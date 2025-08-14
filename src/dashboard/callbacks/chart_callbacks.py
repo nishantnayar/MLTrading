@@ -37,11 +37,13 @@ def register_chart_callbacks(app):
 
     @app.callback(
         Output("sector-chart", "figure"),
-        [Input("refresh-stats-btn", "n_clicks")],
+        [Input("refresh-stats-btn", "n_clicks"),
+         Input("initial-interval", "n_intervals")],
         prevent_initial_call=False
     )
-    def update_sector_chart(refresh_clicks):
+    def update_sector_chart(refresh_clicks, n_intervals):
         """Update sector distribution chart with real data"""
+        logger.info(f"Sector chart callback triggered: refresh_clicks={refresh_clicks}, n_intervals={n_intervals}")
         try:
             # Get real sector distribution data
             sector_data = data_service.get_sector_distribution()
@@ -98,10 +100,11 @@ def register_chart_callbacks(app):
     @app.callback(
         Output("industry-chart", "figure"),
         [Input("sector-chart", "clickData"),
-         Input("refresh-stats-btn", "n_clicks")],
+         Input("refresh-stats-btn", "n_clicks"),
+         Input("initial-interval", "n_intervals")],
         prevent_initial_call=False
     )
-    def update_industry_chart(sector_click, refresh_clicks):
+    def update_industry_chart(sector_click, refresh_clicks, n_intervals):
         """Update industry distribution chart based on sector selection with real data"""
         try:
             if sector_click:
@@ -196,11 +199,13 @@ def register_chart_callbacks(app):
          Output("symbol-dropdown", "value")],
         [Input("refresh-stats-btn", "n_clicks"),
          Input("current-sector-filter", "children"),
-         Input("current-industry-filter", "children")],
+         Input("current-industry-filter", "children"),
+         Input("initial-interval", "n_intervals")],
         prevent_initial_call=False
     )
-    def update_symbol_options(refresh_clicks, selected_sector, selected_industry):
+    def update_symbol_options(refresh_clicks, selected_sector, selected_industry, n_intervals):
         """Update symbol dropdown based on selected sector and industry filters"""
+        logger.info(f"Symbol dropdown callback triggered: sector={selected_sector}, industry={selected_industry}, n_intervals={n_intervals}")
         try:
             # Determine which filter to use
             if selected_industry and selected_industry != "All Industries":

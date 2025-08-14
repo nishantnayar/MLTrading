@@ -71,8 +71,12 @@ def create_help_layout():
                                     html.I(className="fas fa-book-open me-3 text-primary"),
                                     "ML Trading Dashboard"
                                 ], className="mb-2 fw-bold"),
-                                html.P("Complete guide to the enhanced trading dashboard with advanced volume analysis and technical indicators", 
-                                      className="text-muted mb-3"),
+                                                                 html.P("Complete guide to the simplified trading dashboard with advanced volume analysis and technical indicators", 
+                                       className="text-muted mb-3"),
+                                 dbc.Alert([
+                                     html.I(className="fas fa-info-circle me-2"),
+                                     html.Strong("Simplified Dashboard:"), " The settings page has been removed to focus on core trading functionality and eliminate debugging complexity."
+                                 ], color="info", className="mb-3"),
                                 dbc.ButtonGroup([
                                     dbc.Button([html.I(className="fas fa-rocket me-1"), "Quick Start"], 
                                               color="primary", size="sm", href="#quick-start"),
@@ -426,10 +430,7 @@ def create_help_layout():
                                         html.I(className="fas fa-brain me-2"),
                                         html.Strong("Analysis"), " - Advanced trading insights and analytics"
                                     ]),
-                                    dbc.ListGroupItem([
-                                        html.I(className="fas fa-cog me-2"),
-                                        html.Strong("Settings"), " - Dashboard configuration and preferences"
-                                    ])
+                                    
                                 ])
                             ], width=6),
                             dbc.Col([
@@ -442,10 +443,6 @@ def create_help_layout():
                                     dbc.ListGroupItem([
                                         html.I(className="fas fa-file-alt me-2"),
                                         html.Strong("Logs"), " - System logs and performance monitoring"
-                                    ]),
-                                    dbc.ListGroupItem([
-                                        html.I(className="fas fa-cogs me-2"),
-                                        html.Strong("Settings"), " - System configuration"
                                     ]),
                                     dbc.ListGroupItem([
                                         html.I(className="fas fa-question-circle me-2"),

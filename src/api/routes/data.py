@@ -55,11 +55,17 @@ async def get_market_data(
     - **source**: Data source (yahoo, alpaca, iex)
     """
     try:
-        logger.info(f"Fetching market data for {request.symbol} from {request.start_date} to {request.end_date}")
+        # Early validation for obviously invalid symbols
+        symbol = request.symbol.strip().upper()
+        if not symbol or len(symbol) > 10 or not symbol.replace('.', '').replace('-', '').isalpha():
+            logger.warning(f"Rejecting invalid symbol: {request.symbol}")
+            return []
+        
+        logger.info(f"Fetching market data for {symbol} from {request.start_date} to {request.end_date}")
         
         # Get data from database
         df = db.get_market_data(
-            symbol=request.symbol,
+            symbol=symbol,
             start_date=request.start_date,
             end_date=request.end_date,
             source=request.source.value
@@ -103,6 +109,12 @@ async def get_latest_market_data(
     - **source**: Data source (yahoo, alpaca, iex)
     """
     try:
+        # Early validation for obviously invalid symbols
+        symbol = symbol.strip().upper()
+        if not symbol or len(symbol) > 10 or not symbol.replace('.', '').replace('-', '').isalpha():
+            logger.warning(f"Rejecting invalid symbol: {symbol}")
+            raise HTTPException(status_code=400, detail=f"Invalid symbol format: {symbol}")
+        
         logger.info(f"Fetching latest market data for {symbol}")
         
         data = db.get_latest_market_data(symbol=symbol, source=source.value)

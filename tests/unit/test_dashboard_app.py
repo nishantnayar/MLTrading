@@ -91,7 +91,7 @@ class TestDashboardApp:
         mock_ctx.triggered = []
         mock_dashboard.return_value = "dashboard_content"
         
-        result = display_page(None, None, None, None, None, None)
+        result = display_page(None, None, None, None, None, None, None)
         
         mock_dashboard.assert_called_once()
         assert result == "dashboard_content"
@@ -104,7 +104,7 @@ class TestDashboardApp:
         mock_ctx.triggered = [{'prop_id': 'nav-help.n_clicks'}]
         mock_help.return_value = "help_content"
         
-        result = display_page(None, None, 1, None, None, None)
+        result = display_page(None, None, 1, None, None, None, None)
         
         mock_help.assert_called_once()
         assert result == "help_content"
@@ -117,7 +117,7 @@ class TestDashboardApp:
         mock_ctx.triggered = [{'prop_id': 'nav-logs.n_clicks'}]
         mock_logs.return_value = "logs_content"
         
-        result = display_page(None, None, None, None, 1, None)
+        result = display_page(None, None, None, None, 1, None, None)
         
         mock_logs.assert_called_once()
         assert result == "logs_content"
@@ -130,7 +130,7 @@ class TestDashboardApp:
         mock_ctx.triggered = [{'prop_id': 'nav-author.n_clicks'}]
         mock_author.return_value = "author_content"
         
-        result = display_page(None, None, None, None, None, 1)
+        result = display_page(None, None, None, None, None, 1, None)
         
         mock_author.assert_called_once()
         assert result == "author_content"

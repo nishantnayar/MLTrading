@@ -23,6 +23,8 @@ from src.dashboard.config import (
 )
 from src.dashboard.layouts.dashboard_layout import create_dashboard_content
 from src.dashboard.layouts.help_layout import create_help_layout
+from src.dashboard.layouts.tests_layout import create_tests_layout
+
 from src.dashboard.layouts.logs_layout import create_logs_layout, register_logs_callbacks
 from src.dashboard.layouts.author_layout import create_author_layout
 from src.dashboard.callbacks import register_chart_callbacks, register_overview_callbacks
@@ -97,12 +99,13 @@ app.layout = dbc.Container([
     # Location component for navigation
     dcc.Location(id='url', refresh=False),
     
-    # Interval to trigger initial callbacks (disabled by default, only runs once)
+    # Interval to trigger initial callbacks (enabled initially, runs once then disables)
     dcc.Interval(
         id="initial-interval", 
-        interval=DASHBOARD_CONFIG['refresh_interval'], 
+        interval=1000,  # 1 second for quick initial load
         n_intervals=0, 
-        disabled=True
+        disabled=False,
+        max_intervals=1  # Only run once
     ),
     
     # Navigation Bar
@@ -129,12 +132,13 @@ app.layout = dbc.Container([
     Output("page-content", "children"),
     [Input("url", "pathname"),
      Input("nav-dashboard", "n_clicks"),
+     Input("nav-tests", "n_clicks"),
      Input("nav-help", "n_clicks"),
-     Input("nav-settings", "n_clicks"),
+
      Input("nav-logs", "n_clicks"),
      Input("nav-author", "n_clicks")]
 )
-def display_page(pathname, nav_dashboard, nav_help, nav_settings, nav_logs, nav_author):
+def display_page(pathname, nav_dashboard, nav_tests, nav_help, nav_logs, nav_author):
     """Display different pages based on navigation"""
     ctx = callback_context
     
@@ -144,13 +148,11 @@ def display_page(pathname, nav_dashboard, nav_help, nav_settings, nav_logs, nav_
     
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     
-    if button_id == "nav-help" or pathname == "/help":
+    if button_id == "nav-tests" or pathname == "/tests":
+        return create_tests_layout()
+    elif button_id == "nav-help" or pathname == "/help":
         return create_help_layout()
-    elif button_id == "nav-settings" or pathname == "/settings":
-        return html.Div([
-            html.H3("Settings", className="text-center"),
-            html.P("Settings page coming soon...", className="text-center text-muted")
-        ])
+
     elif button_id == "nav-logs" or pathname == "/logs":
         return create_logs_layout()
     elif button_id == "nav-author" or pathname == "/author":
@@ -178,6 +180,7 @@ register_chart_callbacks(app)
 register_overview_callbacks(app)
 register_interactive_chart_callbacks(app)
 register_logs_callbacks(app)
+
 
 
 if __name__ == '__main__':

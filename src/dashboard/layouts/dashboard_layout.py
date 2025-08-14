@@ -288,21 +288,6 @@ def create_analysis_tab():
     )
 
 
-def create_settings_tab():
-    """Create the settings tab content"""
-    return dbc.Tab(
-        dbc.Card([
-            dbc.CardHeader("Settings", className="text-center p-2"),
-            dbc.CardBody([
-                html.Div([
-                    html.H5("Dashboard Settings", className="text-center mb-3"),
-                    html.P("Configure your dashboard preferences and trading parameters.", className="text-center text-muted")
-                ], className="p-4")
-            ], className="p-0")
-        ], style=CARD_STYLE_NONE),
-        label="Settings",
-        tab_id="settings-tab"
-    )
 
 
 def create_dashboard_content():
@@ -310,6 +295,5 @@ def create_dashboard_content():
     return dbc.Tabs([
         create_overview_tab(),
         create_charts_tab(), 
-        create_analysis_tab(),
-        create_settings_tab()
+        create_analysis_tab()
     ], id="dashboard-tabs", active_tab="overview-tab")

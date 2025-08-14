@@ -13,6 +13,7 @@ from typing import Dict, List, Any, Optional
 from ..config import CHART_COLORS
 from ..services.technical_indicators import TechnicalIndicatorService
 from ..services.market_data_service import MarketDataService
+
 from ...utils.logging_config import get_ui_logger
 
 logger = get_ui_logger("interactive_chart")
@@ -32,6 +33,11 @@ class InteractiveChartBuilder:
             logger.info(f"Bollinger Bands config: {self.chart_config['bollinger']}")
         else:
             logger.warning("Bollinger Bands config not found!")
+    
+    def get_chart_colors(self):
+        """Get chart colors from constants"""
+        from ..config.constants import CHART_COLORS
+        return CHART_COLORS
     
     def create_advanced_price_chart(self, 
                                   df: pd.DataFrame, 
@@ -135,6 +141,8 @@ class InteractiveChartBuilder:
     
     def _add_price_chart(self, fig: go.Figure, df: pd.DataFrame, symbol: str, chart_type: str, row: int):
         """Add main price chart (candlestick, OHLC, or line)."""
+        colors = self.get_chart_colors()
+        
         if chart_type == 'candlestick':
             fig.add_trace(
                 go.Candlestick(
@@ -144,8 +152,8 @@ class InteractiveChartBuilder:
                     low=df['low'],
                     close=df['close'],
                     name=symbol,
-                    increasing_line_color=CHART_COLORS['success'],
-                    decreasing_line_color=CHART_COLORS['danger'],
+                    increasing_line_color=colors['success'],
+                    decreasing_line_color=colors['danger'],
                     showlegend=False
                 ),
                 row=row, col=1
@@ -159,8 +167,8 @@ class InteractiveChartBuilder:
                     low=df['low'],
                     close=df['close'],
                     name=symbol,
-                    increasing_line_color=CHART_COLORS['success'],
-                    decreasing_line_color=CHART_COLORS['danger'],
+                    increasing_line_color=colors['success'],
+                    decreasing_line_color=colors['danger'],
                     showlegend=False
                 ),
                 row=row, col=1
@@ -172,7 +180,7 @@ class InteractiveChartBuilder:
                     y=df['close'],
                     mode='lines',
                     name=f'{symbol} Close',
-                    line=dict(color=CHART_COLORS['primary'], width=2),
+                    line=dict(color=colors['primary'], width=2),
                     showlegend=False
                 ),
                 row=row, col=1
@@ -291,19 +299,21 @@ class InteractiveChartBuilder:
     
     def _add_volume_chart(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, row: int, volume_display: str = 'bars_ma', color_by_price: bool = True):
         """Add volume chart with configurable display options."""
+        colors = self.get_chart_colors()
+        
         # Color volume bars based on price movement if enabled
         if color_by_price:
-            colors = []
+            bar_colors = []
             for i in range(len(df)):
                 if i == 0:
-                    colors.append(CHART_COLORS['primary'])
+                    bar_colors.append(colors['primary'])
                 else:
                     # Color based on price direction
-                    color = CHART_COLORS['success'] if df.iloc[i]['close'] >= df.iloc[i-1]['close'] else CHART_COLORS['danger']
-                    colors.append(color)
+                    color = colors['success'] if df.iloc[i]['close'] >= df.iloc[i-1]['close'] else colors['danger']
+                    bar_colors.append(color)
         else:
             # Use single color for all bars
-            colors = CHART_COLORS['info']
+            bar_colors = colors['info']
         
         # Add volume bars (always show for now)
         fig.add_trace(
@@ -311,7 +321,7 @@ class InteractiveChartBuilder:
                 x=df['timestamp'],
                 y=df['volume'],
                 name='Volume',
-                marker_color=colors,
+                marker_color=bar_colors,
                 opacity=0.7,
                 showlegend=False,
                 hovertemplate='<b>%{x}</b><br>Volume: %{y:,.0f}<extra></extra>'
@@ -327,7 +337,7 @@ class InteractiveChartBuilder:
                     y=indicator_data['volume_sma'],
                     mode='lines',
                     name='Volume SMA(20)',
-                    line=dict(color=CHART_COLORS['warning'], width=2),
+                    line=dict(color=colors['warning'], width=2),
                     opacity=0.8,
                     hovertemplate='<b>%{x}</b><br>Volume SMA: %{y:,.0f}<extra></extra>'
                 ),
@@ -553,10 +563,12 @@ class InteractiveChartBuilder:
     
     def _update_chart_layout(self, fig: go.Figure, symbol: str, total_rows: int):
         """Update chart layout with advanced features."""
+        colors = self.get_chart_colors()
+        
         fig.update_layout(
             title=dict(
                 text=f"{symbol} - Advanced Technical Analysis",
-                font=dict(size=20, color=CHART_COLORS['primary']),
+                font=dict(size=20, color=colors['primary']),
                 x=0.5,
                 xanchor='center'
             ),
@@ -605,8 +617,8 @@ class InteractiveChartBuilder:
                         dict(count=365, label="1Y", step="day", stepmode="backward"),
                         dict(step="all", label="ALL")
                     ]),
-                    bgcolor=CHART_COLORS['light'],
-                    activecolor=CHART_COLORS['primary']
+                    bgcolor=colors['light'],
+                    activecolor=colors['primary']
                 ),
                 type="date"
             )

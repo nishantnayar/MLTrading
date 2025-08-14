@@ -221,7 +221,7 @@ Enhanced Service Layer
 
 #### **Layout System Refactoring**
 - **Dashboard Layout** (`dashboard_layout.py`):
-  - Modular tab creation (Overview, Charts, Analysis, Settings)
+  - Modular tab creation (Overview, Charts, Analysis)
   - Reusable UI components and chart containers
   - Consistent styling with configuration-driven theming
   - Responsive design with proper spacing and typography

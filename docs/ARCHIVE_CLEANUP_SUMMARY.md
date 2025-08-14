@@ -20,10 +20,11 @@
 - **Purpose**: Reusable chart creation functions
 - **Status**: ✅ Moved (ready for future use)
 
-### 4. Settings Layout
+### 4. Settings Layout - REMOVED
 - **From**: `src/dashboard/archive/pages/settings.py`
-- **To**: `src/dashboard/layouts/settings_layout.py`
-- **Purpose**: Settings page UI components and callbacks
+- **To**: `src/dashboard/layouts/settings_layout.py` (DELETED)
+- **Purpose**: Settings page was removed to simplify the dashboard and eliminate debugging complexity
+- **Status**: Completely removed from the system
 - **Status**: ✅ Moved (ready for future use)
 
 ### 5. Help Layout
@@ -69,7 +70,7 @@ src/dashboard/
 │   └── log_viewer.py              # Log viewing utilities (moved from archive)
 ├── layouts/
 │   ├── chart_components.py        # Chart creation functions (moved from archive)
-│   ├── settings_layout.py         # Settings page layout (moved from archive)
+│   ├── settings_layout.py         # Settings page layout (REMOVED - was moved from archive)
 │   └── help_layout.py             # Help page layout (moved from archive)
 ├── callbacks/                      # Empty (ready for future use)
 ├── assets/                         # CSS and static files

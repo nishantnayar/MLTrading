@@ -61,8 +61,9 @@ EXTERNAL_STYLESHEETS = [
 # Navigation Items
 NAV_ITEMS = [
     {"label": "Dashboard", "id": "nav-dashboard"},
+    {"label": "Tests", "id": "nav-tests"},
     {"label": "Logs", "id": "nav-logs"},
-    {"label": "Settings", "id": "nav-settings"},
+
     {"label": "Help", "id": "nav-help"},
     {"label": "Author", "id": "nav-author"}
 ]

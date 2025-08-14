@@ -26,13 +26,13 @@ class TestServiceImports:
             pytest.fail(f"Failed to import MarketDataService: {e}")
     
     def test_base_service_import(self):
-        """Test BaseService import."""
+        """Test BaseDashboardService import."""
         try:
-            from src.dashboard.services.base_service import BaseService
-            assert BaseService is not None
-            assert callable(BaseService)
+            from src.dashboard.services.base_service import BaseDashboardService
+            assert BaseDashboardService is not None
+            assert callable(BaseDashboardService)
         except ImportError as e:
-            pytest.skip(f"BaseService not available: {e}")
+            pytest.fail(f"Failed to import BaseDashboardService: {e}")
     
     def test_cache_service_import(self):
         """Test CacheService import."""
@@ -41,7 +41,7 @@ class TestServiceImports:
             assert CacheService is not None
             assert callable(CacheService)
         except ImportError as e:
-            pytest.skip(f"CacheService not available: {e}")
+            pytest.fail(f"Failed to import CacheService: {e}")
     
     def test_symbol_service_import(self):
         """Test SymbolService import."""
@@ -50,22 +50,22 @@ class TestServiceImports:
             assert SymbolService is not None
             assert callable(SymbolService)
         except ImportError as e:
-            pytest.skip(f"SymbolService not available: {e}")
+            pytest.fail(f"Failed to import SymbolService: {e}")
 
 
 class TestBaseService:
     """Test suite for BaseService functionality."""
     
     def test_base_service_initialization(self):
-        """Test BaseService initialization."""
+        """Test BaseDashboardService initialization."""
         try:
-            from src.dashboard.services.base_service import BaseService
-            service = BaseService()
+            from src.dashboard.services.base_service import BaseDashboardService
+            service = BaseDashboardService()
             assert service is not None
-        except ImportError:
-            pytest.skip("BaseService not available")
+        except ImportError as e:
+            pytest.fail(f"Failed to import BaseDashboardService: {e}")
         except Exception as e:
-            pytest.skip(f"BaseService initialization failed: {e}")
+            pytest.fail(f"BaseDashboardService initialization failed: {e}")
 
 
 class TestCacheService:
@@ -77,10 +77,10 @@ class TestCacheService:
             from src.dashboard.services.cache_service import CacheService
             cache_service = CacheService()
             assert cache_service is not None
-        except ImportError:
-            pytest.skip("CacheService not available")
+        except ImportError as e:
+            pytest.fail(f"Failed to import CacheService: {e}")
         except Exception as e:
-            pytest.skip(f"CacheService initialization failed: {e}")
+            pytest.fail(f"CacheService initialization failed: {e}")
     
     def test_cache_basic_operations(self):
         """Test basic cache operations if available."""
@@ -93,10 +93,12 @@ class TestCacheService:
                 cache_service.set("test_key", "test_value")
                 result = cache_service.get("test_key")
                 assert result == "test_value"
-        except (ImportError, AttributeError):
-            pytest.skip("Cache operations not available or not implemented")
+            else:
+                pytest.fail("CacheService missing required 'set' and 'get' methods")
+        except (ImportError, AttributeError) as e:
+            pytest.fail(f"Cache operations not available or not implemented: {e}")
         except Exception as e:
-            pytest.skip(f"Cache operations failed: {e}")
+            pytest.fail(f"Cache operations failed: {e}")
 
 
 class TestMarketDataService:
@@ -108,11 +110,10 @@ class TestMarketDataService:
             from src.dashboard.services.data_service import MarketDataService
             data_service = MarketDataService()
             assert data_service is not None
-        except ImportError:
-            pytest.fail("MarketDataService should be importable")
+        except ImportError as e:
+            pytest.fail(f"Failed to import MarketDataService: {e}")
         except Exception as e:
-            # Service might have dependencies that aren't available in test env
-            pytest.skip(f"MarketDataService initialization failed: {e}")
+            pytest.fail(f"MarketDataService initialization failed: {e}")
     
     def test_market_data_service_structure(self):
         """Test MarketDataService has expected structure."""
@@ -128,10 +129,10 @@ class TestMarketDataService:
             # Basic structure check
             assert service is not None
             
-        except ImportError:
-            pytest.fail("MarketDataService import failed")
+        except ImportError as e:
+            pytest.fail(f"MarketDataService import failed: {e}")
         except Exception as e:
-            pytest.skip(f"MarketDataService structure test failed: {e}")
+            pytest.fail(f"MarketDataService structure test failed: {e}")
 
 
 class TestServiceModule:
@@ -156,15 +157,13 @@ class TestServiceModule:
         """Test services directory has expected files."""
         services_dir = project_root / 'src' / 'dashboard' / 'services'
         
-        if not services_dir.exists():
-            pytest.skip("Services directory not found")
+        assert services_dir.exists(), "Services directory not found"
         
         expected_files = ['__init__.py', 'data_service.py']
         
         for filename in expected_files:
             file_path = services_dir / filename
-            if not file_path.exists():
-                pytest.skip(f"Expected file {filename} not found in services directory")
+            assert file_path.exists(), f"Expected file {filename} not found in services directory"
     
     def test_service_dependencies(self):
         """Test that service modules can handle missing dependencies gracefully."""
@@ -176,8 +175,4 @@ class TestServiceModule:
             assert data_service is not None
             
         except ImportError as e:
-            # Some dependencies might be missing, which is acceptable
-            if "No module named" in str(e):
-                pytest.skip(f"Service dependency missing: {e}")
-            else:
-                pytest.fail(f"Unexpected import error: {e}")
+            pytest.fail(f"Failed to import data_service module: {e}")

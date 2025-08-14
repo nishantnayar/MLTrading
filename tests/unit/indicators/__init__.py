@@ -1,0 +1,1 @@
+# Technical indicators unit tests package

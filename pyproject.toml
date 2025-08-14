@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mltrading"
+version = "0.1.0"
+description = "ML Trading System"
+authors = [{name = "ML Trading Team"}]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
+    "pydantic>=2.0.0",
+    "requests>=2.28.0",
+    "pandas>=1.5.0",
+    "numpy>=1.21.0",
+    "dash>=2.10.0",
+    "plotly>=5.10.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.10.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-benchmark>=4.0.0",
+    "pytest-xdist>=3.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--disable-warnings",
+    "-p", "no:warnings",
+    "--durations=10",
+    "--durations-min=0.1"
+]
+markers = [
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests", 
+    "slow: marks tests as slow running",
+    "api: marks tests as API tests",
+    "fast: marks tests as fast running for development"
+]

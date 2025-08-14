@@ -35,14 +35,14 @@ class TestAPIIntegration:
     def test_api_health(self, base_url: str):
         """Test API health endpoints."""
         # Test main health endpoint
-        response = requests.get(f"{base_url}/health")
+        response = requests.get(f"{base_url}/health", timeout=5)
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
         assert data["service"] == "ml-trading-api"
         
         # Test data API health endpoint
-        response = requests.get(f"{base_url}/data/health")
+        response = requests.get(f"{base_url}/data/health", timeout=5)
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
@@ -51,7 +51,7 @@ class TestAPIIntegration:
     def test_data_symbols_endpoint(self, base_url: str):
         """Test symbols endpoint."""
         payload = {"source": "yahoo"}
-        response = requests.post(f"{base_url}/data/symbols", json=payload)
+        response = requests.post(f"{base_url}/data/symbols", json=payload, timeout=10)
         
         assert response.status_code == 200
         data = response.json()
@@ -66,7 +66,7 @@ class TestAPIIntegration:
     
     def test_data_sectors_endpoint(self, base_url: str):
         """Test sectors endpoint."""
-        response = requests.post(f"{base_url}/data/sectors")
+        response = requests.post(f"{base_url}/data/sectors", timeout=10)
         
         assert response.status_code == 200
         data = response.json()
@@ -79,7 +79,7 @@ class TestAPIIntegration:
     
     def test_data_industries_endpoint(self, base_url: str):
         """Test industries endpoint."""
-        response = requests.post(f"{base_url}/data/industries")
+        response = requests.post(f"{base_url}/data/industries", timeout=10)
         
         assert response.status_code == 200
         data = response.json()
@@ -91,7 +91,7 @@ class TestAPIIntegration:
     
     def test_data_summary_endpoint(self, base_url: str):
         """Test data summary endpoint."""
-        response = requests.get(f"{base_url}/data/data-summary")
+        response = requests.get(f"{base_url}/data/data-summary", timeout=10)
         
         assert response.status_code == 200
         data = response.json()
@@ -108,7 +108,7 @@ class TestAPIIntegration:
     def test_market_data_endpoint(self, base_url: str):
         """Test market data endpoint."""
         # First get available symbols
-        symbols_response = requests.post(f"{base_url}/data/symbols", json={"source": "yahoo"})
+        symbols_response = requests.post(f"{base_url}/data/symbols", json={"source": "yahoo"}, timeout=10)
         assert symbols_response.status_code == 200
         symbols_data = symbols_response.json()
         
@@ -127,7 +127,7 @@ class TestAPIIntegration:
             "source": "yahoo"
         }
         
-        response = requests.post(f"{base_url}/data/market-data", json=payload)
+        response = requests.post(f"{base_url}/data/market-data", json=payload, timeout=15)
         
         assert response.status_code == 200
         data = response.json()
@@ -145,7 +145,7 @@ class TestAPIIntegration:
     def test_latest_market_data_endpoint(self, base_url: str):
         """Test latest market data endpoint."""
         # First get available symbols
-        symbols_response = requests.post(f"{base_url}/data/symbols", json={"source": "yahoo"})
+        symbols_response = requests.post(f"{base_url}/data/symbols", json={"source": "yahoo"}, timeout=10)
         assert symbols_response.status_code == 200
         symbols_data = symbols_response.json()
         
@@ -155,7 +155,7 @@ class TestAPIIntegration:
         # Test with first available symbol
         symbol = symbols_data["symbols"][0]
         
-        response = requests.get(f"{base_url}/data/market-data/{symbol}/latest?source=yahoo")
+        response = requests.get(f"{base_url}/data/market-data/{symbol}/latest?source=yahoo", timeout=10)
         
         # This might return 404 if no data exists, which is acceptable
         if response.status_code == 200:
@@ -173,7 +173,7 @@ class TestAPIIntegration:
     def test_stock_info_endpoint(self, base_url: str):
         """Test stock info endpoint."""
         # First get available symbols
-        symbols_response = requests.post(f"{base_url}/data/symbols", json={"source": "yahoo"})
+        symbols_response = requests.post(f"{base_url}/data/symbols", json={"source": "yahoo"}, timeout=10)
         assert symbols_response.status_code == 200
         symbols_data = symbols_response.json()
         
@@ -184,7 +184,7 @@ class TestAPIIntegration:
         symbol = symbols_data["symbols"][0]
         
         payload = {"symbol": symbol}
-        response = requests.post(f"{base_url}/data/stock-info", json=payload)
+        response = requests.post(f"{base_url}/data/stock-info", json=payload, timeout=10)
         
         # This might return 404 if no stock info exists, which is acceptable
         if response.status_code == 200:
@@ -200,7 +200,7 @@ class TestAPIIntegration:
     def test_sector_stocks_endpoint(self, base_url: str):
         """Test sector stocks endpoint."""
         # First get available sectors
-        sectors_response = requests.post(f"{base_url}/data/sectors")
+        sectors_response = requests.post(f"{base_url}/data/sectors", timeout=10)
         assert sectors_response.status_code == 200
         sectors_data = sectors_response.json()
         
@@ -215,7 +215,7 @@ class TestAPIIntegration:
         # Test with first available non-empty sector
         sector = sectors[0]
         
-        response = requests.post(f"{base_url}/data/sectors/{sector}/stocks")
+        response = requests.post(f"{base_url}/data/sectors/{sector}/stocks", timeout=10)
         
         assert response.status_code == 200
         data = response.json()
@@ -226,7 +226,7 @@ class TestAPIIntegration:
     def test_industry_stocks_endpoint(self, base_url: str):
         """Test industry stocks endpoint."""
         # First get available industries
-        industries_response = requests.post(f"{base_url}/data/industries")
+        industries_response = requests.post(f"{base_url}/data/industries", timeout=10)
         assert industries_response.status_code == 200
         industries_data = industries_response.json()
         
@@ -241,7 +241,7 @@ class TestAPIIntegration:
         # Test with first available non-empty industry
         industry = industries[0]
         
-        response = requests.post(f"{base_url}/data/industries/{industry}/stocks")
+        response = requests.post(f"{base_url}/data/industries/{industry}/stocks", timeout=10)
         
         assert response.status_code == 200
         data = response.json()
@@ -252,7 +252,7 @@ class TestAPIIntegration:
     def test_date_range_endpoint(self, base_url: str):
         """Test date range endpoint."""
         # First get available symbols
-        symbols_response = requests.post(f"{base_url}/data/symbols", json={"source": "yahoo"})
+        symbols_response = requests.post(f"{base_url}/data/symbols", json={"source": "yahoo"}, timeout=10)
         assert symbols_response.status_code == 200
         symbols_data = symbols_response.json()
         
@@ -267,7 +267,7 @@ class TestAPIIntegration:
             "source": "yahoo"
         }
         
-        response = requests.post(f"{base_url}/data/date-range", json=payload)
+        response = requests.post(f"{base_url}/data/date-range", json=payload, timeout=10)
         
         assert response.status_code == 200
         data = response.json()
@@ -283,13 +283,22 @@ class TestAPIIntegration:
 class TestAPIErrorHandling:
     """Test suite for API error handling."""
     
+    # Cache the API port to avoid repeated discovery
+    _cached_api_port = None
+    
     @pytest.fixture(scope="class")
     def api_port(self) -> Optional[int]:
         """Find the port where the API is running."""
+        # Use cached port if available
+        if self._cached_api_port is not None:
+            return self._cached_api_port
+            
         for port in [8000, 8001, 8002, 8003, 8004]:
             try:
-                response = requests.get(f"http://localhost:{port}/health", timeout=2)
+                # Reduced timeout for faster discovery
+                response = requests.get(f"http://localhost:{port}/health", timeout=1)
                 if response.status_code == 200:
+                    self._cached_api_port = port
                     return port
             except requests.RequestException:
                 continue
@@ -304,14 +313,18 @@ class TestAPIErrorHandling:
     
     def test_invalid_symbol(self, base_url: str):
         """Test API behavior with invalid symbol."""
+        # Use a past date range to avoid any real-time data fetching delays
+        past_date = (datetime.now() - timedelta(days=30)).isoformat()
+        
         payload = {
             "symbol": "INVALID_SYMBOL_12345",
-            "start_date": datetime.now().isoformat(),
-            "end_date": datetime.now().isoformat(),
+            "start_date": past_date,
+            "end_date": past_date,
             "source": "yahoo"
         }
         
-        response = requests.post(f"{base_url}/data/market-data", json=payload)
+        # Reduced timeout for faster execution
+        response = requests.post(f"{base_url}/data/market-data", json=payload, timeout=3)
         
         # Should return 200 with empty data, not an error
         assert response.status_code == 200
@@ -328,7 +341,8 @@ class TestAPIErrorHandling:
             "source": "yahoo"
         }
         
-        response = requests.post(f"{base_url}/data/market-data", json=payload)
+        # Reduced timeout for faster failure on invalid data
+        response = requests.post(f"{base_url}/data/market-data", json=payload, timeout=2)
         
         # Should return 422 (validation error) for invalid date format
         assert response.status_code == 422
@@ -340,9 +354,63 @@ class TestAPIErrorHandling:
             # Missing symbol field
         }
         
-        response = requests.post(f"{base_url}/data/market-data", json=payload)
+        # Reduced timeout for faster failure on invalid data
+        response = requests.post(f"{base_url}/data/market-data", json=payload, timeout=2)
         
         # Should return 422 (validation error) for missing required fields
+        assert response.status_code == 422
+
+
+class TestAPIErrorHandlingFast:
+    """Fast version of API error handling tests for development."""
+    
+    # Cache the API port to avoid repeated discovery
+    _cached_api_port = None
+    
+    @pytest.fixture(scope="class")
+    def api_port(self) -> Optional[int]:
+        """Find the port where the API is running."""
+        # Use cached port if available
+        if self._cached_api_port is not None:
+            return self._cached_api_port
+            
+        for port in [8000, 8001, 8002, 8003, 8004]:
+            try:
+                # Very short timeout for fast discovery
+                response = requests.get(f"http://localhost:{port}/health", timeout=0.5)
+                if response.status_code == 200:
+                    self._cached_api_port = port
+                    return port
+            except requests.RequestException:
+                continue
+        return None
+    
+    @pytest.fixture(scope="class")
+    def base_url(self, api_port: Optional[int]) -> str:
+        """Get the base URL for API requests."""
+        if api_port is None:
+            pytest.skip("API server is not running")
+        return f"http://localhost:{api_port}"
+    
+    @pytest.mark.fast
+    def test_invalid_date_format_fast(self, base_url: str):
+        """Fast test for invalid date format validation."""
+        payload = {
+            "symbol": "AAPL",
+            "start_date": "invalid-date",
+            "end_date": "invalid-date",
+            "source": "yahoo"
+        }
+        
+        # Very short timeout for fast feedback
+        response = requests.post(f"{base_url}/data/market-data", json=payload, timeout=1)
+        assert response.status_code == 422
+    
+    @pytest.mark.fast
+    def test_missing_fields_fast(self, base_url: str):
+        """Fast test for missing required fields."""
+        payload = {"source": "yahoo"}
+        response = requests.post(f"{base_url}/data/market-data", json=payload, timeout=1)
         assert response.status_code == 422
 
 
@@ -377,7 +445,7 @@ def run_api_tests():
     
     # Test health endpoints
     try:
-        response = requests.get(f"{base_url}/health")
+        response = requests.get(f"{base_url}/health", timeout=5)
         if response.status_code == 200:
             print("✅ Health endpoint test passed")
             tests_passed += 1
@@ -391,7 +459,7 @@ def run_api_tests():
     # Test symbols endpoint
     try:
         payload = {"source": "yahoo"}
-        response = requests.post(f"{base_url}/data/symbols", json=payload)
+        response = requests.post(f"{base_url}/data/symbols", json=payload, timeout=10)
         if response.status_code == 200:
             data = response.json()
             print(f"✅ Symbols endpoint test passed: {data.get('count', 0)} symbols")
@@ -405,7 +473,7 @@ def run_api_tests():
     
     # Test sectors endpoint
     try:
-        response = requests.post(f"{base_url}/data/sectors")
+        response = requests.post(f"{base_url}/data/sectors", timeout=10)
         if response.status_code == 200:
             data = response.json()
             print(f"✅ Sectors endpoint test passed: {data.get('count', 0)} sectors")
@@ -419,7 +487,7 @@ def run_api_tests():
     
     # Test data summary
     try:
-        response = requests.get(f"{base_url}/data/data-summary")
+        response = requests.get(f"{base_url}/data/data-summary", timeout=10)
         if response.status_code == 200:
             data = response.json()
             print(f"✅ Data summary test passed: {data.get('total_symbols', 0)} symbols, {data.get('total_sectors', 0)} sectors")
