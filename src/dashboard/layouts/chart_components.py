@@ -133,9 +133,10 @@ def create_horizontal_bar_chart(data, title, color=CHART_COLORS['primary']):
     if not data or not data.get('categories') or not data.get('counts'):
         return create_empty_chart(title)
     
-    # Sort by count in descending order
+    # Sort by count in ascending order for horizontal bars (so highest values appear at top)
+    # In horizontal bar charts, the last item in the list appears at the top
     sorted_data = sorted(zip(data['categories'], data['counts']), 
-                        key=lambda x: x[1], reverse=True)
+                        key=lambda x: x[1], reverse=False)
     categories, counts = zip(*sorted_data)
     
     fig = go.Figure(data=[
@@ -342,17 +343,7 @@ def create_stats_card(title, value, change=None, change_type="neutral", id=None)
     
     return html.Div(card_content, className="card-body")
 
-def create_chart_card(title, chart_id, height="400px"):
-    """Create a card container for a chart"""
-    return html.Div([
-        html.Div([
-            dcc.Graph(
-                id=chart_id,
-                config={'displayModeBar': False},
-                style={'height': height}
-            )
-        ], className="card-body")
-    ], className="card h-100")
+# Note: create_chart_card function moved to shared_components.py
 
 def create_volume_summary_card(data):
     """Create a summary card for volume analysis"""
@@ -475,6 +466,60 @@ def create_volume_heatmap_chart(data, symbol=""):
     except Exception:
         return create_empty_chart("Volume Analysis Unavailable")
 
+
+def create_symbol_comparison_bar_chart(symbols_data, metric='volume', title="Symbol Comparison"):
+    """Create a bar chart comparing symbols by various metrics"""
+    if not symbols_data or not symbols_data.get('symbols') or not symbols_data.get(metric):
+        return create_empty_chart(title)
+    
+    symbols = symbols_data['symbols']
+    values = symbols_data[metric]
+    
+    # Sort by value in descending order
+    sorted_data = sorted(zip(symbols, values), key=lambda x: x[1], reverse=True)
+    sorted_symbols, sorted_values = zip(*sorted_data)
+    
+    fig = go.Figure(data=[
+        go.Bar(
+            x=sorted_symbols,
+            y=sorted_values,
+            marker=dict(
+                color=sorted_values,
+                colorscale='Viridis',
+                showscale=True,
+                colorbar=dict(title=metric.title())
+            ),
+            hovertemplate='<b>%{x}</b><br>' + metric.title() + ': %{y}<extra></extra>'
+        )
+    ])
+    
+    fig.update_layout(
+        title=dict(
+            text=title,
+            font=dict(size=20, color=CHART_COLORS['primary']),
+            x=0.5,
+            xanchor='center'
+        ),
+        xaxis=dict(
+            title="Symbols",
+            tickangle=45,
+            showgrid=False,
+            tickcolor=CHART_COLORS['secondary']
+        ),
+        yaxis=dict(
+            title=metric.title(),
+            showgrid=True,
+            gridcolor='rgba(128,128,128,0.2)',
+            tickcolor=CHART_COLORS['secondary']
+        ),
+        margin=dict(l=60, r=40, t=80, b=100),
+        template='plotly_white',
+        height=400,
+        plot_bgcolor='white',
+        paper_bgcolor='white'
+    )
+    
+    return fig
 
 def create_signals_html(signals):
     """Create HTML for recent signals"""

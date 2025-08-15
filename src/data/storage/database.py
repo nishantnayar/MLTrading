@@ -197,6 +197,18 @@ class DatabaseManager:
         """Get market data for a symbol within date range."""
         conn = self.get_connection()
         try:
+            # Debug: Log what we're searching for
+            logger.info(f"Database query - Symbol: {symbol}, Start: {start_date}, End: {end_date}, Source: {source}")
+            
+            # First, check what data actually exists for this symbol
+            debug_query = "SELECT MIN(timestamp), MAX(timestamp), COUNT(*) FROM market_data WHERE symbol = %s AND source = %s"
+            with conn.cursor() as cur:
+                cur.execute(debug_query, (symbol, source))
+                debug_result = cur.fetchone()
+                if debug_result:
+                    min_ts, max_ts, count = debug_result
+                    logger.info(f"Database contains for {symbol}: {count} records from {min_ts} to {max_ts}")
+            
             query = """
                 SELECT symbol, timestamp, open, high, low, close, volume, source
                 FROM market_data 
@@ -206,6 +218,13 @@ class DatabaseManager:
             # Use pandas with psycopg2 connection directly to avoid SQLAlchemy warning
             import pandas as pd
             df = pd.read_sql_query(query, conn, params=(symbol, start_date, end_date, source))
+            
+            # Debug: Log what we actually retrieved
+            if not df.empty:
+                retrieved_min = df['timestamp'].min()
+                retrieved_max = df['timestamp'].max()
+                logger.info(f"Retrieved from database: {len(df)} records from {retrieved_min} to {retrieved_max}")
+            
             return df
             
         except Exception as e:

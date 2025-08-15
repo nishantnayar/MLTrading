@@ -4,18 +4,22 @@ Handles market overview, statistics, and time-related information.
 """
 
 import plotly.graph_objs as go
-from dash import Input, Output, html
+import dash
+from dash import Input, Output, html, dcc, State, callback_context
+import dash_bootstrap_components as dbc
 from datetime import datetime, timedelta
 import pytz
 
 from ..config import CHART_COLORS, MARKET_HOURS
-from ..layouts.chart_components import create_empty_chart
+from ..layouts.chart_components import create_empty_chart, create_horizontal_bar_chart
 from ..services.data_service import MarketDataService
+from ..services.symbol_service import SymbolService
 from ...utils.logging_config import get_ui_logger
 
 # Initialize logger and data service
 logger = get_ui_logger("dashboard")
 data_service = MarketDataService()
+symbol_service = SymbolService()
 
 
 def register_overview_callbacks(app):
@@ -258,3 +262,386 @@ def register_overview_callbacks(app):
         except Exception as e:
             logger.error(f"Error updating database stats: {e}")
             return "0", "Error"
+
+    @app.callback(
+        [Output("sector-distribution-chart", "figure"),
+         Output("selected-sector-store", "data")],
+        [Input("refresh-overview-btn", "n_clicks"),
+         Input("refresh-stats-btn", "n_clicks")],
+        prevent_initial_call=False
+    )
+    def update_sector_distribution_chart(overview_refresh, stats_refresh):
+        """Update sector distribution bar chart"""
+        try:
+            sector_data = symbol_service.get_sector_distribution()
+            
+            if not sector_data or not sector_data.get('sectors'):
+                logger.warning("No sector distribution data available")
+                return create_empty_chart("No Sector Data Available"), ""
+            
+            chart_data = {
+                'categories': sector_data['sectors'],
+                'counts': sector_data['counts']
+            }
+            
+            # Set default sector to the one with highest count (first in list due to sorting)
+            default_sector = sector_data['sectors'][0] if sector_data['sectors'] else ""
+            
+            return create_horizontal_bar_chart(
+                chart_data, 
+                "Stocks by Sector",
+                color=CHART_COLORS['primary']
+            ), default_sector
+            
+        except Exception as e:
+            logger.error(f"Error updating sector distribution chart: {e}")
+            return create_empty_chart("Error Loading Sector Data"), ""
+
+    @app.callback(
+        [Output("industry-distribution-chart", "figure"),
+         Output("selected-sector-badge", "children"),
+         Output("selected-sector-badge", "style")],
+        [Input("sector-distribution-chart", "clickData"),
+         Input("selected-sector-store", "data"),
+         Input("refresh-overview-btn", "n_clicks"),
+         Input("refresh-stats-btn", "n_clicks")],
+        prevent_initial_call=False
+    )
+    def update_industry_distribution_chart(sector_click, default_sector, overview_refresh, stats_refresh):
+        """Update industry distribution chart based on selected sector"""
+        try:
+            # Determine which sector to use
+            selected_sector = default_sector  # Default to highest sector
+            
+            # Check if user clicked on sector chart
+            ctx = callback_context
+            if ctx.triggered:
+                trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+                if trigger_id == "sector-distribution-chart" and sector_click:
+                    if 'points' in sector_click and sector_click['points']:
+                        selected_sector = sector_click['points'][0]['y']  # Get clicked sector
+            
+            if not selected_sector:
+                return create_empty_chart("No Sector Selected"), "", {"display": "none"}
+            
+            # Get industry distribution for selected sector
+            industry_data = symbol_service.get_industry_distribution(selected_sector)
+            
+            if not industry_data or not industry_data.get('industries'):
+                return create_empty_chart(f"No Industries Found in {selected_sector}"), selected_sector, {"display": "inline-block", "font-size": "0.7em"}
+            
+            chart_data = {
+                'categories': industry_data['industries'],
+                'counts': industry_data['counts']
+            }
+            
+            return create_horizontal_bar_chart(
+                chart_data,
+                f"Industries in {selected_sector}",
+                color=CHART_COLORS['info']
+            ), selected_sector, {"display": "inline-block", "font-size": "0.7em"}
+            
+        except Exception as e:
+            logger.error(f"Error updating industry distribution chart: {e}")
+            return create_empty_chart("Error Loading Industry Data"), "Error", {"display": "inline-block", "font-size": "0.7em"}
+
+    @app.callback(
+        Output("top-volume-chart", "figure"),
+        [Input("refresh-overview-btn", "n_clicks"),
+         Input("refresh-stats-btn", "n_clicks")],
+        prevent_initial_call=False
+    )
+    def update_top_volume_chart(overview_refresh, stats_refresh):
+        """Update top symbols by volume bar chart"""
+        try:
+            # Get top 15 symbols by recent volume
+            symbols = data_service.get_available_symbols()[:15]  # Limit to top 15
+            
+            if not symbols:
+                return create_empty_chart("No Volume Data Available")
+            
+            volume_data = []
+            symbol_names = []
+            
+            for symbol_info in symbols:
+                symbol = symbol_info['symbol']
+                try:
+                    # Get recent market data for volume
+                    market_data = data_service.get_market_data(symbol, days=7)
+                    if not market_data.empty and 'volume' in market_data.columns:
+                        avg_volume = market_data['volume'].mean()
+                        volume_data.append(avg_volume)
+                        symbol_names.append(symbol)
+                except Exception:
+                    continue
+            
+            if not volume_data:
+                return create_empty_chart("No Volume Data Available")
+            
+            # Sort by volume descending
+            sorted_pairs = sorted(zip(symbol_names, volume_data), key=lambda x: x[1], reverse=True)
+            sorted_symbols, sorted_volumes = zip(*sorted_pairs)
+            
+            chart_data = {
+                'categories': list(sorted_symbols[:10]),  # Top 10
+                'counts': [vol/1000000 for vol in sorted_volumes[:10]]  # Convert to millions
+            }
+            
+            return create_horizontal_bar_chart(
+                chart_data,
+                "Top 10 Symbols by Volume (7-day avg, millions)",
+                color=CHART_COLORS['info']
+            )
+            
+        except Exception as e:
+            logger.error(f"Error updating top volume chart: {e}")
+            return create_empty_chart("Error Loading Volume Data")
+
+    @app.callback(
+        Output("price-performance-chart", "figure"),
+        [Input("refresh-overview-btn", "n_clicks"),
+         Input("refresh-stats-btn", "n_clicks")],
+        prevent_initial_call=False
+    )
+    def update_price_performance_chart(overview_refresh, stats_refresh):
+        """Update 7-day price performance bar chart"""
+        try:
+            # Get sample of symbols for performance analysis
+            symbols = data_service.get_available_symbols()[:20]  # Top 20 symbols
+            
+            if not symbols:
+                return create_empty_chart("No Price Data Available")
+            
+            performance_data = []
+            symbol_names = []
+            
+            for symbol_info in symbols:
+                symbol = symbol_info['symbol']
+                try:
+                    # Get 7-day price change
+                    price_change = data_service.get_price_change(symbol, days=7)
+                    if price_change and 'change_percent' in price_change:
+                        performance_data.append(price_change['change_percent'])
+                        symbol_names.append(symbol)
+                except Exception:
+                    continue
+            
+            if not performance_data:
+                return create_empty_chart("No Performance Data Available")
+            
+            # Sort by performance descending
+            sorted_pairs = sorted(zip(symbol_names, performance_data), key=lambda x: x[1], reverse=True)
+            sorted_symbols, sorted_performance = zip(*sorted_pairs)
+            
+            chart_data = {
+                'categories': list(sorted_symbols[:10]),  # Top 10 performers
+                'counts': list(sorted_performance[:10])
+            }
+            
+            return create_horizontal_bar_chart(
+                chart_data,
+                "Top 10 Price Performance (7-day %)",
+                color=CHART_COLORS['success']
+            )
+            
+        except Exception as e:
+            logger.error(f"Error updating price performance chart: {e}")
+            return create_empty_chart("Error Loading Performance Data")
+
+    @app.callback(
+        Output("market-activity-chart", "figure"),
+        [Input("refresh-overview-btn", "n_clicks"),
+         Input("refresh-stats-btn", "n_clicks")],
+        prevent_initial_call=False
+    )
+    def update_market_activity_chart(overview_refresh, stats_refresh):
+        """Update market activity summary bar chart"""
+        try:
+            # Get symbols and calculate basic activity metrics
+            symbols = data_service.get_available_symbols()[:15]
+            
+            if not symbols:
+                return create_empty_chart("No Activity Data Available")
+            
+            activity_scores = []
+            symbol_names = []
+            
+            for symbol_info in symbols:
+                symbol = symbol_info['symbol']
+                try:
+                    # Calculate activity score based on volume and price volatility
+                    market_data = data_service.get_market_data(symbol, days=5)
+                    if not market_data.empty:
+                        avg_volume = market_data['volume'].mean() if 'volume' in market_data.columns else 0
+                        price_volatility = market_data['close'].std() if 'close' in market_data.columns else 0
+                        
+                        # Simple activity score (normalized)
+                        activity_score = (avg_volume / 1000000) + (price_volatility * 10)
+                        activity_scores.append(activity_score)
+                        symbol_names.append(symbol)
+                except Exception:
+                    continue
+            
+            if not activity_scores:
+                return create_empty_chart("No Activity Data Available")
+            
+            # Sort by activity score descending
+            sorted_pairs = sorted(zip(symbol_names, activity_scores), key=lambda x: x[1], reverse=True)
+            sorted_symbols, sorted_scores = zip(*sorted_pairs)
+            
+            chart_data = {
+                'categories': list(sorted_symbols[:10]),  # Top 10 most active
+                'counts': list(sorted_scores[:10])
+            }
+            
+            return create_horizontal_bar_chart(
+                chart_data,
+                "Market Activity Index (Volume + Volatility)",
+                color=CHART_COLORS['warning']
+            )
+            
+        except Exception as e:
+            logger.error(f"Error updating market activity chart: {e}")
+            return create_empty_chart("Error Loading Activity Data")
+
+    @app.callback(
+        Output("last-updated", "children"),
+        [Input("refresh-overview-btn", "n_clicks"),
+         Input("refresh-stats-btn", "n_clicks")],
+        prevent_initial_call=False
+    )
+    def update_last_updated_timestamp(overview_refresh, stats_refresh):
+        """Update the last updated timestamp"""
+        from datetime import datetime
+        return datetime.now().strftime("%H:%M:%S")
+
+    @app.callback(
+        [Output("filtered-symbols-display", "children"),
+         Output("filtered-symbols-store", "data"),
+         Output("filter-status-badge", "children"),
+         Output("filter-status-badge", "style")],
+        [Input("sector-distribution-chart", "clickData"),
+         Input("industry-distribution-chart", "clickData"),
+         Input("top-volume-chart", "clickData"),
+         Input("price-performance-chart", "clickData"),
+         Input("market-activity-chart", "clickData")],
+        prevent_initial_call=True
+    )
+    def update_filtered_symbols(sector_click, industry_click, volume_click, performance_click, activity_click):
+        """Update filtered symbols based on bar chart clicks"""
+        try:
+            ctx = callback_context
+            if not ctx.triggered:
+                return (html.P("Click on any bar in the charts above to filter symbols by that category.", 
+                              className="text-muted text-center m-4"), [], "", {"display": "none"})
+            
+            triggered_chart = ctx.triggered[0]['prop_id'].split('.')[0]
+            clicked_data = ctx.triggered[0]['value']
+            
+            if not clicked_data or 'points' not in clicked_data:
+                return (html.P("No data selected. Try clicking on a bar.", className="text-muted"), [], "", {"display": "none"})
+            
+            clicked_point = clicked_data['points'][0]
+            category = clicked_point['y']  # The category name (sector, symbol, etc.)
+            value = clicked_point['x']     # The value
+            
+            filtered_symbols = []
+            filter_type = ""
+            
+            if triggered_chart == "sector-distribution-chart":
+                # Filter symbols by sector
+                filter_type = "Sector"
+                filtered_symbols = symbol_service.get_symbols_by_sector(category)
+                
+            elif triggered_chart == "industry-distribution-chart":
+                # Filter symbols by industry
+                filter_type = "Industry"
+                filtered_symbols = symbol_service.get_symbols_by_industry(category)
+                
+            elif triggered_chart == "top-volume-chart":
+                # Show details for the clicked symbol
+                filter_type = "High Volume Symbol"
+                symbol_info = data_service.get_available_symbols()
+                filtered_symbols = [s for s in symbol_info if s['symbol'] == category]
+                
+            elif triggered_chart == "price-performance-chart":
+                # Show details for the clicked symbol  
+                filter_type = "Top Performer"
+                symbol_info = data_service.get_available_symbols()
+                filtered_symbols = [s for s in symbol_info if s['symbol'] == category]
+                
+            elif triggered_chart == "market-activity-chart":
+                # Show details for the clicked symbol
+                filter_type = "High Activity Symbol"
+                symbol_info = data_service.get_available_symbols()
+                filtered_symbols = [s for s in symbol_info if s['symbol'] == category]
+            
+            if not filtered_symbols:
+                return (html.P(f"No symbols found for {category}", className="text-muted"), [], "", {"display": "none"})
+            
+            # Create symbol cards
+            symbol_cards = []
+            for symbol_data in filtered_symbols[:20]:  # Limit to 20 symbols
+                symbol = symbol_data.get('symbol', '')
+                company_name = symbol_data.get('company_name', symbol)
+                
+                card = dbc.Card([
+                    dbc.CardBody([
+                        html.H6(symbol, className="card-title mb-1"),
+                        html.P(company_name, className="card-text small text-muted mb-2"),
+                        dbc.Button("Analyze", 
+                                 id={"type": "analyze-symbol-btn", "index": symbol},
+                                 size="sm", 
+                                 color="primary",
+                                 className="btn-sm")
+                    ])
+                ], className="h-100")
+                
+                symbol_cards.append(
+                    dbc.Col(card, width=6, lg=4, xl=3, className="mb-3")
+                )
+            
+            header = html.Div([
+                html.H6(f"Filtered by {filter_type}: {category}", className="mb-2"),
+                html.P(f"Found {len(filtered_symbols)} symbols", className="text-muted small mb-3")
+            ])
+            
+            # Store filtered symbols for use in Charts tab
+            symbols_data = [s['symbol'] for s in filtered_symbols]
+            
+            # Create filter status badge
+            badge_text = f"Active: {filter_type}"
+            badge_style = {"display": "inline-block"}
+            
+            return ([header, dbc.Row(symbol_cards)], symbols_data, badge_text, badge_style)
+            
+        except Exception as e:
+            logger.error(f"Error filtering symbols: {e}")
+            return (html.P("Error filtering symbols. Please try again.", className="text-danger"), [], "", {"display": "none"})
+
+    @app.callback(
+        [Output("symbol-search", "value"),
+         Output("main-tabs", "active_tab")],
+        [Input({"type": "analyze-symbol-btn", "index": dash.dependencies.ALL}, "n_clicks")],
+        prevent_initial_call=True
+    )
+    def analyze_symbol_from_overview(n_clicks_list):
+        """Navigate to Charts tab with selected symbol when Analyze button is clicked"""
+        try:
+            ctx = callback_context
+            if not ctx.triggered or not any(n_clicks_list):
+                return dash.no_update, dash.no_update
+            
+            # Find which button was clicked
+            button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+            # Parse the JSON string to get the symbol
+            import json
+            btn_info = json.loads(button_id)
+            symbol = btn_info['index']
+            
+            logger.info(f"Analyzing symbol {symbol} from overview")
+            return symbol, "charts-tab"
+            
+        except Exception as e:
+            logger.error(f"Error in analyze symbol callback: {e}")
+            return dash.no_update, dash.no_update

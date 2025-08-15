@@ -1,0 +1,254 @@
+/* Custom CSS for ML Trading Dashboard */
+
+/* Global Styles */
+body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    scroll-behavior: smooth;
+}
+
+/* Enhanced Card Hover Effects */
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.12) !important;
+    transition: all 0.3s ease;
+}
+
+/* Smooth transitions for all interactive elements */
+.btn, .nav-link, .dropdown-toggle, .form-control, .form-select {
+    transition: all 0.15s ease;
+}
+
+/* Enhanced button hover effects */
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Navigation enhancements */
+.navbar-brand {
+    font-weight: 600;
+    letter-spacing: -0.025em;
+}
+
+.nav-link:hover {
+    transform: translateY(-1px);
+}
+
+/* Chart container enhancements */
+.dash-graph .plotly-graph-div {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Loading states */
+.dash-spinner {
+    margin: 2rem auto;
+}
+
+/* Enhanced focus states for accessibility */
+.btn:focus,
+.form-control:focus,
+.form-select:focus,
+.nav-link:focus {
+    box-shadow: 0 0 0 3px rgba(47, 164, 231, 0.25);
+    outline: none;
+}
+
+/* Metric cards special styling */
+.metric-card {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Section headers */
+.section-header {
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Badge enhancements */
+.badge {
+    font-weight: 500;
+    padding: 0.5em 0.75em;
+    border-radius: 6px;
+}
+
+/* Chart title styling */
+.chart-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem;
+}
+
+/* Enhanced dropdown styling */
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+    border-radius: 8px;
+    padding: 0.5rem 0;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(47, 164, 231, 0.1);
+    color: #2fa4e7;
+}
+
+/* Prevent dropdown squishing when chart loads */
+.Select-control,
+.dash-dropdown .Select-control {
+    min-width: 120px !important;
+    min-height: 38px !important;
+}
+
+.Select-multi-value-wrapper,
+.dash-dropdown .Select-multi-value-wrapper {
+    min-height: 36px !important;
+}
+
+/* Chart controls container protection */
+.chart-controls {
+    min-width: 100% !important;
+    overflow-x: auto;
+}
+
+/* Specific dropdown width protection */
+
+#indicators-dropdown .Select-control {
+    min-width: 180px !important;
+}
+
+#chart-type-dropdown .Select-control {
+    min-width: 120px !important;
+}
+
+#volume-display-dropdown .Select-control {
+    min-width: 140px !important;
+}
+
+#symbol-search .Select-control {
+    min-width: 200px !important;
+}
+
+/* Control panel styling */
+.control-panel {
+    background: rgba(248, 249, 250, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Animated loading dots */
+@keyframes loading-dots {
+    0%, 20% { opacity: 0; }
+    50% { opacity: 1; }
+    80%, 100% { opacity: 0; }
+}
+
+.loading-dots span {
+    animation: loading-dots 1.4s infinite ease-in-out;
+    animation-fill-mode: both;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: 0.16s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.32s; }
+
+/* Subtle animations for page transitions */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Progress indicators */
+.progress {
+    border-radius: 6px;
+    height: 8px;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    border-radius: 6px;
+    transition: width 0.6s ease;
+}
+
+/* Enhanced table styling */
+.table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+/* Status indicators */
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-online { background-color: #73a839; }
+.status-offline { background-color: #c71c22; }
+.status-warning { background-color: #dd5600; }
+
+/* Enhanced spacing for better visual hierarchy */
+.section-spacing {
+    margin-bottom: 3rem;
+}
+
+.subsection-spacing {
+    margin-bottom: 2rem;
+}
+
+/* Responsive text sizing */
+@media (max-width: 768px) {
+    .h1, h1 { font-size: 1.75rem; }
+    .h2, h2 { font-size: 1.5rem; }
+    .h3, h3 { font-size: 1.25rem; }
+    .h4, h4 { font-size: 1.1rem; }
+    .h5, h5 { font-size: 1rem; }
+}
+
+/* Utility classes for enhanced styling */
+.text-gradient {
+    background: linear-gradient(135deg, #2fa4e7 0%, #73a839 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+}
+
+.glass-effect {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hover-lift:hover {
+    transform: translateY(-4px);
+    transition: transform 0.3s ease;
+}
+
+/* Print styles */
+@media print {
+    .no-print { display: none !important; }
+    body { background: white !important; }
+    .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+}

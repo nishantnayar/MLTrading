@@ -26,6 +26,11 @@ class MarketDataService(BaseDashboardService):
             # Get data from database - this returns a DataFrame directly
             df = self.db_manager.get_market_data(symbol.upper(), start_date, end_date, source)
             
+            # If no data found in recent range, try to get any available data
+            if df is None or df.empty:
+                self.logger.info(f"No recent data for {symbol}, checking for any available data...")
+                df = self.get_any_available_data(symbol, source)
+            
             # Ensure df is a DataFrame and handle None case
             if df is None:
                 self.logger.warning(f"Database returned None for {symbol}")
@@ -55,8 +60,17 @@ class MarketDataService(BaseDashboardService):
                 # Sort by timestamp
                 df = df.sort_values('timestamp')
                 
-                # Remove any rows with NaN values
-                df = df.dropna()
+                # Log data before cleaning
+                original_count = len(df)
+                
+                # Only remove rows where essential OHLC data is missing
+                # Keep rows with missing volume or other non-essential data
+                essential_columns = ['timestamp', 'open', 'high', 'low', 'close']
+                df = df.dropna(subset=essential_columns)
+                
+                cleaned_count = len(df)
+                if original_count != cleaned_count:
+                    self.logger.warning(f"Removed {original_count - cleaned_count} rows with missing essential data (kept {cleaned_count}/{original_count})")
                 
                 self.logger.info(f"Retrieved {len(df)} market data points for {symbol}")
             
@@ -64,6 +78,98 @@ class MarketDataService(BaseDashboardService):
             
         except Exception as e:
             self.logger.error(f"Error getting market data for {symbol}: {e}")
+            return pd.DataFrame()
+    
+    def get_all_available_data(self, symbol: str, source: str = 'yahoo') -> pd.DataFrame:
+        """Get ALL available data for a symbol (no limits)."""
+        try:
+            # Get ALL records for the symbol
+            query = """
+                SELECT symbol, timestamp, open, high, low, close, volume, source
+                FROM market_data 
+                WHERE symbol = %s AND source = %s
+                ORDER BY timestamp ASC
+            """
+            
+            conn = self.db_manager.get_connection()
+            df = pd.read_sql_query(query, conn, params=[symbol.upper(), source])
+            conn.close()
+            
+            if not df.empty:
+                # Log data before cleaning
+                original_count = len(df)
+                
+                # Convert timestamp column
+                df['timestamp'] = pd.to_datetime(df['timestamp'])
+                
+                # Convert numeric columns and log conversion issues
+                numeric_columns = ['open', 'high', 'low', 'close', 'volume']
+                for col in numeric_columns:
+                    if col in df.columns:
+                        original_nulls = df[col].isna().sum()
+                        df[col] = pd.to_numeric(df[col], errors='coerce')
+                        new_nulls = df[col].isna().sum()
+                        if new_nulls > original_nulls:
+                            self.logger.warning(f"Column {col}: {new_nulls - original_nulls} values became null after numeric conversion")
+                
+                # Only remove rows where essential OHLC data is missing
+                essential_columns = ['timestamp', 'open', 'high', 'low', 'close']
+                df = df.dropna(subset=essential_columns)
+                
+                cleaned_count = len(df)
+                if original_count != cleaned_count:
+                    self.logger.warning(f"Removed {original_count - cleaned_count} rows with missing essential data")
+                
+                self.logger.info(f"Found ALL {len(df)} records for {symbol} from {df['timestamp'].min()} to {df['timestamp'].max()}")
+            
+            return df
+            
+        except Exception as e:
+            self.logger.error(f"Error getting all available data for {symbol}: {e}")
+            return pd.DataFrame()
+    
+    def get_any_available_data(self, symbol: str, source: str = 'yahoo') -> pd.DataFrame:
+        """Get any available data for a symbol (fallback when no recent data exists)."""
+        try:
+            # Get the last 200 records regardless of date
+            query = """
+                SELECT symbol, timestamp, open, high, low, close, volume, source
+                FROM market_data 
+                WHERE symbol = %s AND source = %s
+                ORDER BY timestamp DESC
+                LIMIT 200
+            """
+            
+            conn = self.db_manager.get_connection()
+            df = pd.read_sql_query(query, conn, params=[symbol.upper(), source])
+            conn.close()
+            
+            if not df.empty:
+                # Reverse to get chronological order
+                df = df.sort_values('timestamp').reset_index(drop=True)
+                
+                # Convert timestamp column
+                df['timestamp'] = pd.to_datetime(df['timestamp'])
+                
+                # Log data before cleaning
+                original_count = len(df)
+                
+                # Convert numeric columns and log any conversion issues
+                numeric_columns = ['open', 'high', 'low', 'close', 'volume']
+                for col in numeric_columns:
+                    if col in df.columns:
+                        original_nulls = df[col].isna().sum()
+                        df[col] = pd.to_numeric(df[col], errors='coerce')
+                        new_nulls = df[col].isna().sum()
+                        if new_nulls > original_nulls:
+                            self.logger.warning(f"Column {col}: {new_nulls - original_nulls} values became null after numeric conversion")
+                
+                self.logger.info(f"Found {len(df)} historical records for {symbol} from {df['timestamp'].min()} to {df['timestamp'].max()}")
+            
+            return df
+            
+        except Exception as e:
+            self.logger.error(f"Error getting any available data for {symbol}: {e}")
             return pd.DataFrame()
     
     def get_latest_price(self, symbol: str, source: str = 'yahoo') -> Optional[Dict[str, Any]]:
@@ -234,6 +340,85 @@ class MarketDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting data quality metrics for {symbol}: {e}")
             return {}
+    
+    def get_available_symbols(self, source: str = 'yahoo') -> List[Dict[str, str]]:
+        """Get list of available symbols with market data and company names."""
+        try:
+            query = """
+                SELECT DISTINCT s.symbol, COALESCE(si.company_name, s.symbol) as company_name
+                FROM (
+                    SELECT DISTINCT symbol FROM market_data WHERE source = %s
+                ) s
+                LEFT JOIN stock_info si ON s.symbol = si.symbol
+                ORDER BY s.symbol
+            """
+            
+            results = self.execute_query(query, (source,))
+            
+            if not results:
+                self.logger.warning("No symbols found with market data")
+                return []
+            
+            symbol_data = [
+                {
+                    'symbol': row[0],
+                    'company_name': row[1]
+                }
+                for row in results
+            ]
+            
+            self.logger.info(f"Retrieved {len(symbol_data)} symbols with company names")
+            return symbol_data
+            
+        except Exception as e:
+            self.logger.error(f"Error getting available symbols: {e}")
+            return []
+    
+    def search_symbols(self, query: str, limit: int = 10) -> List[Dict[str, str]]:
+        """Search symbols by symbol or company name."""
+        try:
+            if not query or len(query) < 2:
+                return []
+            
+            search_query = """
+                SELECT DISTINCT s.symbol, s.company_name
+                FROM stock_info s
+                INNER JOIN market_data md ON s.symbol = md.symbol
+                WHERE (
+                    s.symbol ILIKE %s OR 
+                    s.company_name ILIKE %s
+                )
+                ORDER BY 
+                    CASE WHEN s.symbol ILIKE %s THEN 1 ELSE 2 END,
+                    s.symbol
+                LIMIT %s
+            """
+            
+            search_pattern = f"%{query}%"
+            exact_pattern = f"{query}%"
+            
+            results = self.execute_query(
+                search_query, 
+                (search_pattern, search_pattern, exact_pattern, limit)
+            )
+            
+            if not results:
+                return []
+            
+            symbol_data = [
+                {
+                    'symbol': row[0],
+                    'company_name': row[1] or row[0]
+                }
+                for row in results
+            ]
+            
+            self.logger.info(f"Found {len(symbol_data)} symbols for search: '{query}'")
+            return symbol_data
+            
+        except Exception as e:
+            self.logger.error(f"Error searching symbols with query '{query}': {e}")
+            return []
     
     def validate_market_data(self, data: List[Dict]) -> bool:
         """Validate market data format and completeness."""

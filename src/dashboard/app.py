@@ -29,6 +29,7 @@ from src.dashboard.layouts.logs_layout import create_logs_layout, register_logs_
 from src.dashboard.layouts.author_layout import create_author_layout
 from src.dashboard.callbacks import register_chart_callbacks, register_overview_callbacks
 from src.dashboard.callbacks.interactive_chart_callbacks import register_interactive_chart_callbacks
+from src.dashboard.utils.date_formatters import get_current_timestamp
 
 # Initialize logger
 logger = get_ui_logger("dashboard")
@@ -61,12 +62,16 @@ def create_navigation():
     
     return dbc.Navbar(
         dbc.Container([
-            dbc.NavbarBrand("ML Trading", className="text-white"),
+            dbc.NavbarBrand([
+                html.I(className="fas fa-chart-line me-2"),
+                "ML Trading"
+            ], className="text-white fw-bold", style={"font-size": "1.25rem"}),
             dbc.Nav(nav_links, className="me-auto")
         ]),
         color="primary",
         dark=True,
-        className="mb-4"
+        className="mb-4 shadow-sm",
+        style={"border-radius": "0 0 12px 12px"}
     )
 
 
@@ -75,23 +80,29 @@ def create_header():
     return dbc.Row([
         dbc.Col([
             html.Div([
-                html.H2("ML Trading Dashboard", className="text-center mb-2"),
-                html.P("Welcome Nishant, Good Evening", className="text-center text-muted mb-0")
-            ])
+                html.H1("ML Trading Dashboard", className="text-center mb-2 text-gradient", 
+                        style={"font-weight": "700", "letter-spacing": "-0.025em"}),
+                html.Div([
+                    html.I(className="fas fa-user-circle me-2 text-primary"),
+                    html.Span("Welcome Nishant, Good Evening", className="fs-5")
+                ], className="text-center text-muted mb-0 d-flex align-items-center justify-content-center")
+            ], className="fade-in")
         ])
-    ], className="mb-4")
+    ], className="mb-4 section-spacing")
 
 
 def create_footer():
     """Create the footer section"""
+    current_time = get_current_timestamp("default", "US/Central")
     return dbc.Row([
         dbc.Col([
             html.Div([
+                html.I(className="fas fa-clock me-2 text-primary"),
                 html.Span("Last Updated: ", className="text-muted"),
-                html.Span("2nd Aug, 2025 5:54 PM", className="text-muted")
-            ], className="text-center")
+                html.Span(current_time, id="footer-timestamp", className="text-primary fw-medium")
+            ], className="text-center d-flex align-items-center justify-content-center")
         ])
-    ], className="mt-5")
+    ], className="mt-5 section-spacing")
 
 
 # Main app layout
@@ -99,13 +110,12 @@ app.layout = dbc.Container([
     # Location component for navigation
     dcc.Location(id='url', refresh=False),
     
-    # Interval to trigger initial callbacks (enabled initially, runs once then disables)
+    # Interval to trigger initial callbacks and periodic updates
     dcc.Interval(
         id="initial-interval", 
-        interval=1000,  # 1 second for quick initial load
+        interval=60000,  # 1 minute for timestamp updates
         n_intervals=0, 
-        disabled=False,
-        max_intervals=1  # Only run once
+        disabled=False
     ),
     
     # Navigation Bar
@@ -180,6 +190,16 @@ register_chart_callbacks(app)
 register_overview_callbacks(app)
 register_interactive_chart_callbacks(app)
 register_logs_callbacks(app)
+
+# Callback to update footer timestamp every minute
+@app.callback(
+    Output("footer-timestamp", "children"),
+    [Input("initial-interval", "n_intervals")],
+    prevent_initial_call=False
+)
+def update_footer_timestamp(n_intervals):
+    """Update footer timestamp every minute"""
+    return get_current_timestamp("default", "US/Central")
 
 
 

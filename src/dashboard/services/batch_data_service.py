@@ -77,10 +77,20 @@ class BatchDataService(BaseDashboardService):
                     df = pd.DataFrame(data)
                     # Ensure proper data types
                     numeric_columns = ['open', 'high', 'low', 'close', 'volume']
+                    original_count = len(df)
                     for col in numeric_columns:
-                        df[col] = pd.to_numeric(df[col], errors='coerce')
+                        if col in df.columns:
+                            df[col] = pd.to_numeric(df[col], errors='coerce')
                     df['timestamp'] = pd.to_datetime(df['timestamp'])
-                    df = df.sort_values('timestamp').dropna()
+                    
+                    # Only drop rows with missing essential OHLC data
+                    essential_columns = ['timestamp', 'open', 'high', 'low', 'close']
+                    df = df.sort_values('timestamp').dropna(subset=essential_columns)
+                    
+                    cleaned_count = len(df)
+                    if original_count != cleaned_count:
+                        self.logger.warning(f"Symbol {symbol}: Removed {original_count - cleaned_count} rows with missing essential data")
+                    
                     result[symbol] = df
             
             self.logger.info(f"Retrieved batch market data for {len(result)} symbols with {sum(len(df) for df in result.values())} total records")

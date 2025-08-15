@@ -14,6 +14,7 @@ from ..layouts.interactive_chart import InteractiveChartBuilder
 from ..services.market_data_service import MarketDataService
 from ..services.technical_indicators import TechnicalIndicatorService
 from ...utils.logging_config import get_ui_logger
+from ..utils.date_formatters import format_date_range, format_timestamp
 
 logger = get_ui_logger("interactive_chart_callbacks")
 
@@ -25,37 +26,107 @@ def register_interactive_chart_callbacks(app):
     market_service = MarketDataService()
     indicator_service = TechnicalIndicatorService()
     
+    # Initial symbol options callback
+    @app.callback(
+        Output("symbol-search", "options"),
+        [Input("symbol-search", "search_value"),
+         Input("filtered-symbols-store", "data")],
+        prevent_initial_call=False
+    )
+    def update_symbol_options(search_value, filtered_symbols):
+        """Update symbol dropdown options based on search query and filtered symbols."""
+        try:
+            # Prioritize filtered symbols if available
+            if filtered_symbols and len(filtered_symbols) > 0:
+                # Get detailed info for filtered symbols
+                all_symbols = market_service.get_available_symbols()
+                symbols = [s for s in all_symbols if s['symbol'] in filtered_symbols][:20]
+                
+                # If user is searching, filter the already filtered symbols
+                if search_value and len(search_value) >= 1:
+                    symbols = [s for s in symbols 
+                             if search_value.upper() in s['symbol'].upper() or 
+                                search_value.upper() in s.get('company_name', '').upper()]
+            
+            elif not search_value or len(search_value) < 1:
+                # Return top 10 symbols by default
+                symbols = market_service.get_available_symbols()[:10]
+            else:
+                # Search for symbols matching the query
+                symbols = market_service.search_symbols(search_value, limit=20)
+            
+            if not symbols:
+                return [{"label": "No symbols found", "value": "", "disabled": True}]
+            
+            # Format options for dropdown
+            options = []
+            for symbol_data in symbols:
+                symbol = symbol_data.get('symbol', '')
+                company_name = symbol_data.get('company_name', '')
+                
+                if company_name and company_name != symbol:
+                    label = f"{symbol} - {company_name}"
+                else:
+                    label = symbol
+                
+                options.append({"label": label, "value": symbol})
+            
+            return options
+            
+        except Exception as e:
+            logger.error(f"Error updating symbol options: {e}")
+            return [{"label": "Error loading symbols", "value": "", "disabled": True}]
+    
     @app.callback(
         Output("interactive-price-chart", "figure"),
         [
-            Input("symbol-dropdown", "value"),
+            Input("symbol-search", "value"),
             Input("chart-type-dropdown", "value"),
             Input("indicators-dropdown", "value"),
             Input("volume-display-dropdown", "value"),
-            Input("volume-color-checkbox", "value"),
             Input("refresh-chart-btn", "n_clicks")
         ],
         prevent_initial_call=False
     )
-    def update_interactive_chart(symbol, chart_type, indicators, volume_display, volume_color_options, refresh_clicks):
+    def update_interactive_chart(symbol, chart_type, indicators, volume_display, refresh_clicks):
         """Update interactive chart with technical indicators."""
         try:
-            # Validate inputs
+            # Use selected symbol or default to ADBE
             if not symbol:
-                return chart_builder._create_empty_chart("Please select a symbol")
+                symbol = "ADBE"
             
-            # Use default time range (chart buttons will handle range selection)
-            days = 180  # Default to 6 months for good chart range
-            
-            # Get market data
-            df = market_service.get_market_data(symbol, days=days)
+            # Get ALL available market data (no artificial date limit)
+            # Let users see the complete data range they have
+            df = market_service.get_all_available_data(symbol)
             
             if df is None or df.empty:
                 return chart_builder._create_empty_chart(f"No data available for {symbol}")
             
+            # Log actual data range for debugging
+            if not df.empty and 'timestamp' in df.columns:
+                actual_start = df['timestamp'].min()
+                actual_end = df['timestamp'].max()
+                
+                # Debug: Log raw dates before formatting
+                logger.info(f"Raw date range for {symbol}: {actual_start} to {actual_end}")
+                
+                data_range_str = format_date_range(actual_start, actual_end, "compact")
+                logger.info(f"Chart data for {symbol}: {len(df)} records from {data_range_str}")
+                
+                # Check if data is recent (within last 30 days)
+                from datetime import datetime, timedelta
+                is_recent = actual_end >= (datetime.now() - timedelta(days=30))
+                
+                # Add data range info to chart title with status indicator
+                status_icon = "🟢" if is_recent else "🟡"
+                status_text = "Live Data" if is_recent else "Historical Data"
+                chart_subtitle = f"{status_icon} {status_text}: {data_range_str} ({len(df)} records)"
+            else:
+                chart_subtitle = None
+            
             # Determine volume display settings
             show_volume = volume_display and volume_display != "none"
-            color_by_price = 'color_price' in (volume_color_options or [])
+            color_by_price = True  # Always color by price for better visuals
             
             # Use indicators or default
             chart_indicators = indicators or []
@@ -71,6 +142,17 @@ def register_interactive_chart_callbacks(app):
                 color_by_price=color_by_price
             )
             
+            # Update chart title to include data range info
+            if chart_subtitle:
+                current_title = fig.layout.title.text if fig.layout.title else f"{symbol} Price Chart"
+                fig.update_layout(
+                    title={
+                        'text': f"{current_title}<br><span style='font-size:12px;color:gray'>{chart_subtitle}</span>",
+                        'x': 0.5,
+                        'xanchor': 'center'
+                    }
+                )
+            
             logger.info(f"Updated interactive chart for {symbol} with {len(chart_indicators)} indicators")
             return fig
             
@@ -81,7 +163,7 @@ def register_interactive_chart_callbacks(app):
     @app.callback(
         Output("technical-analysis-summary", "children"),
         [
-            Input("symbol-dropdown", "value"),
+            Input("symbol-search", "value"),
             Input("indicators-dropdown", "value")
         ],
         prevent_initial_call=True
@@ -90,7 +172,7 @@ def register_interactive_chart_callbacks(app):
         """Update technical analysis summary."""
         try:
             if not symbol:
-                return html.P("Select a symbol to view technical analysis.", className="text-muted text-center")
+                symbol = "ADBE"
             
             # Get recent market data for analysis
             df = market_service.get_market_data(symbol, days=30)

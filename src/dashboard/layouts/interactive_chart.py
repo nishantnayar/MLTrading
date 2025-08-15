@@ -55,7 +55,7 @@ class InteractiveChartBuilder:
             symbol: Stock symbol
             indicators: List of indicators to display
             show_volume: Whether to show volume subplot
-            chart_type: Type of chart ('candlestick', 'ohlc', 'line')
+            chart_type: Type of chart ('candlestick', 'ohlc', 'line', 'bar')
             volume_display: Volume display mode ('bars', 'bars_ma', 'profile')
             color_by_price: Whether to color volume bars by price direction
         
@@ -182,6 +182,26 @@ class InteractiveChartBuilder:
                     name=f'{symbol} Close',
                     line=dict(color=colors['primary'], width=2),
                     showlegend=False
+                ),
+                row=row, col=1
+            )
+        elif chart_type == 'bar':
+            # Create bar chart using OHLC data - bars colored by price direction
+            bar_colors = []
+            for i in range(len(df)):
+                if df['close'].iloc[i] >= df['open'].iloc[i]:
+                    bar_colors.append(colors['success'])  # Green for up days
+                else:
+                    bar_colors.append(colors['danger'])   # Red for down days
+            
+            fig.add_trace(
+                go.Bar(
+                    x=df['timestamp'],
+                    y=df['close'],
+                    name=f'{symbol} Close',
+                    marker=dict(color=bar_colors),
+                    showlegend=False,
+                    hovertemplate='<b>%{x}</b><br>Close: $%{y:.2f}<extra></extra>'
                 ),
                 row=row, col=1
             )
@@ -675,7 +695,8 @@ def create_chart_controls() -> html.Div:
                         options=[
                             {'label': 'Candlestick', 'value': 'candlestick'},
                             {'label': 'OHLC', 'value': 'ohlc'},
-                            {'label': 'Line', 'value': 'line'}
+                            {'label': 'Line', 'value': 'line'},
+                            {'label': 'Bar', 'value': 'bar'}
                         ],
                         value='candlestick',
                         clearable=False

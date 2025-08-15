@@ -57,6 +57,10 @@ class MarketDataService:
         """Get historical market data for a symbol."""
         return self.market_service.get_market_data(symbol, days, source, hourly)
     
+    def get_all_available_data(self, symbol: str, source: str = 'yahoo') -> pd.DataFrame:
+        """Get ALL available data for a symbol (no limits)."""
+        return self.market_service.get_all_available_data(symbol, source)
+    
     def get_latest_price(self, symbol: str, source: str = 'yahoo') -> Optional[Dict[str, Any]]:
         """Get the latest price data for a symbol."""
         return self.market_service.get_latest_price(symbol, source)
