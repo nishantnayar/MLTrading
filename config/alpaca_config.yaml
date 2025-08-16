@@ -1,18 +1,20 @@
 # Alpaca Trading Configuration
-# Add your actual API credentials here
+# API credentials are loaded from environment variables for security
 
 alpaca:
   # Paper Trading (Safe for testing)
   paper_trading:
     base_url: "https://paper-api.alpaca.markets"
-    api_key: "PKU866TVNTT8AW81NF0Z"        # Replace with your paper trading key
-    secret_key: "wjyGSGculXWvELMY3bpQpcNqA9adMNin9XPx54gg"  # Replace with your paper trading secret
+    # Credentials loaded from environment:
+    # ALPACA_PAPER_API_KEY
+    # ALPACA_PAPER_SECRET_KEY
     
   # Live Trading (Use only when ready!)
   live_trading:
     base_url: "https://api.alpaca.markets"
-    api_key: "YOUR_LIVE_API_KEY_HERE"         # Replace with your live trading key  
-    secret_key: "YOUR_LIVE_SECRET_KEY_HERE"   # Replace with your live trading secret
+    # Credentials loaded from environment:
+    # ALPACA_LIVE_API_KEY
+    # ALPACA_LIVE_SECRET_KEY
 
 # Trading Settings
 trading:

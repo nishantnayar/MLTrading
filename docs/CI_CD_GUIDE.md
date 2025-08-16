@@ -22,7 +22,6 @@
 
 ### Deployment Options
 - [Simple CI (Current)](#simple-ci-current)
-- [Heroku Deployment](#heroku-deployment)
 - [Docker Deployment](#docker-deployment)
 - [Serverless Options](#serverless-options)
 
@@ -412,54 +411,6 @@ Add to your README.md:
 ![CI Tests](https://github.com/your-username/MLTrading/workflows/CI%20Tests/badge.svg)
 [![codecov](https://codecov.io/gh/your-username/MLTrading/branch/main/graph/badge.svg)](https://codecov.io/gh/your-username/MLTrading)
 ```
-
----
-
-## Heroku Deployment
-
-### 📦 **Setup for Future Deployment**
-
-#### **Heroku Configuration**
-```bash
-# Install Heroku CLI
-npm install -g heroku
-
-# Create applications
-heroku create mltrading-staging
-heroku create mltrading-prod
-
-# Add PostgreSQL
-heroku addons:create heroku-postgresql:hobby-dev -a mltrading-staging
-heroku addons:create heroku-postgresql:standard-0 -a mltrading-prod
-
-# Configure environment variables
-heroku config:set ENVIRONMENT=staging -a mltrading-staging
-heroku config:set ENVIRONMENT=production -a mltrading-prod
-heroku config:set DASH_DEBUG=False -a mltrading-prod
-```
-
-#### **Required Files for Heroku**
-```python
-# Procfile
-web: gunicorn --bind 0.0.0.0:$PORT src.dashboard.app:server
-
-# runtime.txt
-python-3.11.0
-
-# requirements.txt (production dependencies)
-dash==2.14.1
-plotly==5.15.0
-pandas==2.0.3
-psycopg2-binary==2.9.7
-gunicorn==21.2.0
-```
-
-#### **Environment Hierarchy**
-| Environment | Purpose | Data | Access | Deployment |
-|-------------|---------|------|--------|------------|
-| **Development** | Local dev | Mock/sample | Developers | Manual |
-| **Staging** | Pre-production testing | Test dataset | QA team | Automatic (develop) |
-| **Production** | Live system | Real data | Users | Manual approval (main) |
 
 ---
 
@@ -917,8 +868,8 @@ open htmlcov/index.html
 - ✅ Quality gates
 
 ### 🚀 **Phase 2: Basic Deployment** (Next)
-- 🔄 Heroku staging environment
-- 🔄 Automated staging deployments
+- 🔄 Docker-based deployment setup
+- 🔄 Automated staging deployments  
 - 🔄 Production deployment with approval
 - 🔄 Basic monitoring and health checks
 

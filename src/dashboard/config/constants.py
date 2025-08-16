@@ -78,9 +78,9 @@ CUSTOM_CSS = {
 # Navigation Items
 NAV_ITEMS = [
     {"label": "Dashboard", "id": "nav-dashboard"},
+    {"label": "Trading", "id": "nav-trading"},
     {"label": "Tests", "id": "nav-tests"},
     {"label": "Logs", "id": "nav-logs"},
-
     {"label": "Help", "id": "nav-help"},
     {"label": "Author", "id": "nav-author"}
 ]

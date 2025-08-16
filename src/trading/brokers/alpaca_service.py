@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 from datetime import datetime, timedelta
 import pandas as pd
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 try:
     from alpaca_trade_api import REST, Stream
@@ -16,7 +20,7 @@ try:
     ALPACA_AVAILABLE = True
 except ImportError:
     ALPACA_AVAILABLE = False
-    print("⚠️  alpaca-trade-api not installed. Run: pip install alpaca-trade-api")
+    print("[WARNING] alpaca-trade-api not installed. Run: pip install alpaca-trade-api")
 
 from ...utils.logging_config import get_ui_logger
 
@@ -68,29 +72,42 @@ class AlpacaService:
             return False
         
         try:
-            # Get credentials based on trading mode
+            # Get credentials from environment variables (secure approach)
             mode = self.config['trading']['mode']
-            alpaca_config = self.config['alpaca'][f'{mode}_trading']
+            
+            if mode == 'paper':
+                api_key = os.getenv('ALPACA_PAPER_API_KEY')
+                secret_key = os.getenv('ALPACA_PAPER_SECRET_KEY')
+                base_url = self.config['alpaca']['paper_trading']['base_url']
+            else:  # live mode
+                api_key = os.getenv('ALPACA_LIVE_API_KEY')
+                secret_key = os.getenv('ALPACA_LIVE_SECRET_KEY') 
+                base_url = self.config['alpaca']['live_trading']['base_url']
             
             # Validate credentials are set
-            api_key = alpaca_config['api_key']
-            secret_key = alpaca_config['secret_key']
-            
-            if api_key.startswith("YOUR_") or secret_key.startswith("YOUR_"):
-                logger.error("❌ Please set your actual Alpaca API credentials in config/alpaca_config.yaml")
+            if not api_key or not secret_key:
+                logger.error(f"[ERROR] Missing Alpaca API credentials for {mode} mode")
+                logger.error("   Please set environment variables:")
+                if mode == 'paper':
+                    logger.error("   - ALPACA_PAPER_API_KEY")
+                    logger.error("   - ALPACA_PAPER_SECRET_KEY")
+                else:
+                    logger.error("   - ALPACA_LIVE_API_KEY") 
+                    logger.error("   - ALPACA_LIVE_SECRET_KEY")
+                logger.error("   Check your .env file")
                 return False
             
             # Initialize REST client
             self.client = REST(
                 key_id=api_key,
                 secret_key=secret_key,
-                base_url=alpaca_config['base_url'],
+                base_url=base_url,
                 api_version='v2'
             )
             
             # Test connection
             account = self.client.get_account()
-            logger.info(f"✅ Connected to Alpaca ({mode} mode)")
+            logger.info(f"[SUCCESS] Connected to Alpaca ({mode} mode)")
             logger.info(f"   Account: {account.id}")
             logger.info(f"   Buying Power: ${float(account.buying_power):,.2f}")
             logger.info(f"   Portfolio Value: ${float(account.portfolio_value):,.2f}")
@@ -99,7 +116,7 @@ class AlpacaService:
             return True
             
         except Exception as e:
-            logger.error(f"❌ Failed to connect to Alpaca: {e}")
+            logger.error(f"[ERROR] Failed to connect to Alpaca: {e}")
             self._connected = False
             return False
     
@@ -192,11 +209,11 @@ class AlpacaService:
         
         # Safety checks
         if self.config['risk']['emergency_stop']:
-            logger.warning("❌ Emergency stop enabled - order blocked")
+            logger.warning("[BLOCKED] Emergency stop enabled - order blocked")
             return None
         
         if abs(qty) > self.config['risk']['max_position_size']:
-            logger.warning(f"❌ Order quantity {qty} exceeds max position size")
+            logger.warning(f"[BLOCKED] Order quantity {qty} exceeds max position size")
             return None
         
         try:
@@ -208,7 +225,7 @@ class AlpacaService:
                 time_in_force=time_in_force
             )
             
-            logger.info(f"✅ Order submitted: {side} {qty} {symbol}")
+            logger.info(f"[SUCCESS] Order submitted: {side} {qty} {symbol}")
             
             return {
                 'id': order.id,
@@ -221,7 +238,7 @@ class AlpacaService:
             }
             
         except Exception as e:
-            logger.error(f"❌ Error submitting order: {e}")
+            logger.error(f"[ERROR] Error submitting order: {e}")
             return None
     
     def cancel_order(self, order_id: str) -> bool:
@@ -231,10 +248,10 @@ class AlpacaService:
         
         try:
             self.client.cancel_order(order_id)
-            logger.info(f"✅ Order cancelled: {order_id}")
+            logger.info(f"[SUCCESS] Order cancelled: {order_id}")
             return True
         except Exception as e:
-            logger.error(f"❌ Error cancelling order: {e}")
+            logger.error(f"[ERROR] Error cancelling order: {e}")
             return False
     
     def get_market_data(self, symbol: str, timeframe: str = '1Day', 
@@ -268,7 +285,7 @@ class AlpacaService:
         return {
             'connected': self._connected,
             'mode': self.config['trading']['mode'] if self.config else 'unknown',
-            'base_url': self.client.base_url if self.client else None,
+            'base_url': getattr(self.client, '_base_url', None) if self.client else None,
             'account_info': self.get_account_info() if self._connected else None
         }
 

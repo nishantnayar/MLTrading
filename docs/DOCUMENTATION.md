@@ -21,7 +21,7 @@ For detailed technical information, refer to these specialized guides:
 
 - **[📚 Technical API & Services Guide](TECHNICAL_API_GUIDE.md)** - Complete API documentation and service architecture
 - **[🚀 Implementation Guide](IMPLEMENTATION_GUIDE.md)** - Performance optimizations and interactive chart features
-- **[🧪 Testing Guide](TESTING.md)** - Testing procedures and test structure
+- **[🧪 Comprehensive Testing Guide](COMPREHENSIVE_TESTING_GUIDE.md)** - Complete testing framework and procedures
 - **[📋 Change Log](CHANGELOG.md)** - Complete development history and feature releases
 - **[📁 Archive Cleanup](ARCHIVE_CLEANUP_SUMMARY.md)** - Documentation consolidation summary
 
@@ -1054,7 +1054,7 @@ The dashboard now delivers:
 - [ ] Set up monitoring and alerting
 
 #### 11.2 Cloud Deployment (Optional)
-- [ ] Deploy to Heroku/Railway
+- [ ] Deploy to Railway or cloud platform
 - [ ] Set up cloud monitoring
 - [ ] Implement automated backups
 - [ ] Create deployment documentation
@@ -1143,7 +1143,7 @@ The dashboard now delivers:
 - **Interactivity**: Dash callbacks, real-time updates
 
 ### Infrastructure
-- **Deployment**: Local development, Heroku/Railway for hosting
+- **Deployment**: Local development, Railway for hosting
 - **Monitoring**: Basic logging with Python logging
 - **Storage**: Local files + cloud storage (Google Drive/Dropbox)
 
@@ -1153,7 +1153,7 @@ The dashboard now delivers:
   - **Live Trading**: Alpaca Markets (real-time execution data)
 - **Trading**: Alpaca Markets (paper trading free, real trading)
 - **Market Hours**: Currently using calculated market hours (9:30 AM - 4:00 PM EST, Monday-Friday). When Alpaca connectivity is implemented, market open and close times will be sourced directly from Alpaca's real-time market data for more accurate information including holidays and early closures.
-- **Hosting**: Heroku, Railway, or local deployment
+- **Hosting**: Railway or local deployment
 
 ---
 

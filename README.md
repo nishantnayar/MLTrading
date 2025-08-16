@@ -30,7 +30,7 @@ A comprehensive machine learning-based trading system with **professional-grade 
 - **[📚 Main Documentation](docs/DOCUMENTATION.md)** - Complete system documentation and setup guide
 - **[📚 Technical API Guide](docs/TECHNICAL_API_GUIDE.md)** - API documentation and service architecture  
 - **[🚀 Implementation Guide](docs/IMPLEMENTATION_GUIDE.md)** - Performance optimizations and chart features
-- **[🧪 Testing Guide](docs/TESTING.md)** - Testing procedures and test structure
+- **[🧪 Comprehensive Testing Guide](docs/COMPREHENSIVE_TESTING_GUIDE.md)** - Complete testing framework and procedures
 - **[📋 Change Log](docs/CHANGELOG.md)** - Development history and feature releases
 
 ### 🎯 System Status (January 2025)
@@ -275,7 +275,7 @@ INDICATOR_CONFIG = {
 - **📖 Complete Documentation**: [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md)
 - **📊 Interactive Chart Guide**: [src/dashboard/interactive_chart_features_summary.md](src/dashboard/interactive_chart_features_summary.md)
 - **⚡ Performance Optimizations**: [src/dashboard/optimization_summary.md](src/dashboard/optimization_summary.md)
-- **🧪 Testing Guide**: [docs/TESTING.md](docs/TESTING.md)
+- **🧪 Comprehensive Testing Guide**: [docs/COMPREHENSIVE_TESTING_GUIDE.md](docs/COMPREHENSIVE_TESTING_GUIDE.md)
 
 ## 🏆 System Capabilities
 

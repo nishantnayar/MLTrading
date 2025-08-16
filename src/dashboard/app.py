@@ -24,11 +24,12 @@ from src.dashboard.config import (
 from src.dashboard.layouts.dashboard_layout import create_dashboard_content
 from src.dashboard.layouts.help_layout import create_help_layout
 from src.dashboard.layouts.tests_layout import create_tests_layout
-
+from src.dashboard.layouts.trading_layout import create_trading_dashboard
 from src.dashboard.layouts.logs_layout import create_logs_layout, register_logs_callbacks
 from src.dashboard.layouts.author_layout import create_author_layout
 from src.dashboard.callbacks import register_chart_callbacks, register_overview_callbacks, register_comparison_callbacks
 from src.dashboard.callbacks.interactive_chart_callbacks import register_interactive_chart_callbacks
+from src.dashboard.callbacks.trading_callbacks import register_trading_callbacks
 from src.dashboard.utils.date_formatters import get_current_timestamp
 
 # Initialize logger
@@ -142,13 +143,13 @@ app.layout = dbc.Container([
     Output("page-content", "children"),
     [Input("url", "pathname"),
      Input("nav-dashboard", "n_clicks"),
+     Input("nav-trading", "n_clicks"),
      Input("nav-tests", "n_clicks"),
      Input("nav-help", "n_clicks"),
-
      Input("nav-logs", "n_clicks"),
      Input("nav-author", "n_clicks")]
 )
-def display_page(pathname, nav_dashboard, nav_tests, nav_help, nav_logs, nav_author):
+def display_page(pathname, nav_dashboard, nav_trading, nav_tests, nav_help, nav_logs, nav_author):
     """Display different pages based on navigation"""
     ctx = callback_context
     
@@ -158,11 +159,12 @@ def display_page(pathname, nav_dashboard, nav_tests, nav_help, nav_logs, nav_aut
     
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     
-    if button_id == "nav-tests" or pathname == "/tests":
+    if button_id == "nav-trading" or pathname == "/trading":
+        return create_trading_dashboard()
+    elif button_id == "nav-tests" or pathname == "/tests":
         return create_tests_layout()
     elif button_id == "nav-help" or pathname == "/help":
         return create_help_layout()
-
     elif button_id == "nav-logs" or pathname == "/logs":
         return create_logs_layout()
     elif button_id == "nav-author" or pathname == "/author":
@@ -203,6 +205,13 @@ def update_footer_timestamp(n_intervals):
     return get_current_timestamp("default", "US/Central")
 
 
+# Register all callbacks
+register_chart_callbacks(app)
+register_overview_callbacks(app)
+register_comparison_callbacks(app)
+register_interactive_chart_callbacks(app)
+register_logs_callbacks(app)
+register_trading_callbacks(app)  # Register trading callbacks
 
 if __name__ == '__main__':
     logger.info("Starting ML Trading Dashboard...")
