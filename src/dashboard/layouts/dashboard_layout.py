@@ -502,7 +502,6 @@ def create_charts_tab():
                                     # Data Status & Refresh
                                     dbc.Col([
                                         html.Div([
-                                            html.Span("🟢 Live Data", id="data-status-badge", className="badge bg-success me-2"),
                                             dbc.Button([
                                                 html.I(className="fas fa-sync-alt me-1"),
                                                 "Refresh"

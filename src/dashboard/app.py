@@ -205,12 +205,7 @@ def update_footer_timestamp(n_intervals):
     return get_current_timestamp("default", "US/Central")
 
 
-# Register all callbacks
-register_chart_callbacks(app)
-register_overview_callbacks(app)
-register_comparison_callbacks(app)
-register_interactive_chart_callbacks(app)
-register_logs_callbacks(app)
+# Additional trading callbacks registration (logs callbacks already registered above)
 register_trading_callbacks(app)  # Register trading callbacks
 
 if __name__ == '__main__':

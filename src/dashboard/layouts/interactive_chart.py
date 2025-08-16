@@ -70,7 +70,6 @@ class InteractiveChartBuilder:
             indicator_data = self.indicator_service.calculate_all_indicators(df)
             
             # Determine subplot configuration with better height allocation
-            subplot_titles = [f"{symbol} Price Chart"]
             
             oscillator_indicators = []
             if indicators:
@@ -83,17 +82,14 @@ class InteractiveChartBuilder:
                 # Price: 60%, Volume: 25%, Oscillators: 15% (more volume space)
                 row_heights = [0.60, 0.25, 0.15]
                 total_rows = 3
-                subplot_titles.extend(["Volume", "Technical Oscillators"])
             elif show_volume:
                 # Price: 70%, Volume: 30% (even more space for volume when no oscillators)
                 row_heights = [0.70, 0.30]
                 total_rows = 2
-                subplot_titles.append("Volume")
             elif oscillator_indicators:
                 # Price: 75%, Oscillators: 25%
                 row_heights = [0.75, 0.25]
                 total_rows = 2
-                subplot_titles.append("Technical Oscillators")
             else:
                 # Price only: 100%
                 row_heights = [1.0]
@@ -104,7 +100,6 @@ class InteractiveChartBuilder:
                 cols=1,
                 shared_xaxes=True,
                 vertical_spacing=0.05,
-                subplot_titles=subplot_titles,
                 row_heights=row_heights,
                 specs=[[{"secondary_y": False}] for _ in range(total_rows)]
             )

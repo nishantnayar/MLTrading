@@ -17,7 +17,7 @@ logger = get_ui_logger("trading_layout")
 def create_trading_dashboard() -> html.Div:
     """Create the main trading dashboard"""
     
-    return html.Div([
+    return html.Div(id="trading-dashboard", children=[
         # Connection Status Header
         dbc.Alert(
             id="trading-connection-status",
