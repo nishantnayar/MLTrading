@@ -17,7 +17,7 @@ warnings.filterwarnings('ignore', message='pandas only supports SQLAlchemy')
 
 from ...utils.logging_config import get_combined_logger, log_operation
 
-logger = get_combined_logger("mltrading.data.database")
+logger = get_combined_logger("mltrading.data.database", enable_database_logging=True)
 
 
 class DatabaseManager:

@@ -14,6 +14,14 @@ from typing import Dict, Any, Optional, Union
 from contextlib import contextmanager
 from concurrent.futures import ThreadPoolExecutor
 
+# Import database logging components
+try:
+    from .database_logging import DatabaseLogHandler
+    DATABASE_LOGGING_AVAILABLE = True
+except ImportError:
+    DATABASE_LOGGING_AVAILABLE = False
+    DatabaseLogHandler = None
+
 class SanitizingFormatter(logging.Formatter):
     """Custom formatter that sanitizes sensitive information"""
     
@@ -32,14 +40,20 @@ class SanitizingFormatter(logging.Formatter):
         
         return super().format(record)
 
-def setup_logger(name: str, log_file: str = None, level: str = "INFO") -> logging.Logger:
+def setup_logger(name: str, log_file: str = None, level: str = "INFO", 
+                 enable_database_logging: bool = True, 
+                 file_log_level: str = "DEBUG",
+                 db_log_level: str = "INFO") -> logging.Logger:
     """
-    Set up a logger with file and console handlers
+    Set up a logger with file, console, and optional database handlers
     
     Args:
         name: Logger name
         log_file: Log file path (optional)
-        level: Logging level
+        level: Overall logging level
+        enable_database_logging: Whether to enable database logging
+        file_log_level: Log level for file handlers
+        db_log_level: Log level for database handler
     
     Returns:
         Configured logger instance
@@ -87,38 +101,69 @@ def setup_logger(name: str, log_file: str = None, level: str = "INFO") -> loggin
             maxBytes=10*1024*1024,  # 10MB
             backupCount=5
         )
-        file_handler.setLevel(logging.DEBUG)
+        file_handler.setLevel(getattr(logging, file_log_level.upper()))
         file_handler.setFormatter(detailed_formatter)
         logger.addHandler(file_handler)
     
+    # Database handler (if enabled and available)
+    if enable_database_logging and DATABASE_LOGGING_AVAILABLE and DatabaseLogHandler:
+        try:
+            from ..data.storage.database import DatabaseManager
+            db_manager = DatabaseManager()
+            
+            db_handler = DatabaseLogHandler(
+                db_manager=db_manager,
+                table_name="system_logs",
+                max_queue_size=1000,
+                batch_size=50,
+                flush_interval=5.0
+            )
+            db_handler.setLevel(getattr(logging, db_log_level.upper()))
+            logger.addHandler(db_handler)
+            
+        except Exception as e:
+            # If database logging fails, log to file as fallback
+            fallback_logger = logging.getLogger('database_setup_fallback')
+            if not fallback_logger.handlers:
+                # Set up minimal file handler for fallback
+                fallback_handler = logging.FileHandler(logs_dir / "database_fallback.log")
+                fallback_handler.setFormatter(detailed_formatter)
+                fallback_logger.addHandler(fallback_handler)
+            fallback_logger.error(f"Failed to set up database logging for {name}: {e}")
+    
     return logger
 
-def get_ui_logger(component: str) -> logging.Logger:
+def get_ui_logger(component: str, enable_database_logging: bool = True) -> logging.Logger:
     """
     Get a logger for UI components
     
     Args:
         component: Component name (e.g., 'api', 'dashboard')
+        enable_database_logging: Whether to enable database logging
     
     Returns:
         Configured logger for the component
     """
     return setup_logger(
         name=f"mltrading.ui.{component}",
-        log_file=f"ui_{component}.log"
+        log_file=f"ui_{component}.log",
+        enable_database_logging=enable_database_logging,
+        file_log_level="DEBUG",
+        db_log_level="INFO"
     )
 
-def get_combined_logger(name: str) -> logging.Logger:
+def get_combined_logger(name: str, enable_database_logging: bool = True) -> logging.Logger:
     """
-    Get a logger that only writes to the combined log file
+    Get a logger that writes to combined log file and optionally to database
     
     Args:
         name: Logger name
+        enable_database_logging: Whether to enable database logging
     
     Returns:
-        Configured logger that writes to combined log
+        Configured logger that writes to combined log and database
     """
-    return setup_logger(name=name)
+    return setup_logger(name=name, enable_database_logging=enable_database_logging)
 
 def log_structured_event(component: str, level: str, message: str, 
                         metadata: Dict[str, Any] = None, logger: logging.Logger = None):
