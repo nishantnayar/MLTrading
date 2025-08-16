@@ -1,0 +1,284 @@
+"""
+Alpaca Trading Service
+Handles connection and operations with Alpaca Markets API
+"""
+
+import os
+import yaml
+from pathlib import Path
+from typing import Dict, List, Optional, Union
+from datetime import datetime, timedelta
+import pandas as pd
+
+try:
+    from alpaca_trade_api import REST, Stream
+    from alpaca_trade_api.entity import Account, Position, Order
+    ALPACA_AVAILABLE = True
+except ImportError:
+    ALPACA_AVAILABLE = False
+    print("⚠️  alpaca-trade-api not installed. Run: pip install alpaca-trade-api")
+
+from ...utils.logging_config import get_ui_logger
+
+logger = get_ui_logger("alpaca_service")
+
+
+class AlpacaService:
+    """Service for interacting with Alpaca Markets API"""
+    
+    def __init__(self, config_path: Optional[str] = None):
+        """Initialize Alpaca service with configuration"""
+        self.config = self._load_config(config_path)
+        self.client = None
+        self.stream = None
+        self._connected = False
+        
+        # Initialize connection
+        self.connect()
+    
+    def _load_config(self, config_path: Optional[str] = None) -> Dict:
+        """Load Alpaca configuration from YAML file"""
+        if config_path is None:
+            # Default path relative to project root
+            project_root = Path(__file__).parent.parent.parent.parent
+            config_path = project_root / "config" / "alpaca_config.yaml"
+        
+        try:
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f)
+            
+            # Validate required configuration
+            mode = config['trading']['mode']
+            if mode not in ['paper', 'live']:
+                raise ValueError(f"Invalid trading mode: {mode}")
+            
+            return config
+            
+        except FileNotFoundError:
+            logger.error(f"Config file not found: {config_path}")
+            raise
+        except Exception as e:
+            logger.error(f"Error loading config: {e}")
+            raise
+    
+    def connect(self) -> bool:
+        """Establish connection to Alpaca API"""
+        if not ALPACA_AVAILABLE:
+            logger.error("Alpaca Trade API not available. Install with: pip install alpaca-trade-api")
+            return False
+        
+        try:
+            # Get credentials based on trading mode
+            mode = self.config['trading']['mode']
+            alpaca_config = self.config['alpaca'][f'{mode}_trading']
+            
+            # Validate credentials are set
+            api_key = alpaca_config['api_key']
+            secret_key = alpaca_config['secret_key']
+            
+            if api_key.startswith("YOUR_") or secret_key.startswith("YOUR_"):
+                logger.error("❌ Please set your actual Alpaca API credentials in config/alpaca_config.yaml")
+                return False
+            
+            # Initialize REST client
+            self.client = REST(
+                key_id=api_key,
+                secret_key=secret_key,
+                base_url=alpaca_config['base_url'],
+                api_version='v2'
+            )
+            
+            # Test connection
+            account = self.client.get_account()
+            logger.info(f"✅ Connected to Alpaca ({mode} mode)")
+            logger.info(f"   Account: {account.id}")
+            logger.info(f"   Buying Power: ${float(account.buying_power):,.2f}")
+            logger.info(f"   Portfolio Value: ${float(account.portfolio_value):,.2f}")
+            
+            self._connected = True
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to connect to Alpaca: {e}")
+            self._connected = False
+            return False
+    
+    def is_connected(self) -> bool:
+        """Check if connected to Alpaca"""
+        return self._connected and self.client is not None
+    
+    def get_account_info(self) -> Optional[Dict]:
+        """Get account information"""
+        if not self.is_connected():
+            return None
+        
+        try:
+            account = self.client.get_account()
+            return {
+                'account_id': account.id,
+                'buying_power': float(account.buying_power),
+                'portfolio_value': float(account.portfolio_value),
+                'cash': float(account.cash),
+                'day_trade_count': account.daytrade_buying_power,
+                'trading_blocked': account.trading_blocked,
+                'account_blocked': account.account_blocked,
+                'pattern_day_trader': account.pattern_day_trader
+            }
+        except Exception as e:
+            logger.error(f"Error getting account info: {e}")
+            return None
+    
+    def get_positions(self) -> List[Dict]:
+        """Get current positions"""
+        if not self.is_connected():
+            return []
+        
+        try:
+            positions = self.client.list_positions()
+            return [
+                {
+                    'symbol': pos.symbol,
+                    'qty': int(pos.qty),
+                    'market_value': float(pos.market_value),
+                    'cost_basis': float(pos.cost_basis),
+                    'unrealized_pl': float(pos.unrealized_pl),
+                    'unrealized_plpc': float(pos.unrealized_plpc),
+                    'side': pos.side,
+                    'avg_entry_price': float(pos.avg_entry_price)
+                }
+                for pos in positions
+            ]
+        except Exception as e:
+            logger.error(f"Error getting positions: {e}")
+            return []
+    
+    def get_orders(self, status: str = 'all', limit: int = 50) -> List[Dict]:
+        """Get recent orders"""
+        if not self.is_connected():
+            return []
+        
+        try:
+            orders = self.client.list_orders(
+                status=status,
+                limit=limit,
+                direction='desc'
+            )
+            return [
+                {
+                    'id': order.id,
+                    'symbol': order.symbol,
+                    'qty': int(order.qty),
+                    'filled_qty': int(order.filled_qty) if order.filled_qty else 0,
+                    'side': order.side,
+                    'order_type': order.order_type,
+                    'time_in_force': order.time_in_force,
+                    'status': order.status,
+                    'submitted_at': order.submitted_at.isoformat() if order.submitted_at else None,
+                    'filled_at': order.filled_at.isoformat() if order.filled_at else None,
+                    'filled_avg_price': float(order.filled_avg_price) if order.filled_avg_price else None
+                }
+                for order in orders
+            ]
+        except Exception as e:
+            logger.error(f"Error getting orders: {e}")
+            return []
+    
+    def submit_order(self, symbol: str, qty: int, side: str, 
+                    order_type: str = 'market', time_in_force: str = 'day') -> Optional[Dict]:
+        """Submit a trading order"""
+        if not self.is_connected():
+            logger.error("Not connected to Alpaca")
+            return None
+        
+        # Safety checks
+        if self.config['risk']['emergency_stop']:
+            logger.warning("❌ Emergency stop enabled - order blocked")
+            return None
+        
+        if abs(qty) > self.config['risk']['max_position_size']:
+            logger.warning(f"❌ Order quantity {qty} exceeds max position size")
+            return None
+        
+        try:
+            order = self.client.submit_order(
+                symbol=symbol,
+                qty=qty,
+                side=side,
+                type=order_type,
+                time_in_force=time_in_force
+            )
+            
+            logger.info(f"✅ Order submitted: {side} {qty} {symbol}")
+            
+            return {
+                'id': order.id,
+                'symbol': order.symbol,
+                'qty': int(order.qty),
+                'side': order.side,
+                'order_type': order.order_type,
+                'status': order.status,
+                'submitted_at': order.submitted_at.isoformat() if order.submitted_at else None
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error submitting order: {e}")
+            return None
+    
+    def cancel_order(self, order_id: str) -> bool:
+        """Cancel an order"""
+        if not self.is_connected():
+            return False
+        
+        try:
+            self.client.cancel_order(order_id)
+            logger.info(f"✅ Order cancelled: {order_id}")
+            return True
+        except Exception as e:
+            logger.error(f"❌ Error cancelling order: {e}")
+            return False
+    
+    def get_market_data(self, symbol: str, timeframe: str = '1Day', 
+                       start: Optional[datetime] = None, end: Optional[datetime] = None) -> pd.DataFrame:
+        """Get market data for a symbol"""
+        if not self.is_connected():
+            return pd.DataFrame()
+        
+        try:
+            # Default to last 30 days if no dates provided
+            if end is None:
+                end = datetime.now()
+            if start is None:
+                start = end - timedelta(days=30)
+            
+            bars = self.client.get_bars(
+                symbol,
+                timeframe,
+                start=start.isoformat(),
+                end=end.isoformat()
+            ).df
+            
+            return bars
+            
+        except Exception as e:
+            logger.error(f"Error getting market data for {symbol}: {e}")
+            return pd.DataFrame()
+    
+    def get_connection_status(self) -> Dict:
+        """Get detailed connection status"""
+        return {
+            'connected': self._connected,
+            'mode': self.config['trading']['mode'] if self.config else 'unknown',
+            'base_url': self.client.base_url if self.client else None,
+            'account_info': self.get_account_info() if self._connected else None
+        }
+
+
+# Global instance for easy access
+alpaca_service = None
+
+def get_alpaca_service() -> AlpacaService:
+    """Get global Alpaca service instance"""
+    global alpaca_service
+    if alpaca_service is None:
+        alpaca_service = AlpacaService()
+    return alpaca_service

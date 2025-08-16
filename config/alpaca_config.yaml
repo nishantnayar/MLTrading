@@ -1,0 +1,28 @@
+# Alpaca Trading Configuration
+# Add your actual API credentials here
+
+alpaca:
+  # Paper Trading (Safe for testing)
+  paper_trading:
+    base_url: "https://paper-api.alpaca.markets"
+    api_key: "PKU866TVNTT8AW81NF0Z"        # Replace with your paper trading key
+    secret_key: "wjyGSGculXWvELMY3bpQpcNqA9adMNin9XPx54gg"  # Replace with your paper trading secret
+    
+  # Live Trading (Use only when ready!)
+  live_trading:
+    base_url: "https://api.alpaca.markets"
+    api_key: "YOUR_LIVE_API_KEY_HERE"         # Replace with your live trading key  
+    secret_key: "YOUR_LIVE_SECRET_KEY_HERE"   # Replace with your live trading secret
+
+# Trading Settings
+trading:
+  mode: "paper"              # "paper" or "live" - START WITH PAPER!
+  default_order_type: "market"
+  default_time_in_force: "day"
+  max_order_value: 10000     # Maximum $ per order (safety limit)
+
+# Risk Management
+risk:
+  max_daily_orders: 10       # Limit orders per day
+  max_position_size: 1000    # Max shares per position  
+  emergency_stop: false      # Emergency stop all trading
