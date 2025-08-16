@@ -546,7 +546,7 @@ def start_log_cleanup_scheduler(cleanup_interval_hours: int = 24,
         delete_after_days: Days before deleting regular logs
         delete_compressed_after_days: Days before deleting compressed logs
     """
-    global _log_cleanup_thread, _cleanup_running
+    global _log_cleanup_thread
     
     if _cleanup_running:
         return
