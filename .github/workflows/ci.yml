@@ -37,7 +37,7 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-cov flake8
         # Install additional test dependencies
-        pip install pytest-mock pytest-asyncio
+        pip install pytest-mock pytest-asyncio psutil
     
     - name: Lint with flake8
       run: |
