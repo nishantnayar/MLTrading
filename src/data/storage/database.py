@@ -4,7 +4,6 @@ Handles connections, table creation, and basic CRUD operations.
 """
 
 import os
-import logging
 import warnings
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
@@ -16,7 +15,9 @@ import pandas as pd
 # Suppress pandas SQLAlchemy warning
 warnings.filterwarnings('ignore', message='pandas only supports SQLAlchemy')
 
-logger = logging.getLogger(__name__)
+from ...utils.logging_config import get_combined_logger, log_operation
+
+logger = get_combined_logger("mltrading.data.database")
 
 
 class DatabaseManager:

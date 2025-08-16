@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 import pytz
 
 from ..config import CHART_COLORS, MARKET_HOURS
+from ...trading.brokers.alpaca_service import get_alpaca_service
 from ..layouts.chart_components import create_empty_chart, create_horizontal_bar_chart
 from ..services.data_service import MarketDataService
 from ..services.symbol_service import SymbolService
@@ -187,55 +188,109 @@ def register_overview_callbacks(app):
             # Format current time
             current_time = now.strftime("%I:%M %p CST")
             
-            # Calculate next market open and close using config
-            market_open = now.replace(
-                hour=MARKET_HOURS['open_hour'], 
-                minute=MARKET_HOURS['open_minute'], 
-                second=0, 
-                microsecond=0
-            )
-            market_close = now.replace(
-                hour=MARKET_HOURS['close_hour'], 
-                minute=MARKET_HOURS['close_minute'], 
-                second=0, 
-                microsecond=0
-            )
-            
-            # If it's weekend, next open is Monday
-            if now.weekday() >= 5:  # Saturday = 5, Sunday = 6
-                days_until_monday = (7 - now.weekday()) % 7
-                next_open = now + timedelta(days=days_until_monday)
-                next_open = next_open.replace(hour=9, minute=30, second=0, microsecond=0)
-            else:
-                # If it's before market open today
-                if now.time() < market_open.time():
-                    next_open = market_open
-                else:
-                    # Next open is tomorrow (or Monday if Friday)
-                    if now.weekday() == 4:  # Friday
-                        next_open = now + timedelta(days=3)  # Monday
+            # Try to get real market hours from Alpaca
+            try:
+                alpaca_service = get_alpaca_service()
+                market_hours = alpaca_service.get_market_hours()
+                
+                if market_hours and 'next_open' in market_hours and 'next_close' in market_hours:
+                    # Convert to Central Time for display
+                    next_open = market_hours['next_open'].astimezone(chicago)
+                    next_close = market_hours['next_close'].astimezone(chicago)
+                    
+                    # Format market times with day information
+                    today = now.date()
+                    open_date = next_open.date()
+                    close_date = next_close.date()
+                    
+                    # Add day information if not today
+                    if open_date == today:
+                        next_open_str = next_open.strftime("%I:%M %p")
+                    elif open_date == today + timedelta(days=1):
+                        next_open_str = next_open.strftime("Tomorrow %I:%M %p")
                     else:
-                        next_open = now + timedelta(days=1)
-                    next_open = next_open.replace(
-                        hour=MARKET_HOURS['open_hour'], 
-                        minute=MARKET_HOURS['open_minute'], 
-                        second=0, 
-                        microsecond=0
-                    )
-            
-            # Next close is the same day as next open
-            next_close = next_open.replace(
-                hour=MARKET_HOURS['close_hour'], 
-                minute=MARKET_HOURS['close_minute'], 
-                second=0, 
-                microsecond=0
-            )
-            
-            # Format market times
-            next_open_str = next_open.strftime("%I:%M %p")
-            next_close_str = next_close.strftime("%I:%M %p")
-            
-            return current_time, next_open_str, next_close_str
+                        next_open_str = next_open.strftime("%A %I:%M %p")
+                    
+                    if close_date == today:
+                        next_close_str = next_close.strftime("%I:%M %p")
+                    elif close_date == today + timedelta(days=1):
+                        next_close_str = next_close.strftime("Tomorrow %I:%M %p")
+                    else:
+                        next_close_str = next_close.strftime("%A %I:%M %p")
+                    
+                    return current_time, next_open_str, next_close_str
+                else:
+                    logger.warning("Could not get market hours from Alpaca, falling back to hardcoded values")
+                    raise Exception("Alpaca market hours not available")
+                    
+            except Exception as alpaca_error:
+                logger.warning(f"Alpaca API unavailable for market hours: {alpaca_error}, using fallback")
+                
+                # Fallback to hardcoded market hours (existing logic)
+                market_open = now.replace(
+                    hour=MARKET_HOURS['open_hour'], 
+                    minute=MARKET_HOURS['open_minute'], 
+                    second=0, 
+                    microsecond=0
+                )
+                market_close = now.replace(
+                    hour=MARKET_HOURS['close_hour'], 
+                    minute=MARKET_HOURS['close_minute'], 
+                    second=0, 
+                    microsecond=0
+                )
+                
+                # If it's weekend, next open is Monday
+                if now.weekday() >= 5:  # Saturday = 5, Sunday = 6
+                    days_until_monday = (7 - now.weekday()) % 7
+                    next_open = now + timedelta(days=days_until_monday)
+                    next_open = next_open.replace(hour=9, minute=30, second=0, microsecond=0)
+                else:
+                    # If it's before market open today
+                    if now.time() < market_open.time():
+                        next_open = market_open
+                    else:
+                        # Next open is tomorrow (or Monday if Friday)
+                        if now.weekday() == 4:  # Friday
+                            next_open = now + timedelta(days=3)  # Monday
+                        else:
+                            next_open = now + timedelta(days=1)
+                        next_open = next_open.replace(
+                            hour=MARKET_HOURS['open_hour'], 
+                            minute=MARKET_HOURS['open_minute'], 
+                            second=0, 
+                            microsecond=0
+                        )
+                
+                # Next close is the same day as next open
+                next_close = next_open.replace(
+                    hour=MARKET_HOURS['close_hour'], 
+                    minute=MARKET_HOURS['close_minute'], 
+                    second=0, 
+                    microsecond=0
+                )
+                
+                # Format market times with day information
+                today = now.date()
+                open_date = next_open.date()
+                close_date = next_close.date()
+                
+                # Add day information if not today
+                if open_date == today:
+                    next_open_str = next_open.strftime("%I:%M %p")
+                elif open_date == today + timedelta(days=1):
+                    next_open_str = next_open.strftime("Tomorrow %I:%M %p")
+                else:
+                    next_open_str = next_open.strftime("%A %I:%M %p")
+                
+                if close_date == today:
+                    next_close_str = next_close.strftime("%I:%M %p")
+                elif close_date == today + timedelta(days=1):
+                    next_close_str = next_close.strftime("Tomorrow %I:%M %p")
+                else:
+                    next_close_str = next_close.strftime("%A %I:%M %p")
+                
+                return current_time, next_open_str, next_close_str
             
         except Exception as e:
             logger.error(f"Error updating time and market info: {e}")

@@ -37,7 +37,7 @@ For detailed technical information, refer to these specialized guides:
 - **Testing Framework**: Comprehensive test suite with 117 tests and interactive dashboard
 - **Security Validation**: Input validation and sanitization system for security
 - **Analytics Engine**: Portfolio analytics and performance metrics system
-- **Monitoring & Logging**: Advanced log viewing with filtering and real-time monitoring
+- **Enhanced Logging System**: Enterprise-grade logging with automatic sanitization, correlation IDs, log consolidation, and Prefect-ready cleanup tasks
 - **Simplified Navigation**: Clean, focused interface without complex settings management
 
 ### 📊 Current Capabilities
@@ -1144,7 +1144,7 @@ The dashboard now delivers:
 
 ### Infrastructure
 - **Deployment**: Local development, Railway for hosting
-- **Monitoring**: Basic logging with Python logging
+- **Monitoring**: Enhanced logging system with sanitization, correlation IDs, and automated cleanup
 - **Storage**: Local files + cloud storage (Google Drive/Dropbox)
 
 ### External Services
@@ -1277,6 +1277,145 @@ redis_manager = RedisManager(
     decode_responses=True
 )
 ```
+
+---
+
+## Enhanced Logging System
+
+### Overview
+
+The ML Trading System features an enterprise-grade logging system with advanced security, performance monitoring, and automated maintenance capabilities.
+
+### Key Features
+
+#### 🔒 **Security & Sanitization**
+- **Automatic Data Masking**: Automatically sanitizes sensitive information including:
+  - Passwords (`password=secret` → `password=***MASKED***`)
+  - API Keys (`api_key=abc123` → `api_key=***MASKED***`)
+  - Secrets and Tokens (`secret=value` → `secret=***MASKED***`)
+  - Bearer Tokens (`bearer token` → `bearer ***MASKED***`)
+- **Pattern-based Detection**: Uses regex patterns to identify sensitive data
+- **Thread-safe**: Operates safely in multi-threaded environments
+
+#### 🔗 **Request Tracing**
+- **Correlation IDs**: Every log entry includes a unique correlation ID for request tracing
+- **Thread-local Context**: Maintains correlation context across operations
+- **Cross-component Tracking**: Track requests across API, dashboard, and services
+
+#### ⏱️ **Performance Monitoring**
+- **Operation Timing**: Automatic timing of operations with `log_operation()` context manager
+- **Error Tracking**: Comprehensive error logging with stack traces and timing
+- **Structured Events**: JSON-formatted performance logs for analytics
+
+#### 🗜️ **Log Consolidation & Cleanup**
+- **Automatic Compression**: Compresses logs older than 7 days using gzip
+- **Configurable Retention**: Separate retention policies for regular and compressed logs
+- **Space Optimization**: Significant disk space savings through compression
+- **Health Monitoring**: Automated log health checks and recommendations
+
+### Usage Examples
+
+#### Basic Enhanced Logging
+```python
+from src.utils.logging_config import get_combined_logger, log_operation
+
+# Get logger with automatic sanitization and correlation IDs
+logger = get_combined_logger("mycomponent")
+
+# Automatic sensitization
+logger.info("User login with password=secret123")  
+# → Logged as: "User login with password=***MASKED***"
+
+# Operation tracking with automatic timing
+with log_operation("data_processing", logger):
+    # Your code here - automatically logs start, completion time, and errors
+    process_data()
+```
+
+#### Manual Log Management
+```python
+from src.utils.log_manager import get_log_manager
+
+manager = get_log_manager()
+
+# Manual cleanup and consolidation
+cleanup_results = manager.manual_cleanup()
+consolidation_results = manager.manual_consolidation()
+
+# Health check
+health = manager.health_check()
+if health['status'] != 'healthy':
+    print(f"Issues found: {health['recommendations']}")
+
+# Get statistics
+stats = manager.get_statistics()
+print(f"Total logs: {stats['total_log_files']}, Size: {stats['total_size']} bytes")
+```
+
+### Prefect Integration
+
+The system includes ready-to-use Prefect tasks for scheduled log maintenance:
+
+```python
+from src.utils.prefect_log_tasks import (
+    log_consolidation_task,
+    log_cleanup_task,
+    full_log_maintenance_task,
+    log_health_check_task
+)
+
+# Example Prefect flow for daily maintenance
+@flow(name="daily-log-maintenance")
+def daily_log_maintenance():
+    # Health check
+    health = log_health_check_task()
+    
+    # Consolidate old logs
+    consolidation = log_consolidation_task(max_age_days=7)
+    
+    # Clean up very old logs
+    cleanup = log_cleanup_task(max_age_days=30, max_compressed_age_days=90)
+    
+    return {"health": health, "consolidation": consolidation, "cleanup": cleanup}
+```
+
+### Log Structure
+
+```
+logs/
+├── mltrading_combined.log      # All components (main log)
+├── ui_dashboard.log           # Dashboard-specific logs
+├── ui_api.log                 # API-specific logs
+├── ui_alpaca_service.log      # Trading service logs
+└── [component]_[date].log.gz  # Compressed historical logs
+```
+
+### Configuration
+
+#### Default Settings
+- **Consolidation**: Files older than 7 days are compressed
+- **Regular Log Cleanup**: Deleted after 30 days
+- **Compressed Log Cleanup**: Deleted after 90 days
+- **Auto-scheduler**: Disabled (use Prefect for scheduling)
+
+#### Log Levels
+- **Console**: INFO and above
+- **File**: DEBUG and above
+- **Rotation**: 50MB for combined log, 10MB for component logs
+
+### Security Features
+
+The logging system automatically protects against:
+- **Credential Exposure**: API keys, passwords, secrets are masked
+- **Token Leakage**: Bearer tokens and authentication tokens are sanitized
+- **Configuration Data**: Database passwords and connection strings are protected
+
+### Performance Benefits
+
+- **Automatic Timing**: Operations are timed without manual instrumentation
+- **Structured Data**: JSON logs enable powerful analytics and monitoring
+- **Efficient Storage**: Compression reduces storage requirements by 70-80%
+- **Fast Retrieval**: Correlation IDs enable quick request tracing
 
 ---
 

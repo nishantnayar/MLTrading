@@ -280,6 +280,58 @@ class AlpacaService:
             logger.error(f"Error getting market data for {symbol}: {e}")
             return pd.DataFrame()
     
+    def get_market_hours(self) -> Dict:
+        """Get market hours and status from Alpaca"""
+        if not self.is_connected():
+            return {}
+        
+        try:
+            # Get market clock
+            clock = self.client.get_clock()
+            
+            # Get market calendar for today and next trading day
+            calendar = self.client.get_calendar(start=datetime.now().date(), end=(datetime.now() + timedelta(days=7)).date())
+            
+            if not calendar:
+                return {}
+            
+            # Find next trading day
+            today = datetime.now().date()
+            next_trading_day = None
+            
+            for day in calendar:
+                if day.date >= today:
+                    next_trading_day = day
+                    break
+            
+            if not next_trading_day:
+                return {}
+            
+            # Calculate next market open and close times
+            current_time = datetime.now()
+            
+            # If market is open or it's a trading day but before open
+            if clock.is_open or (next_trading_day.date == today and current_time.time() < next_trading_day.open.time()):
+                next_open = next_trading_day.open
+                next_close = next_trading_day.close
+            else:
+                # Market is closed, find next trading day
+                for day in calendar[1:]:  # Skip today
+                    next_open = day.open
+                    next_close = day.close
+                    break
+            
+            return {
+                'is_open': clock.is_open,
+                'next_open': next_open,
+                'next_close': next_close,
+                'current_time': clock.timestamp
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting market hours: {e}")
+            return {}
+    
     def get_connection_status(self) -> Dict:
         """Get detailed connection status"""
         return {
