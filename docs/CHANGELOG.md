@@ -103,6 +103,35 @@ src/dashboard/
 - 🔄 Real-time data systems
 - 🔄 Advanced analytics
 
+## 🚀 **Future Enhancements (Planned)**
+
+### **🔔 Alert System** 
+- Price/volume threshold notifications
+- Custom alert criteria setup
+- Email/dashboard notifications
+
+### **💾 Data Management**
+- Save filter presets ("High Volume Tech", "Growth Stocks")
+- Export filtered symbol lists (CSV/PDF)
+- Personal watchlist management
+
+### **📈 Advanced Analysis**
+- Portfolio optimization suggestions
+- Risk assessment metrics
+- Correlation analysis between symbols
+
+### **🎯 Enhanced Comparison**
+- Support for more than 3 symbols
+- Historical performance overlays
+- Fundamental data comparison
+
+### **🔧 Enhanced User Experience**
+- Advanced drawing tools for chart analysis
+- Real-time collaboration features
+- Mobile application development
+- Advanced portfolio analytics dashboard
+- Market sentiment integration
+
 ## 🎯 **System Capabilities Summary**
 
 The ML Trading System is a **production-ready trading platform** with:

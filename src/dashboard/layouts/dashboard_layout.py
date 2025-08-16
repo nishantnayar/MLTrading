@@ -197,7 +197,18 @@ def create_overview_tab():
                                 ], className="mb-0")
                             ]),
                             dbc.CardBody([
-                                dcc.Graph(id="sector-distribution-chart", style={'height': '400px'})
+                                dcc.Graph(
+                                    id="sector-distribution-chart", 
+                                    style={'height': '400px'},
+                                    config={
+                                        'displayModeBar': False, 
+                                        'staticPlot': False,
+                                        'doubleClick': False,
+                                        'showTips': False,
+                                        'displaylogo': False,
+                                        'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d']
+                                    }
+                                )
                             ], className="p-0")
                         ], style=CARD_STYLE)
                     ], width=6),
@@ -220,7 +231,11 @@ def create_overview_tab():
                                 ], className="mb-0")
                             ]),
                             dbc.CardBody([
-                                dcc.Graph(id="industry-distribution-chart", style={'height': '400px'})
+                                dcc.Graph(
+                                    id="industry-distribution-chart", 
+                                    style={'height': '400px'},
+                                    config={'displayModeBar': False, 'staticPlot': False}
+                                )
                             ], className="p-0")
                         ], style=CARD_STYLE)
                     ], width=6)
@@ -238,7 +253,11 @@ def create_overview_tab():
                                 ], className="mb-0")
                             ]),
                             dbc.CardBody([
-                                dcc.Graph(id="top-volume-chart", style={'height': '400px'})
+                                dcc.Graph(
+                                    id="top-volume-chart", 
+                                    style={'height': '400px'},
+                                    config={'displayModeBar': False, 'staticPlot': False}
+                                )
                             ], className="p-0")
                         ], style=CARD_STYLE)
                     ], width=4),
@@ -253,7 +272,11 @@ def create_overview_tab():
                                 ], className="mb-0")
                             ]),
                             dbc.CardBody([
-                                dcc.Graph(id="price-performance-chart", style={'height': '400px'})
+                                dcc.Graph(
+                                    id="price-performance-chart", 
+                                    style={'height': '400px'},
+                                    config={'displayModeBar': False, 'staticPlot': False}
+                                )
                             ], className="p-0")
                         ], style=CARD_STYLE)
                     ], width=4),
@@ -268,7 +291,11 @@ def create_overview_tab():
                                 ], className="mb-0")
                             ]),
                             dbc.CardBody([
-                                dcc.Graph(id="market-activity-chart", style={'height': '400px'})
+                                dcc.Graph(
+                                    id="market-activity-chart", 
+                                    style={'height': '400px'},
+                                    config={'displayModeBar': False, 'staticPlot': False}
+                                )
                             ], className="p-0")
                         ], style=CARD_STYLE)
                     ], width=4)
@@ -546,6 +573,87 @@ def create_charts_tab():
     )
 
 
+def create_comparison_tab():
+    """Create the symbol comparison tab content"""
+    return dbc.Tab(
+        dbc.Card([
+            dbc.CardBody([
+                # Comparison Header
+                dbc.Row([
+                    dbc.Col([
+                        html.H3([
+                            html.I(className="fas fa-balance-scale me-3"),
+                            "Symbol Comparison"
+                        ], className="mb-3"),
+                        html.P("Compare multiple symbols side-by-side with detailed metrics and charts", 
+                               className="text-muted mb-4")
+                    ], width=12)
+                ]),
+                
+                # Symbol Selection Panel
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardHeader([
+                                html.H5([
+                                    html.I(className="fas fa-plus-circle me-2"),
+                                    "Select Symbols to Compare"
+                                ], className="mb-0")
+                            ]),
+                            dbc.CardBody([
+                                dbc.Row([
+                                    dbc.Col([
+                                        html.Label("Symbol 1:", className="form-label"),
+                                        dcc.Dropdown(
+                                            id="comparison-symbol-1",
+                                            placeholder="Select first symbol...",
+                                            className="mb-3"
+                                        )
+                                    ], width=3),
+                                    dbc.Col([
+                                        html.Label("Symbol 2:", className="form-label"),
+                                        dcc.Dropdown(
+                                            id="comparison-symbol-2",
+                                            placeholder="Select second symbol...",
+                                            className="mb-3"
+                                        )
+                                    ], width=3),
+                                    dbc.Col([
+                                        html.Label("Symbol 3 (Optional):", className="form-label"),
+                                        dcc.Dropdown(
+                                            id="comparison-symbol-3",
+                                            placeholder="Select third symbol...",
+                                            className="mb-3"
+                                        )
+                                    ], width=3),
+                                    dbc.Col([
+                                        html.Label("Actions:", className="form-label"),
+                                        html.Div([
+                                            dbc.Button("Compare", id="compare-symbols-btn", color="primary", className="me-2"),
+                                            dbc.Button("Clear", id="clear-comparison-btn", color="outline-secondary")
+                                        ])
+                                    ], width=3)
+                                ])
+                            ])
+                        ], style=CARD_STYLE)
+                    ], width=12)
+                ], className="mb-4"),
+                
+                # Comparison Results
+                html.Div(id="comparison-results", children=[
+                    html.Div([
+                        html.I(className="fas fa-chart-bar fa-3x text-muted mb-3"),
+                        html.H5("Ready to Compare", className="text-muted"),
+                        html.P("Select 2-3 symbols above and click 'Compare' to see detailed side-by-side analysis", 
+                               className="text-muted")
+                    ], className="text-center py-5")
+                ])
+            ])
+        ], style=CARD_STYLE_NONE),
+        label="Compare",
+        tab_id="comparison-tab"
+    )
+
 def create_analysis_tab():
     """Create the analysis tab content"""
     return dbc.Tab(
@@ -577,6 +685,7 @@ def create_dashboard_content():
         dbc.Tabs([
             create_overview_tab(),
             create_charts_tab(), 
+            create_comparison_tab(),
             create_analysis_tab()
         ], id="main-tabs", active_tab="overview-tab")
     ])

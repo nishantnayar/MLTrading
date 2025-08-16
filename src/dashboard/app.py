@@ -27,7 +27,7 @@ from src.dashboard.layouts.tests_layout import create_tests_layout
 
 from src.dashboard.layouts.logs_layout import create_logs_layout, register_logs_callbacks
 from src.dashboard.layouts.author_layout import create_author_layout
-from src.dashboard.callbacks import register_chart_callbacks, register_overview_callbacks
+from src.dashboard.callbacks import register_chart_callbacks, register_overview_callbacks, register_comparison_callbacks
 from src.dashboard.callbacks.interactive_chart_callbacks import register_interactive_chart_callbacks
 from src.dashboard.utils.date_formatters import get_current_timestamp
 
@@ -189,6 +189,7 @@ def handle_initial_load(n_intervals):
 register_chart_callbacks(app)
 register_overview_callbacks(app)
 register_interactive_chart_callbacks(app)
+register_comparison_callbacks(app)
 register_logs_callbacks(app)
 
 # Callback to update footer timestamp every minute

@@ -1708,10 +1708,14 @@ progress {
 
 .author-profile-image {
     transition: all 0.3s ease;
+    object-fit: cover;
+    object-position: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .author-profile-image:hover {
     transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(47, 164, 231, 0.25);
 }
 
 .skill-progress {

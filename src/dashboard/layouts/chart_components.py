@@ -177,7 +177,10 @@ def create_horizontal_bar_chart(data, title, color=CHART_COLORS['primary']):
         plot_bgcolor='white',
         paper_bgcolor='white',
         bargap=0.1,
-        bargroupgap=0.05
+        bargroupgap=0.05,
+        clickmode='event',  # Enable click events for filtering
+        selectdirection='any',
+        dragmode=False
     )
     
     return fig

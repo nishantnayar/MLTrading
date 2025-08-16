@@ -1,0 +1,59 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 23.7.0
+    hooks:
+      - id: black
+        language_version: python3.9
+        args: [--line-length=88]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: [--profile=black, --line-length=88]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        args: [--max-line-length=88, --extend-ignore=E203,W503]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-merge-conflict
+
+  - repo: https://github.com/pycqa/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: [-r, src/, -f, json, -o, bandit-report.json]
+        pass_filenames: false
+
+  - repo: local
+    hooks:
+      - id: regression-smoke-tests
+        name: Quick Regression Tests
+        entry: pytest tests/test_callback_regression.py -m smoke -x
+        language: system
+        pass_filenames: false
+        stages: [commit]
+
+      - id: no-direct-main-commits
+        name: Prevent Direct Main Branch Commits
+        entry: bash -c 'if [ "$PRE_COMMIT_FROM_REF" != "$PRE_COMMIT_TO_REF" ] && [ "$(git rev-parse --abbrev-ref HEAD)" = "main" ]; then echo "Direct commits to main branch are not allowed. Use pull requests."; exit 1; fi'
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: check-regression-test-coverage
+        name: Verify Regression Test Coverage
+        entry: bash -c 'if ! grep -r "test_.*_regression" tests/; then echo "No regression tests found. Add regression tests before committing."; exit 1; fi'
+        language: system
+        pass_filenames: false
+        files: ^src/dashboard/

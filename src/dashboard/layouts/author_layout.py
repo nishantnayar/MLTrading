@@ -96,9 +96,10 @@ def create_author_layout():
                             dbc.Col([
                                 html.Div([
                                     html.Img(
-                                        src="https://via.placeholder.com/150x150/2fa4e7/ffffff?text=NN",
+                                        src="/assets/image.jpg",
+                                        alt="Nishant Nayar - Profile Photo",
                                         className="rounded-circle border border-3 border-primary author-profile-image",
-                                        style={"width": "120px", "height": "120px"}
+                                        style={"width": "120px", "height": "120px", "object-fit": "cover"}
                                     )
                                 ], className="text-center mb-3")
                             ], width=12, md=3),

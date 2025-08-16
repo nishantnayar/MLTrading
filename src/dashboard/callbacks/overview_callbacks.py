@@ -538,6 +538,9 @@ def register_overview_callbacks(app):
             triggered_chart = ctx.triggered[0]['prop_id'].split('.')[0]
             clicked_data = ctx.triggered[0]['value']
             
+            # Add logging to debug the issue
+            logger.info(f"Bar chart clicked - Chart: {triggered_chart}, Data: {clicked_data}")
+            
             if not clicked_data or 'points' not in clicked_data:
                 return (html.P("No data selected. Try clicking on a bar.", className="text-muted"), [], "", {"display": "none"})
             
@@ -589,11 +592,18 @@ def register_overview_callbacks(app):
                     dbc.CardBody([
                         html.H6(symbol, className="card-title mb-1"),
                         html.P(company_name, className="card-text small text-muted mb-2"),
-                        dbc.Button("Analyze", 
-                                 id={"type": "analyze-symbol-btn", "index": symbol},
-                                 size="sm", 
-                                 color="primary",
-                                 className="btn-sm")
+                        html.Div([
+                            dbc.Button("Analyze", 
+                                     id={"type": "analyze-symbol-btn", "index": symbol},
+                                     size="sm", 
+                                     color="primary",
+                                     className="btn-sm me-1"),
+                            dbc.Button("Compare", 
+                                     id={"type": "compare-symbol-btn", "index": symbol},
+                                     size="sm", 
+                                     color="outline-info",
+                                     className="btn-sm")
+                        ])
                     ])
                 ], className="h-100")
                 
@@ -621,27 +631,71 @@ def register_overview_callbacks(app):
 
     @app.callback(
         [Output("symbol-search", "value"),
+         Output("comparison-symbol-1", "value"),
          Output("main-tabs", "active_tab")],
-        [Input({"type": "analyze-symbol-btn", "index": dash.dependencies.ALL}, "n_clicks")],
+        [Input({"type": "analyze-symbol-btn", "index": dash.dependencies.ALL}, "n_clicks"),
+         Input({"type": "compare-symbol-btn", "index": dash.dependencies.ALL}, "n_clicks")],
+        [State("comparison-symbol-1", "value")],
         prevent_initial_call=True
     )
-    def analyze_symbol_from_overview(n_clicks_list):
-        """Navigate to Charts tab with selected symbol when Analyze button is clicked"""
+    def handle_symbol_actions(analyze_clicks, compare_clicks, current_symbol1):
+        """Handle both Analyze and Compare button clicks from overview"""
         try:
             ctx = callback_context
-            if not ctx.triggered or not any(n_clicks_list):
-                return dash.no_update, dash.no_update
+            if not ctx.triggered:
+                return dash.no_update, dash.no_update, dash.no_update
             
-            # Find which button was clicked
-            button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-            # Parse the JSON string to get the symbol
+            # Get the trigger information
+            trigger_info = ctx.triggered[0]
+            button_id = trigger_info['prop_id'].split('.')[0]
+            trigger_value = trigger_info['value']
+            
+            # Debug logging
+            logger.info(f"Symbol action callback triggered by: {button_id}, value: {trigger_value}")
+            
+            # STRICT VALIDATION: Only proceed if this is actually a button click with n_clicks > 0
+            if trigger_value is None or trigger_value == 0:
+                logger.info(f"Button trigger ignored - no actual click detected")
+                return dash.no_update, dash.no_update, dash.no_update
+            
+            # STRICT VALIDATION: Parse JSON and validate button structure
             import json
-            btn_info = json.loads(button_id)
-            symbol = btn_info['index']
+            try:
+                btn_info = json.loads(button_id)
+                
+                # Must have both 'type' and 'index' keys
+                if 'type' not in btn_info or 'index' not in btn_info:
+                    logger.info(f"Invalid button structure: {btn_info}")
+                    return dash.no_update, dash.no_update, dash.no_update
+                
+                symbol = btn_info['index']
+                button_type = btn_info['type']
+                
+                # STRICT VALIDATION: Only allow specific button types
+                if button_type not in ['analyze-symbol-btn', 'compare-symbol-btn']:
+                    logger.info(f"Invalid button type ignored: {button_type}")
+                    return dash.no_update, dash.no_update, dash.no_update
+                
+                # STRICT VALIDATION: Symbol must be a non-empty string
+                if not symbol or not isinstance(symbol, str) or len(symbol.strip()) == 0:
+                    logger.info(f"Invalid symbol: {symbol}")
+                    return dash.no_update, dash.no_update, dash.no_update
+                    
+            except (json.JSONDecodeError, KeyError, TypeError) as e:
+                logger.info(f"Non-button trigger ignored: {button_id}, error: {e}")
+                return dash.no_update, dash.no_update, dash.no_update
             
-            logger.info(f"Analyzing symbol {symbol} from overview")
-            return symbol, "charts-tab"
+            # Execute valid actions
+            if button_type == "analyze-symbol-btn":
+                logger.info(f"VALID: Analyzing symbol {symbol} from overview")
+                return symbol, dash.no_update, "charts-tab"
+            
+            elif button_type == "compare-symbol-btn":
+                logger.info(f"VALID: Adding symbol {symbol} to comparison")
+                return dash.no_update, symbol, "comparison-tab"
+            
+            return dash.no_update, dash.no_update, dash.no_update
             
         except Exception as e:
-            logger.error(f"Error in analyze symbol callback: {e}")
-            return dash.no_update, dash.no_update
+            logger.error(f"Error in symbol action callback: {e}")
+            return dash.no_update, dash.no_update, dash.no_update
