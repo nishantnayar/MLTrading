@@ -434,19 +434,19 @@ analysis = callbacks.generate_chart_analysis(symbol="AAPL")
 
 ### **1. Update your main app.py:**
 ```python
-from src.dashboard.layouts.enhanced_dashboard_layout import create_enhanced_dashboard_content
+from src.dashboard.layouts.dashboard_layout import create_dashboard_content
 from src.dashboard.callbacks.interactive_chart_callbacks import InteractiveChartCallbacks
 
-# Register enhanced callbacks
+# Register interactive chart callbacks
 chart_callbacks = InteractiveChartCallbacks()
 chart_callbacks.register_callbacks(app)
 ```
 
-### **2. Replace dashboard content:**
+### **2. Dashboard content is already integrated:**
 ```python
 # In your navigation callback
 elif button_id == "nav-dashboard":
-    return create_enhanced_dashboard_content()  # Instead of create_dashboard_content()
+    return create_dashboard_content()  # Main dashboard content
 ```
 
 ### **3. Add required dependencies:**

@@ -174,7 +174,7 @@ MLTrading/
 - **`technical_indicators.py`**: Complete technical analysis engine
 - **`interactive_chart.py`**: Advanced chart builder with all features
 - **`interactive_chart_callbacks.py`**: Chart interaction callbacks
-- **`enhanced_dashboard_layout.py`**: Professional dashboard layout
+- **`dashboard_layout.py`**: Professional dashboard layout
 
 #### Performance Services
 - **`cache_service.py`**: Intelligent caching with TTL
