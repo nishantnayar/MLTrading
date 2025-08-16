@@ -692,6 +692,7 @@ def register_overview_callbacks(app):
             
             elif button_type == "compare-symbol-btn":
                 logger.info(f"VALID: Adding symbol {symbol} to comparison")
+                logger.info(f"DEBUG: Returning tab navigation to comparison-tab")
                 return dash.no_update, symbol, "comparison-tab"
             
             return dash.no_update, dash.no_update, dash.no_update
