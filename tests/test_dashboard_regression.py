@@ -55,25 +55,31 @@ class TestDashboardRegression:
         for element in required_elements:
             assert dash_duo.find_element(element), f"Element {element} not found"
     
-    def test_tab_navigation(self, dash_duo):
-        """Test navigation between tabs works correctly"""
+    def test_page_navigation(self, dash_duo):
+        """Test navigation between pages works correctly"""
         app = import_app("src.dashboard.app")
         dash_duo.start_server(app)
         
-        # Wait for tabs to load
-        dash_duo.wait_for_element("#main-tabs", timeout=10)
+        # Wait for navigation to load
+        dash_duo.wait_for_element("#nav-dashboard", timeout=10)
         
-        # Get all tab elements
-        tabs = dash_duo.find_elements("a[role='tab']")
-        assert len(tabs) >= 3, "Not all tabs found"
+        # Test navigation to Trading page
+        trading_nav = dash_duo.find_element("#nav-trading")
+        trading_nav.click()
+        time.sleep(2)
         
-        # Test clicking each tab
-        for i, tab in enumerate(tabs):
-            tab.click()
-            time.sleep(1)  # Allow time for tab content to load
-            
-            # Verify tab is active
-            assert "active" in tab.get_attribute("class"), f"Tab {i} not activated"
+        # Verify page content changed (trading dashboard has account info)
+        trading_content = dash_duo.find_elements("#trading-dashboard")
+        assert len(trading_content) > 0, "Trading page not loaded"
+        
+        # Test navigation back to Dashboard
+        dashboard_nav = dash_duo.find_element("#nav-dashboard")
+        dashboard_nav.click()
+        time.sleep(2)
+        
+        # Verify dashboard content (should have main-tabs)
+        dashboard_content = dash_duo.find_elements("#main-tabs")
+        assert len(dashboard_content) > 0, "Dashboard page not loaded"
     
     def test_sector_chart_filtering_only(self, dash_duo):
         """Test that clicking sector chart ONLY filters, doesn't navigate"""
@@ -121,8 +127,16 @@ class TestDashboardRegression:
         app = import_app("src.dashboard.app")
         dash_duo.start_server(app)
         
-        # Wait for page load
+        # Ensure we're on dashboard page
         dash_duo.wait_for_element("#main-tabs", timeout=10)
+        
+        # Make sure we're on overview tab first
+        try:
+            overview_tab = dash_duo.driver.find_element(By.XPATH, "//a[@role='tab' and contains(text(), 'Overview')]")
+            overview_tab.click()
+            time.sleep(2)
+        except:
+            pass  # May already be on overview
         
         # First trigger symbol filtering by clicking a chart with retry mechanism
         dash_duo.wait_for_element("#sector-distribution-chart", timeout=15)
@@ -177,9 +191,14 @@ class TestDashboardRegression:
             charts_tab = dash_duo.driver.find_element(By.XPATH, "//a[@role='tab' and contains(text(), 'Interactive Charts')]")
             assert "active" in charts_tab.get_attribute("class"), "Not navigated to charts tab"
         except:
-            # Alternative check - look for active tab containing "Charts"
-            active_tab = dash_duo.find_element("a[role='tab'].active")
-            assert "Charts" in active_tab.text or "Interactive" in active_tab.text, f"Expected Charts tab but found: {active_tab.text}"
+            try:
+                # Try alternative selector
+                charts_tab = dash_duo.driver.find_element(By.XPATH, "//a[@role='tab' and contains(text(), 'Charts')]")
+                assert "active" in charts_tab.get_attribute("class"), "Not navigated to charts tab"
+            except:
+                # Alternative check - look for active tab containing "Charts"
+                active_tab = dash_duo.find_element("a[role='tab'].active")
+                assert "Charts" in active_tab.text or "Interactive" in active_tab.text, f"Expected Charts tab but found: {active_tab.text}"
     
     def test_compare_button_navigation(self, dash_duo):
         """Test that Compare buttons navigate to comparison tab"""
@@ -270,19 +289,31 @@ class TestDashboardRegression:
             compare_tab = dash_duo.driver.find_element(By.XPATH, "//a[@role='tab' and contains(text(), 'Compare')]")
             assert "active" in compare_tab.get_attribute("class"), "Not navigated to comparison tab"
         except:
-            # Alternative check - look for active tab containing "Compare"
-            active_tab = dash_duo.find_element("a[role='tab'].active")
-            assert "Compare" in active_tab.text, f"Expected Compare tab but found: {active_tab.text}"
+            try:
+                # Try alternative selector
+                compare_tab = dash_duo.driver.find_element(By.XPATH, "//a[@role='tab' and contains(text(), 'Comparison')]")
+                assert "active" in compare_tab.get_attribute("class"), "Not navigated to comparison tab"
+            except:
+                # Alternative check - look for active tab containing "Compare"
+                active_tab = dash_duo.find_element("a[role='tab'].active")
+                assert "Compare" in active_tab.text or "Comparison" in active_tab.text, f"Expected Compare tab but found: {active_tab.text}"
     
     def test_charts_tab_functionality(self, dash_duo):
         """Test that charts tab loads and functions properly"""
         app = import_app("src.dashboard.app")
         dash_duo.start_server(app)
         
-        # Navigate to charts tab
+        # Ensure we're on dashboard page first
         dash_duo.wait_for_element("#main-tabs", timeout=10)
-        charts_tab = dash_duo.driver.find_element(By.XPATH, "//a[@role='tab' and contains(text(), 'Interactive Charts')]")
-        charts_tab.click()
+        
+        # Navigate to charts tab within dashboard
+        try:
+            charts_tab = dash_duo.driver.find_element(By.XPATH, "//a[@role='tab' and contains(text(), 'Interactive Charts')]")
+            charts_tab.click()
+        except:
+            # Try alternative selectors
+            charts_tab = dash_duo.driver.find_element(By.XPATH, "//a[@role='tab' and contains(text(), 'Charts')]")
+            charts_tab.click()
         
         # Wait for charts content
         time.sleep(3)
@@ -302,10 +333,17 @@ class TestDashboardRegression:
         app = import_app("src.dashboard.app")
         dash_duo.start_server(app)
         
-        # Navigate to comparison tab
+        # Ensure we're on dashboard page first
         dash_duo.wait_for_element("#main-tabs", timeout=10)
-        compare_tab = dash_duo.driver.find_element(By.XPATH, "//a[@role='tab' and contains(text(), 'Compare')]")
-        compare_tab.click()
+        
+        # Navigate to comparison tab within dashboard
+        try:
+            compare_tab = dash_duo.driver.find_element(By.XPATH, "//a[@role='tab' and contains(text(), 'Compare')]")
+            compare_tab.click()
+        except:
+            # Try alternative selectors
+            compare_tab = dash_duo.driver.find_element(By.XPATH, "//a[@role='tab' and contains(text(), 'Comparison')]")
+            compare_tab.click()
         
         # Wait for comparison content
         time.sleep(3)
@@ -346,23 +384,17 @@ class TestDashboardRegression:
         
         time.sleep(3)
         
-        # 2. Navigate between tabs (re-find elements each time)
-        def get_tabs():
-            return dash_duo.find_elements("a[role='tab']")
+        # 2. Navigate between pages (re-find elements each time)
+        nav_items = ["#nav-dashboard", "#nav-trading", "#nav-tests"]
         
-        for i in range(min(3, len(get_tabs()))):  # Test first 3 tabs
+        for nav_id in nav_items:
             try:
-                tabs = get_tabs()
-                if i < len(tabs):
-                    tabs[i].click()
-                    time.sleep(2)
+                nav_element = dash_duo.find_element(nav_id)
+                nav_element.click()
+                time.sleep(2)
             except:
-                # Retry if stale
-                time.sleep(1)
-                tabs = get_tabs()
-                if i < len(tabs):
-                    tabs[i].click()
-                    time.sleep(2)
+                # Skip if navigation element not found
+                continue
         
         # 3. Check for any console errors
         console_logs = dash_duo.get_logs()

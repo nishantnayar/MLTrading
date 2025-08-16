@@ -136,7 +136,7 @@ class AlpacaService:
                 'buying_power': float(account.buying_power),
                 'portfolio_value': float(account.portfolio_value),
                 'cash': float(account.cash),
-                'day_trade_count': account.daytrade_buying_power,
+                'daytrading_buying_power': float(account.daytrading_buying_power),
                 'trading_blocked': account.trading_blocked,
                 'account_blocked': account.account_blocked,
                 'pattern_day_trader': account.pattern_day_trader
