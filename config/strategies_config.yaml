@@ -1,0 +1,82 @@
+# Trading Strategies Configuration
+# Define your trading strategies and their parameters
+
+strategies:
+  # Simple Moving Average Strategy
+  sma_conservative:
+    class: "SimpleMovingAverageStrategy"
+    enabled: true
+    symbols:
+      - "AAPL"
+      - "MSFT"
+      - "GOOGL"
+    parameters:
+      short_window: 20
+      long_window: 50
+      min_signal_strength: 0.7
+    risk_params:
+      max_position_size: 500
+      risk_per_trade: 0.02
+      stop_loss_pct: 0.03
+      take_profit_pct: 0.06
+    max_positions: 3
+
+  sma_aggressive:
+    class: "SimpleMovingAverageStrategy"
+    enabled: false  # Disabled by default
+    symbols:
+      - "TSLA"
+      - "NVDA"
+    parameters:
+      short_window: 10
+      long_window: 20
+      min_signal_strength: 0.6
+    risk_params:
+      max_position_size: 200
+      risk_per_trade: 0.03
+      stop_loss_pct: 0.02
+      take_profit_pct: 0.04
+    max_positions: 2
+
+  # Momentum Strategy
+  momentum_tech:
+    class: "MomentumStrategy"
+    enabled: true
+    symbols:
+      - "AAPL"
+      - "MSFT"
+      - "GOOGL"
+      - "AMZN"
+    parameters:
+      lookback_period: 20
+      rsi_period: 14
+      rsi_oversold: 25
+      rsi_overbought: 75
+    risk_params:
+      max_position_size: 300
+      risk_per_trade: 0.025
+      stop_loss_pct: 0.025
+      take_profit_pct: 0.05
+    max_positions: 2
+
+# Global Risk Management
+global_risk:
+  max_total_positions: 10
+  max_daily_orders: 25
+  max_portfolio_risk: 0.15  # 15% of portfolio
+  emergency_stop_loss: 0.10  # 10% portfolio drawdown
+
+# Execution Settings
+execution:
+  signal_processing_interval: 30  # seconds
+  market_data_refresh: 60  # seconds
+  order_timeout: 300  # seconds
+  retry_failed_orders: true
+  max_order_retries: 3
+
+# Backtesting Settings
+backtesting:
+  default_initial_capital: 100000
+  default_commission: 1.0
+  default_slippage: 0.001
+  lookback_period_days: 252  # 1 year

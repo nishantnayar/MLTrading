@@ -177,32 +177,24 @@ def generate_test_report(automated_passed):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     report = f"""
-# Regression Test Report
+# Automated Regression Test Report
 **Date**: {timestamp}
-**Automated Tests**: {'PASSED' if automated_passed else 'FAILED'}
+**Status**: {'PASSED' if automated_passed else 'FAILED'}
 
-## Automated Test Results
+## Test Results
 - Dashboard startup: {'PASS' if automated_passed else 'FAIL'}
 - Tab navigation: {'PASS' if automated_passed else 'FAIL'} 
 - Chart functionality: {'PASS' if automated_passed else 'FAIL'}
 - Button interactions: {'PASS' if automated_passed else 'FAIL'}
 
-## Manual Testing Required
-Please complete the manual test checklist:
-- [ ] Chart click behavior (no unwanted navigation)
-- [ ] Symbol filtering functionality  
-- [ ] Analyze/Compare button navigation
-- [ ] Cross-tab data persistence
-- [ ] Error handling scenarios
+## Summary
+{f'✅ All automated regression tests passed successfully.' if automated_passed else '❌ Some automated tests failed. Review logs and fix issues before deployment.'}
 
-## Next Steps
-{'1. Fix failing automated tests' if not automated_passed else '1. Automated tests passing'}
-2. Complete manual testing checklist
-3. Verify all critical user flows
-4. Test in different browsers (optional)
+## Manual Testing
+For comprehensive testing, run the manual test checklist in tests/regression_test_manual.md
 """
     
-    report_path = Path("test_report.md")
+    report_path = Path("regression_test_report.md")
     with open(report_path, "w", encoding='utf-8') as f:
         f.write(report)
     
@@ -220,40 +212,16 @@ def main():
     # Step 2: Generate report
     report_path = generate_test_report(automated_passed)
     
-    # Step 3: Show manual testing options
-    print_section("Manual Testing Options")
-    print("Choose an option:")
-    print("1. Start dashboard for manual testing")
-    print("2. Show manual test checklist only") 
-    print("3. Skip manual testing")
-    
-    try:
-        choice = input("\nEnter choice (1/2/3): ").strip()
-        
-        if choice == "1":
-            show_manual_test_checklist()
-            time.sleep(2)  # Give time to open checklist
-            start_dashboard_for_manual_testing()
-        elif choice == "2":
-            show_manual_test_checklist()
-        elif choice == "3":
-            print("Skipping manual testing")
-        else:
-            print("Invalid choice. Showing checklist only.")
-            show_manual_test_checklist()
-            
-    except KeyboardInterrupt:
-        print("\n\nTest runner interrupted by user")
-    
-    # Final summary
+    # Step 3: Exit with appropriate code for automation
     print_header("Test Suite Complete")
     print(f"Report: {report_path.absolute()}")
-    print(f"Manual Checklist: tests/regression_test_manual.md")
     
     if automated_passed:
-        print("SUCCESS: Automated tests passed - Ready for manual testing")
+        print("SUCCESS: All automated regression tests passed")
+        sys.exit(0)
     else:
-        print("ERROR: Fix automated test failures before manual testing")
+        print("ERROR: Automated regression tests failed")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

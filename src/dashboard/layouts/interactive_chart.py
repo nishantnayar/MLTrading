@@ -682,20 +682,21 @@ def create_chart_controls() -> html.Div:
         ]),
         dbc.CardBody([
             dbc.Row([
-                # Chart Type Selection
+                # Chart Type Selection - Button Group Alternative
                 dbc.Col([
                     html.Label("Chart Type:", className="form-label"),
-                    dcc.Dropdown(
-                        id="chart-type-dropdown",
-                        options=[
-                            {'label': 'Candlestick', 'value': 'candlestick'},
-                            {'label': 'OHLC', 'value': 'ohlc'},
-                            {'label': 'Line', 'value': 'line'},
-                            {'label': 'Bar', 'value': 'bar'}
-                        ],
-                        value='candlestick',
-                        clearable=False
-                    )
+                    dbc.ButtonGroup([
+                        dbc.Button("📈 Candlestick", id="chart-type-candlestick", size="sm", 
+                                 color="primary", outline=False, className="chart-type-btn"),
+                        dbc.Button("📊 OHLC", id="chart-type-ohlc", size="sm", 
+                                 color="primary", outline=True, className="chart-type-btn"),
+                        dbc.Button("📉 Line", id="chart-type-line", size="sm", 
+                                 color="primary", outline=True, className="chart-type-btn"),
+                        dbc.Button("📋 Bar", id="chart-type-bar", size="sm", 
+                                 color="primary", outline=True, className="chart-type-btn")
+                    ], className="d-flex w-100"),
+                    # Hidden store for current chart type
+                    dcc.Store(id="chart-type-store", data='candlestick')
                 ], width=3),
                 
                 # Overlay Indicators

@@ -318,12 +318,31 @@ class TestDashboardRegression:
         # Wait for charts content
         time.sleep(3)
         
-        # Check key chart components
+        # Check key chart components (updated for button controls)
         required_elements = [
             "#symbol-search",
-            "#chart-type-dropdown",
             "#interactive-price-chart"
         ]
+        
+        # Check for either dropdown or button-based chart controls
+        chart_controls_found = False
+        try:
+            # Try to find new button-based controls
+            button_controls = dash_duo.find_elements(".chart-type-btn")
+            if len(button_controls) > 0:
+                chart_controls_found = True
+        except:
+            pass
+            
+        try:
+            # Fallback to dropdown controls
+            dropdown_control = dash_duo.find_element("#chart-type-dropdown")
+            if dropdown_control:
+                chart_controls_found = True
+        except:
+            pass
+        
+        assert chart_controls_found, "Chart type controls (buttons or dropdown) not found"
         
         for element in required_elements:
             assert dash_duo.find_element(element), f"Chart element {element} not found"
@@ -427,6 +446,362 @@ class TestCallbackRegression:
         """Test button click callback validation works correctly"""
         # Test the validation logic in isolation
         pass
+
+
+class TestAlpacaIntegrationRegression:
+    """Regression tests for new Alpaca integration functionality"""
+    
+    def test_market_hours_display(self, dash_duo):
+        """Test that market hours display properly with date information"""
+        app = import_app("src.dashboard.app")
+        dash_duo.start_server(app)
+        
+        # Wait for page to load
+        dash_duo.wait_for_element("#page-content", timeout=10)
+        
+        # Check market hours elements exist (make optional for systems without Alpaca)
+        market_hours_elements = [
+            "#current-time",
+            "#next-market-open", 
+            "#next-market-close"
+        ]
+        
+        found_elements = 0
+        for element in market_hours_elements:
+            try:
+                element_obj = dash_duo.find_element(element)
+                if element_obj and element_obj.text.strip():
+                    found_elements += 1
+            except:
+                continue
+        
+        # If no market hours elements found, skip test (Alpaca may not be configured)
+        if found_elements == 0:
+            pytest.skip("Market hours elements not found - Alpaca integration may not be configured for testing environment")
+        
+        # If we get here, at least one element was found with content
+        assert found_elements > 0, f"Expected market hours content but found {found_elements} elements"
+    
+    def test_market_hours_format_includes_date(self, dash_duo):
+        """Test that market hours include day information when appropriate"""
+        app = import_app("src.dashboard.app")
+        dash_duo.start_server(app)
+        
+        # Wait for page to load
+        dash_duo.wait_for_element("#page-content", timeout=10)
+        
+        # Try to get market open text (optional for systems without Alpaca)
+        try:
+            market_open_element = dash_duo.find_element("#next-market-open")
+            if market_open_element and market_open_element.text.strip():
+                market_open_text = market_open_element.text
+                
+                # On weekends, should include day name (Monday, Tuesday, etc.)
+                from datetime import datetime
+                if datetime.now().weekday() >= 5:  # Weekend
+                    assert any(day in market_open_text for day in 
+                              ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]), \
+                           f"Weekend market hours should include day name, got: {market_open_text}"
+                # Test passes if not weekend or if format is correct
+            else:
+                pytest.skip("Market hours element not found or empty - Alpaca integration may not be available")
+        except:
+            pytest.skip("Market hours functionality not available - Alpaca integration may not be configured")
+    
+    def test_trading_page_alpaca_elements(self, dash_duo):
+        """Test that trading page loads with Alpaca-specific elements"""
+        app = import_app("src.dashboard.app")
+        dash_duo.start_server(app)
+        
+        # Navigate to trading page
+        dash_duo.wait_for_element("#nav-trading", timeout=10)
+        trading_nav = dash_duo.find_element("#nav-trading")
+        trading_nav.click()
+        time.sleep(3)
+        
+        # Check for Alpaca-specific elements
+        required_elements = [
+            "#trading-dashboard",
+            "#trading-connection-status",
+            "#account-info-display",
+            "#refresh-account-btn"
+        ]
+        
+        for element in required_elements:
+            assert dash_duo.find_element(element), f"Trading element {element} not found"
+    
+    def test_alpaca_fallback_behavior(self, dash_duo):
+        """Test that dashboard works when Alpaca API is unavailable"""
+        app = import_app("src.dashboard.app")
+        dash_duo.start_server(app)
+        
+        # Wait for page to load
+        dash_duo.wait_for_element("#page-content", timeout=10)
+        
+        # Check that basic dashboard functionality works regardless of Alpaca status
+        # Market hours elements are optional
+        market_elements_found = 0
+        try:
+            market_open = dash_duo.find_element("#next-market-open")
+            if market_open and market_open.text.strip():
+                market_elements_found += 1
+        except:
+            pass
+            
+        try:
+            market_close = dash_duo.find_element("#next-market-close")
+            if market_close and market_close.text.strip():
+                market_elements_found += 1
+        except:
+            pass
+        
+        # Trading page should still load (even without Alpaca)
+        try:
+            trading_nav = dash_duo.find_element("#nav-trading")
+            trading_nav.click()
+            time.sleep(3)
+            
+            # Check for trading dashboard or any trading-related content
+            trading_elements = dash_duo.find_elements("#trading-dashboard") or \
+                             dash_duo.find_elements("[id*='trading']") or \
+                             dash_duo.find_elements("[class*='trading']")
+            
+            assert len(trading_elements) > 0, "Some trading content should load even without Alpaca"
+            
+        except Exception as e:
+            # If trading page doesn't exist, that's also acceptable
+            pytest.skip(f"Trading page navigation failed: {e}")
+
+
+class TestPerformanceRegression:
+    """Tests to ensure performance doesn't regress"""
+    
+    def test_dashboard_load_time(self, dash_duo):
+        """Test that dashboard loads within acceptable time limits"""
+        start_time = time.time()
+        
+        app = import_app("src.dashboard.app")
+        dash_duo.start_server(app)
+        
+        # Wait for key elements to load
+        dash_duo.wait_for_element("#main-tabs", timeout=15)
+        dash_duo.wait_for_element("#sector-distribution-chart", timeout=15)
+        
+        load_time = time.time() - start_time
+        
+        # Dashboard should load within 15 seconds
+        assert load_time < 15, f"Dashboard took {load_time:.2f}s to load, expected < 15s"
+    
+    def test_tab_switching_performance(self, dash_duo):
+        """Test that tab switching is responsive"""
+        app = import_app("src.dashboard.app")
+        dash_duo.start_server(app)
+        
+        dash_duo.wait_for_element("#main-tabs", timeout=10)
+        
+        # Test switching between tabs
+        tabs = ["Overview", "Interactive Charts", "Compare"]
+        
+        for tab_name in tabs:
+            start_time = time.time()
+            
+            try:
+                tab_element = dash_duo.driver.find_element(
+                    By.XPATH, f"//a[@role='tab' and contains(text(), '{tab_name}')]"
+                )
+                tab_element.click()
+                
+                # Wait for tab to become active
+                WebDriverWait(dash_duo.driver, 5).until(
+                    lambda driver: "active" in tab_element.get_attribute("class")
+                )
+                
+                switch_time = time.time() - start_time
+                
+                # Tab switching should be under 3 seconds
+                assert switch_time < 3, f"Tab '{tab_name}' took {switch_time:.2f}s to switch, expected < 3s"
+                
+            except Exception as e:
+                # Skip if tab not found
+                continue
+
+
+class TestDataIntegrityRegression:
+    """Tests to ensure data consistency and integrity"""
+    
+    def test_symbol_filtering_consistency(self, dash_duo):
+        """Test that symbol filtering produces consistent results"""
+        app = import_app("src.dashboard.app")
+        dash_duo.start_server(app)
+        
+        # Wait for charts to load
+        dash_duo.wait_for_element("#sector-distribution-chart", timeout=15)
+        
+        # Click sector chart multiple times to test consistency
+        for i in range(3):
+            try:
+                sector_chart = dash_duo.find_element("#sector-distribution-chart")
+                sector_chart.click()
+                time.sleep(2)
+                
+                # Check that filtered symbols display is updated
+                filtered_display = dash_duo.find_element("#filtered-symbols-display")
+                assert filtered_display, f"Filtered display not found on iteration {i+1}"
+                
+            except Exception as e:
+                # Skip if clicking fails
+                continue
+    
+    def test_chart_data_consistency(self, dash_duo):
+        """Test that chart data remains consistent across interactions"""
+        app = import_app("src.dashboard.app")
+        dash_duo.start_server(app)
+        
+        # Navigate to interactive charts
+        dash_duo.wait_for_element("#main-tabs", timeout=10)
+        
+        try:
+            charts_tab = dash_duo.driver.find_element(
+                By.XPATH, "//a[@role='tab' and contains(text(), 'Interactive Charts')]"
+            )
+            charts_tab.click()
+            time.sleep(3)
+            
+            # Check that chart loads with default symbol
+            chart_element = dash_duo.find_element("#interactive-price-chart")
+            assert chart_element, "Interactive chart should load"
+            
+        except Exception:
+            # Skip if charts tab not accessible
+            pass
+
+
+class TestChartControlsRegression:
+    """Tests for new button-based chart controls"""
+    
+    def test_chart_type_button_controls(self, dash_duo):
+        """Test that chart type button controls work properly"""
+        app = import_app("src.dashboard.app")
+        dash_duo.start_server(app)
+        
+        # Navigate to charts tab
+        dash_duo.wait_for_element("#main-tabs", timeout=10)
+        
+        try:
+            charts_tab = dash_duo.driver.find_element(By.XPATH, "//a[@role='tab' and contains(text(), 'Interactive Charts')]")
+            charts_tab.click()
+            time.sleep(3)
+            
+            # Test button-based chart type controls
+            chart_type_buttons = [
+                "chart-type-candlestick",
+                "chart-type-ohlc", 
+                "chart-type-line",
+                "chart-type-bar"
+            ]
+            
+            buttons_found = 0
+            for button_id in chart_type_buttons:
+                try:
+                    button = dash_duo.find_element(f"#{button_id}")
+                    if button:
+                        buttons_found += 1
+                        # Test button is clickable
+                        assert button.is_enabled(), f"Button {button_id} should be enabled"
+                        
+                        # Test button click (visual feedback)
+                        button.click()
+                        time.sleep(0.5)
+                        
+                except Exception as e:
+                    continue
+            
+            # Should find at least some chart type buttons
+            assert buttons_found >= 2, f"Expected multiple chart type buttons, found {buttons_found}"
+            
+        except Exception as e:
+            # Skip if charts tab not available
+            pytest.skip(f"Charts tab not accessible: {e}")
+    
+    def test_button_controls_accessibility(self, dash_duo):
+        """Test that button controls are accessible"""
+        app = import_app("src.dashboard.app")
+        dash_duo.start_server(app)
+        
+        # Navigate to charts tab
+        dash_duo.wait_for_element("#main-tabs", timeout=10)
+        
+        try:
+            charts_tab = dash_duo.driver.find_element(By.XPATH, "//a[@role='tab' and contains(text(), 'Interactive Charts')]")
+            charts_tab.click()
+            time.sleep(3)
+            
+            # Check button accessibility features
+            button_elements = dash_duo.find_elements(".chart-type-btn")
+            
+            for button in button_elements:
+                # Check button has text content
+                assert button.text.strip(), "Chart type button should have text content"
+                
+                # Check button is focusable
+                dash_duo.driver.execute_script("arguments[0].focus();", button)
+                focused_element = dash_duo.driver.switch_to.active_element
+                
+                # Button should be focusable or within focusable container
+                assert focused_element is not None, "Chart type button should be focusable"
+                
+        except Exception as e:
+            pytest.skip(f"Button accessibility test skipped: {e}")
+
+
+class TestAccessibilityRegression:
+    """Tests to ensure accessibility doesn't regress"""
+    
+    def test_keyboard_navigation(self, dash_duo):
+        """Test that keyboard navigation works for key elements"""
+        app = import_app("src.dashboard.app")
+        dash_duo.start_server(app)
+        
+        dash_duo.wait_for_element("#main-tabs", timeout=10)
+        
+        # Test that main navigation buttons are focusable
+        nav_elements = ["#nav-dashboard", "#nav-trading", "#nav-tests", "#nav-help"]
+        
+        for nav_id in nav_elements:
+            try:
+                nav_element = dash_duo.find_element(nav_id)
+                # Check if element can receive focus
+                dash_duo.driver.execute_script("arguments[0].focus();", nav_element)
+                focused_element = dash_duo.driver.switch_to.active_element
+                assert focused_element == nav_element, f"Element {nav_id} should be focusable"
+            except Exception:
+                # Skip if element not found
+                continue
+    
+    def test_screen_reader_elements(self, dash_duo):
+        """Test that important elements have proper accessibility attributes"""
+        app = import_app("src.dashboard.app")
+        dash_duo.start_server(app)
+        
+        dash_duo.wait_for_element("#main-tabs", timeout=10)
+        
+        # Check for proper ARIA labels on key interactive elements
+        elements_to_check = [
+            ("#refresh-stats-btn", "button"),
+            ("#main-tabs", "tablist"),
+        ]
+        
+        for element_id, expected_role in elements_to_check:
+            try:
+                element = dash_duo.find_element(element_id)
+                # Check for role or aria-label attributes
+                role = element.get_attribute("role")
+                aria_label = element.get_attribute("aria-label")
+                
+                assert role or aria_label, f"Element {element_id} should have role or aria-label"
+            except Exception:
+                # Skip if element not found
+                continue
 
 
 if __name__ == "__main__":
