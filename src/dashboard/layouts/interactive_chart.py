@@ -678,83 +678,161 @@ def create_chart_controls() -> html.Div:
     
     return dbc.Card([
         dbc.CardHeader([
-            html.H5("Chart Controls", className="mb-0")
+            dbc.Row([
+                dbc.Col([
+                    html.H5("Chart Controls", className="mb-0")
+                ], width=6),
+                dbc.Col([
+                    dbc.Button(
+                        [html.I(className="fas fa-cog me-1"), "Advanced"],
+                        id="chart-controls-toggle",
+                        color="outline-secondary",
+                        size="sm",
+                        className="float-end"
+                    )
+                ], width=6)
+            ])
         ]),
         dbc.CardBody([
+            # Main Controls Row - Always Visible
             dbc.Row([
-                # Chart Type Selection - Button Group Alternative
+                # Chart Type Selection
                 dbc.Col([
-                    html.Label("Chart Type:", className="form-label"),
+                    html.Label("Chart Type:", className="form-label small"),
                     dbc.ButtonGroup([
-                        dbc.Button("📈 Candlestick", id="chart-type-candlestick", size="sm", 
-                                 color="primary", outline=False, className="chart-type-btn"),
-                        dbc.Button("📊 OHLC", id="chart-type-ohlc", size="sm", 
-                                 color="primary", outline=True, className="chart-type-btn"),
-                        dbc.Button("📉 Line", id="chart-type-line", size="sm", 
-                                 color="primary", outline=True, className="chart-type-btn"),
-                        dbc.Button("📋 Bar", id="chart-type-bar", size="sm", 
-                                 color="primary", outline=True, className="chart-type-btn")
-                    ], className="d-flex w-100"),
-                    # Hidden store for current chart type
-                    dcc.Store(id="chart-type-store", data='candlestick')
+                        dbc.Button("📈", id="chart-type-candlestick", size="sm", 
+                                 color="primary", outline=False, className="chart-type-btn",
+                                 title="Candlestick"),
+                        dbc.Button("📊", id="chart-type-ohlc", size="sm", 
+                                 color="primary", outline=True, className="chart-type-btn",
+                                 title="OHLC"),
+                        dbc.Button("📉", id="chart-type-line", size="sm", 
+                                 color="primary", outline=True, className="chart-type-btn",
+                                 title="Line"),
+                        dbc.Button("📋", id="chart-type-bar", size="sm", 
+                                 color="primary", outline=True, className="chart-type-btn",
+                                 title="Bar")
+                    ], className="w-100"),
+                    # Hidden stores
+                    dcc.Store(id="chart-type-store", data='candlestick'),
+                    dcc.Store(id="overlay-indicators-store", data=['sma', 'ema']),
+                    dcc.Store(id="oscillator-indicators-store", data=['rsi'])
                 ], width=3),
                 
-                # Overlay Indicators
+                # Quick Indicator Toggles
                 dbc.Col([
-                    html.Label("Overlay Indicators:", className="form-label"),
-                    dcc.Dropdown(
-                        id="overlay-indicators-dropdown",
-                        options=overlay_indicators,
-                        value=['sma', 'ema'],
-                        multi=True,
-                        placeholder="Select overlays..."
-                    )
-                ], width=4),
-                
-                # Oscillator Indicators
-                dbc.Col([
-                    html.Label("Oscillators:", className="form-label"),
-                    dcc.Dropdown(
-                        id="oscillator-indicators-dropdown",
-                        options=oscillator_indicators,
-                        value=['rsi'],
-                        multi=True,
-                        placeholder="Select oscillators..."
-                    )
-                ], width=3),
-                
-                # Volume Toggle
-                dbc.Col([
-                    html.Label("Volume:", className="form-label"),
-                    dbc.Switch(
-                        id="volume-toggle",
-                        label="Show Volume",
-                        value=True
-                    )
-                ], width=2)
-            ], className="mb-3"),
-            
-            dbc.Row([
-                # Drawing Tools (Future Enhancement)
-                dbc.Col([
-                    html.Label("Drawing Tools:", className="form-label"),
-                    dbc.ButtonGroup([
-                        dbc.Button("Trend Line", id="trend-line-btn", size="sm", outline=True),
-                        dbc.Button("Support/Resistance", id="support-resistance-btn", size="sm", outline=True),
-                        dbc.Button("Clear All", id="clear-drawings-btn", size="sm", outline=True, color="secondary")
+                    html.Label("Quick Indicators:", className="form-label small"),
+                    html.Div([
+                        dbc.ButtonGroup([
+                            dbc.Button("SMA", id="indicator-sma-btn", size="sm", 
+                                     color="success", outline=False, className="indicator-btn"),
+                            dbc.Button("EMA", id="indicator-ema-btn", size="sm", 
+                                     color="success", outline=False, className="indicator-btn"),
+                            dbc.Button("BB", id="indicator-bollinger-btn", size="sm", 
+                                     color="info", outline=True, className="indicator-btn",
+                                     title="Bollinger Bands"),
+                            dbc.Button("RSI", id="indicator-rsi-btn", size="sm", 
+                                     color="warning", outline=False, className="indicator-btn")
+                        ], className="w-100")
                     ])
                 ], width=6),
                 
-                # Export Options
+                # Volume & Options
                 dbc.Col([
-                    html.Label("Export:", className="form-label"),
-                    dbc.ButtonGroup([
-                        dbc.Button("PNG", id="export-png-btn", size="sm", outline=True),
-                        dbc.Button("PDF", id="export-pdf-btn", size="sm", outline=True),
-                        dbc.Button("SVG", id="export-svg-btn", size="sm", outline=True)
+                    html.Label("Options:", className="form-label small"),
+                    html.Div([
+                        dbc.ButtonGroup([
+                            dbc.Button("📊", id="volume-toggle-btn", size="sm", 
+                                     color="info", outline=False, className="volume-btn",
+                                     title="Toggle Volume"),
+                            dbc.Button("⚙️", id="chart-settings-btn", size="sm", 
+                                     color="secondary", outline=True,
+                                     title="Chart Settings"),
+                            dbc.Button("📤", id="export-chart-btn", size="sm", 
+                                     color="secondary", outline=True,
+                                     title="Export Chart")
+                        ], className="w-100")
                     ])
-                ], width=6)
-            ])
+                ], width=3)
+            ], className="mb-3"),
+            
+            # Advanced Controls - Collapsible
+            dbc.Collapse([
+                html.Hr(),
+                dbc.Row([
+                    # Overlay Indicators Section
+                    dbc.Col([
+                        html.Label("Overlay Indicators:", className="form-label small fw-bold"),
+                        html.Div([
+                            html.Div([
+                                dbc.Button(opt['label'], 
+                                         id=f"overlay-{opt['value']}-btn",
+                                         size="sm",
+                                         color="success" if opt['value'] in ['sma', 'ema'] else "outline-success",
+                                         className="me-1 mb-1 overlay-indicator-btn")
+                                for opt in overlay_indicators
+                            ])
+                        ])
+                    ], width=6),
+                    
+                    # Oscillator Indicators Section
+                    dbc.Col([
+                        html.Label("Oscillator Indicators:", className="form-label small fw-bold"),
+                        html.Div([
+                            html.Div([
+                                dbc.Button(opt['label'], 
+                                         id=f"oscillator-{opt['value']}-btn",
+                                         size="sm",
+                                         color="warning" if opt['value'] == 'rsi' else "outline-warning",
+                                         className="me-1 mb-1 oscillator-indicator-btn")
+                                for opt in oscillator_indicators
+                            ])
+                        ])
+                    ], width=6)
+                ], className="mb-3"),
+                
+                dbc.Row([
+                    # Volume Options
+                    dbc.Col([
+                        html.Label("Volume Display:", className="form-label small fw-bold"),
+                        dbc.ButtonGroup([
+                            dbc.Button("Hide", id="volume-hide-btn", size="sm", 
+                                     color="outline-secondary", className="volume-display-btn"),
+                            dbc.Button("Bars", id="volume-bars-btn", size="sm", 
+                                     color="info", outline=False, className="volume-display-btn"),
+                            dbc.Button("Bars + MA", id="volume-bars-ma-btn", size="sm", 
+                                     color="outline-info", className="volume-display-btn")
+                        ], className="w-100"),
+                        dcc.Store(id="volume-display-store", data="bars_ma")
+                    ], width=4),
+                    
+                    # Chart Tools
+                    dbc.Col([
+                        html.Label("Chart Tools:", className="form-label small fw-bold"),
+                        dbc.ButtonGroup([
+                            dbc.Button("🖊️", id="trend-line-btn", size="sm", outline=True,
+                                     title="Trend Line", className="chart-tool-btn"),
+                            dbc.Button("📏", id="support-resistance-btn", size="sm", outline=True,
+                                     title="Support/Resistance", className="chart-tool-btn"),
+                            dbc.Button("🗑️", id="clear-drawings-btn", size="sm", outline=True, 
+                                     color="danger", title="Clear All", className="chart-tool-btn")
+                        ], className="w-100")
+                    ], width=4),
+                    
+                    # Export Options
+                    dbc.Col([
+                        html.Label("Export Format:", className="form-label small fw-bold"),
+                        dbc.ButtonGroup([
+                            dbc.Button("PNG", id="export-png-btn", size="sm", outline=True,
+                                     className="export-btn"),
+                            dbc.Button("PDF", id="export-pdf-btn", size="sm", outline=True,
+                                     className="export-btn"),
+                            dbc.Button("SVG", id="export-svg-btn", size="sm", outline=True,
+                                     className="export-btn")
+                        ], className="w-100")
+                    ], width=4)
+                ])
+            ], id="advanced-chart-controls", is_open=False)
         ])
     ], className="mb-4")
 

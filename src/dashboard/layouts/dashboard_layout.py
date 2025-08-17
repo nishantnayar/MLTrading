@@ -21,6 +21,7 @@ from ..components.shared_components import (
     create_control_group,
     create_button_group
 )
+from .interactive_chart import create_chart_controls
 
 
 
@@ -430,9 +431,8 @@ def create_charts_tab():
                                     subtitle="Customize your technical analysis view",
                                     icon_class="fas fa-sliders-h"
                                 ),
-                                # Simplified Controls with Symbol Type-ahead
+                                # Symbol Search Row
                                 dbc.Row([
-                                    # Symbol Type-ahead
                                     dbc.Col([
                                         html.Label("Search Symbol:", className="text-primary-emphasis mb-1"),
                                         dcc.Dropdown(
@@ -444,62 +444,7 @@ def create_charts_tab():
                                             clearable=False,
                                             className="mb-2"
                                         )
-                                    ], width=3),
-                                    
-                                    # Chart Type  
-                                    dbc.Col([
-                                        html.Label("Chart Type:", className="text-primary-emphasis mb-1"),
-                                        dcc.Dropdown(
-                                            id="chart-type-dropdown",
-                                            options=[
-                                                {"label": "Candlestick", "value": "candlestick"},
-                                                {"label": "OHLC", "value": "ohlc"},
-                                                {"label": "Line", "value": "line"},
-                                                {"label": "Bar", "value": "bar"}
-                                            ],
-                                            value="candlestick",
-                                            className="mb-2"
-                                        )
-                                    ], width=2),
-                                    
-                                    # Technical Indicators
-                                    dbc.Col([
-                                        html.Label("Technical Indicators:", className="text-primary-emphasis mb-1"),
-                                        dcc.Dropdown(
-                                            id="indicators-dropdown",
-                                            options=[
-                                                {"label": "SMA (20)", "value": "sma"},
-                                                {"label": "EMA (12,26)", "value": "ema"},
-                                                {"label": "Bollinger Bands", "value": "bollinger"},
-                                                {"label": "RSI", "value": "rsi"},
-                                                {"label": "MACD", "value": "macd"},
-                                                {"label": "Stochastic", "value": "stochastic"},
-                                                {"label": "VWAP", "value": "vwap"},
-                                                {"label": "ATR", "value": "atr"}
-                                            ],
-                                            value=["sma", "rsi"],
-                                            multi=True,
-                                            className="mb-2"
-                                        )
-                                    ], width=3),
-                                    
-                                    # Volume Controls
-                                    dbc.Col([
-                                        html.Label("Volume:", className="text-primary-emphasis mb-1"),
-                                        dcc.Dropdown(
-                                            id="volume-display-dropdown",
-                                            options=[
-                                                {"label": "Hide", "value": "none"},
-                                                {"label": "Bars", "value": "bars"},
-                                                {"label": "Bars + MA", "value": "bars_ma"},
-                                                {"label": "Profile", "value": "profile"}
-                                            ],
-                                            value="bars_ma",
-                                            className="mb-2"
-                                        )
-                                    ], width=2),
-                                    
-                                    # Data Status & Refresh
+                                    ], width=8),
                                     dbc.Col([
                                         html.Div([
                                             dbc.Button([
@@ -507,8 +452,11 @@ def create_charts_tab():
                                                 "Refresh"
                                             ], id="refresh-chart-btn", color="outline-primary", size="sm")
                                         ], className="d-flex align-items-end justify-content-end")
-                                    ], width=2)
-                                ], className="align-items-end")
+                                    ], width=4)
+                                ], className="align-items-end"),
+                                
+                                # New Chart Controls
+                                create_chart_controls()
                             ], className="p-3")
                         ], style=CARD_STYLE_NONE)
                     ], width=12)

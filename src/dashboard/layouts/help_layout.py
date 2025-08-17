@@ -154,7 +154,20 @@ def create_help_layout():
                         dbc.Tabs([
                             dbc.Tab([
                                 html.Div([
-                                    html.H5("Chart Types", className="mt-3 mb-3"),
+                                    html.H5("Chart Types & Controls", className="mt-3 mb-3"),
+                                    dbc.Alert([
+                                        html.H6("🎛️ New Button-Based Controls", className="alert-heading mb-2"),
+                                        html.P("Chart type selection now uses intuitive button controls instead of dropdowns for better accessibility and mobile support!", className="mb-0")
+                                    ], color="success", className="mb-3"),
+                                    
+                                    html.H6("Chart Type Buttons:"),
+                                    dbc.ButtonGroup([
+                                        dbc.Button("📈 Candlestick", color="primary", size="sm", disabled=True),
+                                        dbc.Button("📊 OHLC", color="outline-primary", size="sm", disabled=True),
+                                        dbc.Button("📉 Line", color="outline-primary", size="sm", disabled=True),
+                                        dbc.Button("📋 Bar", color="outline-primary", size="sm", disabled=True)
+                                    ], className="mb-4 w-100"),
+                                    
                                     dbc.Row([
                                         dbc.Col([
                                             dbc.Card([
@@ -169,7 +182,7 @@ def create_help_layout():
                                                     ])
                                                 ])
                                             ])
-                                        ], width=4),
+                                        ], width=6),
                                         dbc.Col([
                                             dbc.Card([
                                                 dbc.CardBody([
@@ -183,7 +196,9 @@ def create_help_layout():
                                                     ])
                                                 ])
                                             ])
-                                        ], width=4),
+                                        ], width=6)
+                                    ], className="mb-3"),
+                                    dbc.Row([
                                         dbc.Col([
                                             dbc.Card([
                                                 dbc.CardBody([
@@ -197,7 +212,21 @@ def create_help_layout():
                                                     ])
                                                 ])
                                             ])
-                                        ], width=4)
+                                        ], width=6),
+                                        dbc.Col([
+                                            dbc.Card([
+                                                dbc.CardBody([
+                                                    html.H6("📋 Bar Charts"),
+                                                    html.P("Colored bars based on price direction:"),
+                                                    html.Ul([
+                                                        html.Li("Height shows closing price"),
+                                                        html.Li("Green bars: price closed higher"),
+                                                        html.Li("Red bars: price closed lower"),
+                                                        html.Li("Good for volume comparison")
+                                                    ])
+                                                ])
+                                            ])
+                                        ], width=6)
                                     ])
                                 ])
                             ], label="Chart Types", tab_id="chart-types"),
@@ -495,6 +524,93 @@ def create_help_layout():
                         ])
                     ],
                     "fas fa-keyboard"
+                )
+            ], width=12)
+        ]),
+        
+        # Recent Improvements Section
+        dbc.Row([
+            dbc.Col([
+                create_help_section(
+                    "🚀 Recent System Improvements",
+                    [
+                        dbc.Alert([
+                            html.H5("Latest Updates - August 2025", className="alert-heading"),
+                            html.P("The ML Trading Dashboard has received significant improvements for better usability and reliability.")
+                        ], color="primary", className="mb-4"),
+                        
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader([
+                                        html.I(className="fas fa-mouse-pointer me-2"),
+                                        html.H6("Button-Based Chart Controls", className="mb-0")
+                                    ]),
+                                    dbc.CardBody([
+                                        html.Ul([
+                                            html.Li("Replaced problematic dropdown menus with accessible button controls"),
+                                            html.Li("Improved mobile and touch device compatibility"), 
+                                            html.Li("Better visual feedback for selected chart types"),
+                                            html.Li("Enhanced keyboard navigation support")
+                                        ])
+                                    ])
+                                ])
+                            ], width=6),
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader([
+                                        html.I(className="fas fa-robot me-2"),
+                                        html.H6("Automated Testing Suite", className="mb-0")
+                                    ]),
+                                    dbc.CardBody([
+                                        html.Ul([
+                                            html.Li("Fully automated regression testing for CI/CD"),
+                                            html.Li("Comprehensive dashboard functionality validation"),
+                                            html.Li("Graceful handling of optional features (Alpaca integration)"),
+                                            html.Li("No manual intervention required for test execution")
+                                        ])
+                                    ])
+                                ])
+                            ], width=6)
+                        ], className="mb-3"),
+                        
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader([
+                                        html.I(className="fas fa-chart-bar me-2"),
+                                        html.H6("Enhanced Volume Analysis", className="mb-0")
+                                    ]),
+                                    dbc.CardBody([
+                                        html.Ul([
+                                            html.Li("Improved volume display options and color coding"),
+                                            html.Li("Better volume ratio calculations vs historical averages"),
+                                            html.Li("More intuitive volume chart integration"),
+                                            html.Li("Enhanced volume-based technical indicators")
+                                        ])
+                                    ])
+                                ])
+                            ], width=6),
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader([
+                                        html.I(className="fas fa-cogs me-2"),
+                                        html.H6("System Reliability", className="mb-0")
+                                    ]),
+                                    dbc.CardBody([
+                                        html.Ul([
+                                            html.Li("Fixed syntax errors and code quality issues"),
+                                            html.Li("Improved error handling and graceful degradation"),
+                                            html.Li("Better logging and debugging capabilities"),
+                                            html.Li("Consolidated documentation for easier maintenance")
+                                        ])
+                                    ])
+                                ])
+                            ], width=6)
+                        ])
+                    ],
+                    "fas fa-star",
+                    "primary"
                 )
             ], width=12)
         ]),

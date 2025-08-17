@@ -35,12 +35,14 @@ A comprehensive machine learning-based trading system with **professional-grade 
 - **[📋 Change Log](docs/CHANGELOG.md)** - Development history and feature releases
 
 ### 🎯 System Status (August 2025)
-- ✅ **Interactive Charting**: Bloomberg Terminal-quality technical analysis
+- ✅ **Interactive Charting**: Bloomberg Terminal-quality technical analysis with button-based controls
 - ✅ **Performance Optimization**: 90% faster with intelligent caching  
-- ✅ **Professional UI**: Enterprise-grade responsive dashboard
+- ✅ **Professional UI**: Enterprise-grade responsive dashboard with accessibility improvements
+- ✅ **Automated Testing**: Fully automated CI/CD-compatible regression test suite
 - ✅ **API Integration**: Complete FastAPI backend
 - ✅ **Pairs Trading Strategy**: Complete implementation with ATEN-INGM pair
 - ✅ **Strategy Framework**: Advanced strategy management system
+- ✅ **System Reliability**: Enhanced error handling and graceful degradation
 - 🔄 **ML Pipeline**: Feature engineering in development
 - 🔄 **Live Trading**: Alpaca integration in progress
 
@@ -101,9 +103,10 @@ A comprehensive machine learning-based trading system with **professional-grade 
 - **Support/Resistance**: Automatic level detection
 
 ### Chart Features
-- **Chart Types**: Candlestick, OHLC, Line charts
+- **Chart Types**: Candlestick, OHLC, Line, Bar charts with button-based selection
 - **Time Ranges**: 1D, 1W, 1M, 3M, 6M, 1Y, ALL
-- **Volume Overlay**: Color-coded volume bars (green/red)
+- **Volume Overlay**: Color-coded volume bars (green/red) with enhanced volume analysis
+- **Accessibility**: Improved button controls for mobile and keyboard navigation
 - **Drawing Tools**: Trend lines, shapes, annotations
 - **Zoom Controls**: Interactive zoom, pan, auto-scaling
 - **Analysis Modal**: Comprehensive technical analysis
@@ -186,6 +189,9 @@ MLTrading/
 
 ### Testing
 ```bash
+# Automated regression test suite (CI/CD compatible)
+python run_regression_tests.py
+
 # Quick API health check
 python run_tests.py --type quick
 
@@ -197,6 +203,13 @@ python run_tests.py --type unit      # Unit tests
 python run_tests.py --type api       # API tests
 python run_tests.py --type integration  # Integration tests
 ```
+
+### Automated Testing Features
+- **CI/CD Compatible**: No manual intervention required
+- **Comprehensive Coverage**: Dashboard, charts, navigation, controls
+- **Graceful Handling**: Optional features (Alpaca) skip when unavailable
+- **Browser Testing**: Selenium-based functional testing
+- **Performance Validation**: Load time and responsiveness checks
 
 ## ⚙️ Configuration
 
@@ -243,6 +256,13 @@ INDICATOR_CONFIG = {
 3. **Interactive Features**: Ensure JavaScript is enabled
 
 ## 🚀 Recent Improvements
+
+### ✅ August 2025 - Latest System Enhancements
+- **Chart Controls Upgrade**: Eliminated dropdown clipping with professional button-based interface
+- **Connection Pool Fix**: Resolved database connection exhaustion for improved stability
+- **Clean UI Design**: Removed duplicate data displays for streamlined user experience
+- **Mobile Optimization**: Touch-friendly controls with responsive design patterns
+- **System Reliability**: Enhanced error handling and graceful degradation patterns
 
 ### ✅ Interactive Chart System (Complete)
 - **Professional Charting**: Trading-grade chart quality with 12+ technical indicators

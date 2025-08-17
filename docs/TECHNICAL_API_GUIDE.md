@@ -4,6 +4,25 @@
 
 This comprehensive guide covers the ML Trading System's API endpoints, services, and technical implementation details for both data extraction and interactive chart features.
 
+## 🆕 **Recent Technical Improvements - August 17, 2025**
+
+### 🔧 **Database Connection Pool Management**
+- **Fixed**: Connection pool exhaustion in `MarketDataService`
+- **Issue**: Methods were calling `conn.close()` instead of `return_connection()`
+- **Solution**: Implemented proper try/finally blocks for connection handling
+- **Impact**: Eliminated "connection pool exhausted" errors under concurrent load
+
+### 🎛️ **Service Layer Enhancements**
+- **Chart Controls**: Upgraded from dropdown to button-based interface
+- **UI Components**: Enhanced mobile responsiveness and accessibility
+- **Error Handling**: Improved exception safety in data service methods
+- **Performance**: Stable concurrent chart request handling
+
+### 🔍 **Code Quality Improvements**
+- **Connection Safety**: All database services now use consistent connection patterns
+- **Exception Handling**: Proper resource cleanup in error scenarios
+- **Logging**: Enhanced debugging information for connection management
+
 ---
 
 # 📊 Data Extraction API

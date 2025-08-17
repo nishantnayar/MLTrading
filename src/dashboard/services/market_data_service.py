@@ -92,8 +92,10 @@ class MarketDataService(BaseDashboardService):
             """
             
             conn = self.db_manager.get_connection()
-            df = pd.read_sql_query(query, conn, params=[symbol.upper(), source])
-            conn.close()
+            try:
+                df = pd.read_sql_query(query, conn, params=[symbol.upper(), source])
+            finally:
+                self.db_manager.return_connection(conn)
             
             if not df.empty:
                 # Log data before cleaning
@@ -141,8 +143,10 @@ class MarketDataService(BaseDashboardService):
             """
             
             conn = self.db_manager.get_connection()
-            df = pd.read_sql_query(query, conn, params=[symbol.upper(), source])
-            conn.close()
+            try:
+                df = pd.read_sql_query(query, conn, params=[symbol.upper(), source])
+            finally:
+                self.db_manager.return_connection(conn)
             
             if not df.empty:
                 # Reverse to get chronological order

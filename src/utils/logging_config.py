@@ -234,7 +234,7 @@ def log_system_event(event_type: str, details: str,
 def log_performance_event(operation: str, duration_ms: float, 
                          metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
-    Log performance metrics with structured data
+    Log performance metrics with structured data and database storage
     
     Args:
         operation: Operation name
@@ -248,9 +248,38 @@ def log_performance_event(operation: str, duration_ms: float,
         'performance_data': metadata or {}
     }
     
+    # Log to regular logs
     log_structured_event('performance', 'INFO', 
                        f"Operation '{operation}' completed in {duration_ms:.2f}ms", 
                        perf_metadata, logger)
+    
+    # Also log to database performance_logs table
+    try:
+        from ..utils.database_logging import get_performance_logger
+        perf_logger = get_performance_logger()
+        
+        # Extract component from metadata or correlation
+        component = metadata.get('component') if metadata else None
+        correlation_id = metadata.get('correlation_id') if metadata else get_correlation_id()
+        
+        # Clean metadata to avoid conflicts with explicit parameters
+        clean_perf_metadata = {k: v for k, v in (metadata or {}).items() 
+                              if k not in ['component', 'correlation_id']}
+        
+        perf_logger.log_performance(
+            operation_name=operation,
+            duration_ms=duration_ms,
+            status='success',
+            component=component or 'unknown',
+            **clean_perf_metadata
+        )
+    except Exception as e:
+        # Don't fail the operation if performance logging fails
+        if logger:
+            logger.warning(f"Failed to log performance to database: {e}")
+        else:
+            fallback_logger = logging.getLogger('performance_fallback')
+            fallback_logger.warning(f"Failed to log performance to database: {e}")
 
 def log_request(request_info: dict, logger: logging.Logger = None):
     """
@@ -395,6 +424,27 @@ def log_operation(operation_name: str, logger: logging.Logger = None,
                     extra={'correlation_id': correlation_id, 'operation': operation_name,
                           'duration_ms': duration_ms, 'status': 'error', 'error': error_msg},
                     exc_info=True)
+        
+        # Log performance event for failed operations too
+        try:
+            from ..utils.database_logging import get_performance_logger
+            perf_logger = get_performance_logger()
+            
+            # Clean metadata to avoid conflicts
+            error_metadata = {k: v for k, v in clean_metadata.items() 
+                            if k not in ['component', 'correlation_id']}
+            error_metadata['error'] = error_msg
+            
+            perf_logger.log_performance(
+                operation_name=operation_name,
+                duration_ms=duration_ms,
+                status='error',
+                component=clean_metadata.get('component', 'unknown'),
+                **error_metadata
+            )
+        except Exception as perf_err:
+            logger.warning(f"Failed to log error performance to database: {perf_err}")
+        
         raise
 
 def get_combined_log_path() -> Path:

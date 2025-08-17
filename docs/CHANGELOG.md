@@ -2,6 +2,26 @@
 
 This document describes the current state and capabilities of the ML Trading System.
 
+## 📋 **Latest Updates - August 17, 2025**
+
+### 🎛️ **Chart Controls System Upgrade**
+- **Problem Solved**: Eliminated dropdown clipping issues in constrained containers
+- **New Interface**: Professional button-based controls replace problematic dropdowns
+- **Mobile Optimization**: Touch-friendly interface with responsive design
+- **Space Efficiency**: Collapsible advanced controls with main controls always visible
+
+### 🔧 **Database Connection Pool Fix**
+- **Critical Fix**: Resolved connection pool exhaustion causing system failures
+- **Root Cause**: Methods were calling `conn.close()` instead of returning to pool
+- **Solution**: Implemented proper connection handling with try/finally blocks
+- **Result**: Stable concurrent chart requests without connection errors
+
+### 🎨 **UI/UX Improvements**
+- **Cleaner Charts**: Removed duplicate data range displays from chart titles
+- **Streamlined Interface**: Data range info consolidated to overview page only
+- **Better Focus**: Charts display clean, professional titles without clutter
+- **Improved Hierarchy**: Information shown once in appropriate locations
+
 ## 🚀 **Current System Capabilities**
 
 ### **Interactive Chart System**

@@ -26,6 +26,239 @@ def register_interactive_chart_callbacks(app):
     market_service = MarketDataService()
     indicator_service = TechnicalIndicatorService()
     
+    # NEW: Toggle advanced controls
+    @app.callback(
+        Output("advanced-chart-controls", "is_open"),
+        [Input("chart-controls-toggle", "n_clicks")],
+        [State("advanced-chart-controls", "is_open")],
+        prevent_initial_call=True
+    )
+    def toggle_advanced_controls(n_clicks, is_open):
+        """Toggle the advanced chart controls collapse."""
+        if n_clicks:
+            return not is_open
+        return is_open
+    
+    # NEW: Chart type button handlers
+    @app.callback(
+        [Output("chart-type-store", "data"),
+         Output("chart-type-candlestick", "outline"),
+         Output("chart-type-ohlc", "outline"),
+         Output("chart-type-line", "outline"),
+         Output("chart-type-bar", "outline")],
+        [Input("chart-type-candlestick", "n_clicks"),
+         Input("chart-type-ohlc", "n_clicks"), 
+         Input("chart-type-line", "n_clicks"),
+         Input("chart-type-bar", "n_clicks")],
+        prevent_initial_call=True
+    )
+    def update_chart_type(*clicks):
+        """Handle chart type button clicks."""
+        ctx = callback_context
+        if not ctx.triggered:
+            return 'candlestick', False, True, True, True
+        
+        trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+        chart_types = {
+            'chart-type-candlestick': ('candlestick', False, True, True, True),
+            'chart-type-ohlc': ('ohlc', True, False, True, True),
+            'chart-type-line': ('line', True, True, False, True),
+            'chart-type-bar': ('bar', True, True, True, False)
+        }
+        
+        return chart_types.get(trigger_id, ('candlestick', False, True, True, True))
+    
+    # NEW: Quick indicator toggles
+    @app.callback(
+        [Output("overlay-indicators-store", "data"),
+         Output("indicator-sma-btn", "outline"),
+         Output("indicator-ema-btn", "outline"),
+         Output("indicator-bollinger-btn", "outline")],
+        [Input("indicator-sma-btn", "n_clicks"),
+         Input("indicator-ema-btn", "n_clicks"),
+         Input("indicator-bollinger-btn", "n_clicks")],
+        [State("overlay-indicators-store", "data")],
+        prevent_initial_call=True
+    )
+    def toggle_overlay_indicators(sma_clicks, ema_clicks, bb_clicks, current_indicators):
+        """Toggle overlay indicators on/off."""
+        ctx = callback_context
+        if not ctx.triggered:
+            return current_indicators or ['sma', 'ema'], False, False, True
+        
+        trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+        indicators = set(current_indicators or ['sma', 'ema'])
+        
+        indicator_map = {
+            'indicator-sma-btn': 'sma',
+            'indicator-ema-btn': 'ema', 
+            'indicator-bollinger-btn': 'bollinger'
+        }
+        
+        if trigger_id in indicator_map:
+            indicator = indicator_map[trigger_id]
+            if indicator in indicators:
+                indicators.discard(indicator)
+            else:
+                indicators.add(indicator)
+        
+        indicators_list = list(indicators)
+        return (indicators_list,
+                'sma' not in indicators,
+                'ema' not in indicators,
+                'bollinger' not in indicators)
+    
+    # NEW: RSI toggle
+    @app.callback(
+        [Output("oscillator-indicators-store", "data"),
+         Output("indicator-rsi-btn", "outline")],
+        [Input("indicator-rsi-btn", "n_clicks")],
+        [State("oscillator-indicators-store", "data")],
+        prevent_initial_call=True
+    )
+    def toggle_rsi_indicator(rsi_clicks, current_oscillators):
+        """Toggle RSI indicator on/off."""
+        if not rsi_clicks:
+            return current_oscillators or ['rsi'], False
+        
+        oscillators = set(current_oscillators or ['rsi'])
+        if 'rsi' in oscillators:
+            oscillators.discard('rsi')
+        else:
+            oscillators.add('rsi')
+        
+        oscillators_list = list(oscillators)
+        return oscillators_list, 'rsi' not in oscillators
+    
+    # NEW: Volume display controls
+    @app.callback(
+        [Output("volume-display-store", "data"),
+         Output("volume-hide-btn", "outline"),
+         Output("volume-bars-btn", "outline"),
+         Output("volume-bars-ma-btn", "outline"),
+         Output("volume-toggle-btn", "outline")],
+        [Input("volume-hide-btn", "n_clicks"),
+         Input("volume-bars-btn", "n_clicks"),
+         Input("volume-bars-ma-btn", "n_clicks"),
+         Input("volume-toggle-btn", "n_clicks")],
+        [State("volume-display-store", "data")],
+        prevent_initial_call=True
+    )
+    def update_volume_display(*clicks):
+        """Handle volume display button clicks."""
+        ctx = callback_context
+        if not ctx.triggered:
+            return 'bars_ma', True, True, False, False
+        
+        trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+        
+        if trigger_id == 'volume-toggle-btn':
+            # Quick toggle between hide and bars_ma
+            current = clicks[-1] or 'bars_ma'
+            new_mode = 'hide' if current != 'hide' else 'bars_ma'
+        else:
+            volume_modes = {
+                'volume-hide-btn': 'hide',
+                'volume-bars-btn': 'bars',
+                'volume-bars-ma-btn': 'bars_ma'
+            }
+            new_mode = volume_modes.get(trigger_id, 'bars_ma')
+        
+        return (new_mode,
+                new_mode != 'hide',      # hide outline
+                new_mode != 'bars',      # bars outline  
+                new_mode != 'bars_ma',   # bars_ma outline
+                new_mode == 'hide')      # toggle outline
+    
+    # NEW: Dynamic advanced indicator callbacks
+    # This creates callbacks for all available indicators dynamically
+    indicator_service_temp = TechnicalIndicatorService()
+    chart_config = indicator_service_temp.get_indicator_config()
+    
+    # Get overlay indicators
+    overlay_indicators = [key for key, config in chart_config.items() if config.get('type') == 'overlay']
+    oscillator_indicators = [key for key, config in chart_config.items() if config.get('type') == 'oscillator']
+    
+    # Create a callback for overlay indicator buttons in advanced section
+    if overlay_indicators:
+        overlay_inputs = [Input(f"overlay-{ind}-btn", "n_clicks") for ind in overlay_indicators]
+        overlay_outputs = [Output(f"overlay-{ind}-btn", "outline") for ind in overlay_indicators]
+        
+        @app.callback(
+            [Output("overlay-indicators-store", "data", allow_duplicate=True)] + overlay_outputs,
+            overlay_inputs,
+            [State("overlay-indicators-store", "data")],
+            prevent_initial_call=True
+        )
+        def toggle_advanced_overlay_indicators(*args):
+            """Handle advanced overlay indicator toggles."""
+            ctx = callback_context
+            if not ctx.triggered:
+                # Default state - SMA and EMA active
+                default_indicators = ['sma', 'ema']
+                outlines = [ind not in default_indicators for ind in overlay_indicators]
+                return [default_indicators] + outlines
+            
+            # Get current state (last argument is the state)
+            current_indicators = set(args[-1] or ['sma', 'ema'])
+            
+            # Find which button was clicked
+            trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+            
+            # Extract indicator name from button ID
+            if trigger_id.startswith('overlay-') and trigger_id.endswith('-btn'):
+                indicator = trigger_id[8:-4]  # Remove 'overlay-' and '-btn'
+                
+                if indicator in current_indicators:
+                    current_indicators.discard(indicator)
+                else:
+                    current_indicators.add(indicator)
+            
+            indicators_list = list(current_indicators)
+            outlines = [ind not in current_indicators for ind in overlay_indicators]
+            
+            return [indicators_list] + outlines
+    
+    # Create a callback for oscillator indicator buttons in advanced section  
+    if oscillator_indicators:
+        oscillator_inputs = [Input(f"oscillator-{ind}-btn", "n_clicks") for ind in oscillator_indicators]
+        oscillator_outputs = [Output(f"oscillator-{ind}-btn", "outline") for ind in oscillator_indicators]
+        
+        @app.callback(
+            [Output("oscillator-indicators-store", "data", allow_duplicate=True)] + oscillator_outputs,
+            oscillator_inputs,
+            [State("oscillator-indicators-store", "data")],
+            prevent_initial_call=True
+        )
+        def toggle_advanced_oscillator_indicators(*args):
+            """Handle advanced oscillator indicator toggles."""
+            ctx = callback_context
+            if not ctx.triggered:
+                # Default state - RSI active
+                default_indicators = ['rsi']
+                outlines = [ind not in default_indicators for ind in oscillator_indicators]
+                return [default_indicators] + outlines
+            
+            # Get current state (last argument is the state)
+            current_indicators = set(args[-1] or ['rsi'])
+            
+            # Find which button was clicked
+            trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+            
+            # Extract indicator name from button ID
+            if trigger_id.startswith('oscillator-') and trigger_id.endswith('-btn'):
+                indicator = trigger_id[11:-4]  # Remove 'oscillator-' and '-btn'
+                
+                if indicator in current_indicators:
+                    current_indicators.discard(indicator)
+                else:
+                    current_indicators.add(indicator)
+            
+            indicators_list = list(current_indicators)
+            outlines = [ind not in current_indicators for ind in oscillator_indicators]
+            
+            return [indicators_list] + outlines
+    
     # Initial symbol options callback
     @app.callback(
         Output("symbol-search", "options"),
@@ -81,19 +314,23 @@ def register_interactive_chart_callbacks(app):
         Output("interactive-price-chart", "figure"),
         [
             Input("symbol-search", "value"),
-            Input("chart-type-dropdown", "value"),
-            Input("indicators-dropdown", "value"),
-            Input("volume-display-dropdown", "value"),
+            Input("chart-type-store", "data"),
+            Input("overlay-indicators-store", "data"),
+            Input("oscillator-indicators-store", "data"),
+            Input("volume-display-store", "data"),
             Input("refresh-chart-btn", "n_clicks")
         ],
         prevent_initial_call=False
     )
-    def update_interactive_chart(symbol, chart_type, indicators, volume_display, refresh_clicks):
+    def update_interactive_chart(symbol, chart_type, overlay_indicators, oscillator_indicators, volume_display, refresh_clicks):
         """Update interactive chart with technical indicators."""
         try:
             # Use selected symbol or default to ADBE
             if not symbol:
                 symbol = "ADBE"
+            
+            # Combine overlay and oscillator indicators
+            indicators = (overlay_indicators or []) + (oscillator_indicators or [])
             
             # Get ALL available market data (no artificial date limit)
             # Let users see the complete data range they have
@@ -112,20 +349,9 @@ def register_interactive_chart_callbacks(app):
                 
                 data_range_str = format_date_range(actual_start, actual_end, "compact")
                 logger.info(f"Chart data for {symbol}: {len(df)} records from {data_range_str}")
-                
-                # Check if data is recent (within last 30 days)
-                from datetime import datetime, timedelta
-                is_recent = actual_end >= (datetime.now() - timedelta(days=30))
-                
-                # Add data range info to chart title with status indicator
-                status_icon = "🟢" if is_recent else "🟡"
-                status_text = "Live Data" if is_recent else "Historical Data"
-                chart_subtitle = f"{status_icon} {status_text}: {data_range_str} ({len(df)} records)"
-            else:
-                chart_subtitle = None
             
             # Determine volume display settings
-            show_volume = volume_display and volume_display != "none"
+            show_volume = volume_display and volume_display != "hide"
             color_by_price = True  # Always color by price for better visuals
             
             # Use indicators or default
@@ -142,16 +368,6 @@ def register_interactive_chart_callbacks(app):
                 color_by_price=color_by_price
             )
             
-            # Update chart title to include data range info
-            if chart_subtitle:
-                current_title = fig.layout.title.text if fig.layout.title else f"{symbol} Price Chart"
-                fig.update_layout(
-                    title={
-                        'text': f"{current_title}<br><span style='font-size:12px;color:gray'>{chart_subtitle}</span>",
-                        'x': 0.5,
-                        'xanchor': 'center'
-                    }
-                )
             
             logger.info(f"Updated interactive chart for {symbol} with {len(chart_indicators)} indicators")
             return fig
@@ -164,15 +380,19 @@ def register_interactive_chart_callbacks(app):
         Output("technical-analysis-summary", "children"),
         [
             Input("symbol-search", "value"),
-            Input("indicators-dropdown", "value")
+            Input("overlay-indicators-store", "data"),
+            Input("oscillator-indicators-store", "data")
         ],
         prevent_initial_call=True
     )
-    def update_technical_analysis_summary(symbol, indicators):
+    def update_technical_analysis_summary(symbol, overlay_indicators, oscillator_indicators):
         """Update technical analysis summary."""
         try:
             if not symbol:
                 symbol = "ADBE"
+            
+            # Combine indicators for analysis
+            indicators = (overlay_indicators or []) + (oscillator_indicators or [])
             
             # Get recent market data for analysis
             df = market_service.get_market_data(symbol, days=30)
