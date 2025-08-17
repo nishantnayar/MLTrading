@@ -143,13 +143,13 @@ class BacktestEngine:
                 
                 with self.db_manager.get_connection() as conn:
                     for symbol in symbols:
-                        query = \"\"\"
+                        query = """
                         SELECT timestamp, open, high, low, close, volume
                         FROM stock_data
                         WHERE symbol = %s 
                         AND timestamp BETWEEN %s AND %s
                         ORDER BY timestamp ASC
-                        \"\"\"
+                        """
                         
                         df = pd.read_sql_query(
                             query, 
