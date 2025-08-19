@@ -16,7 +16,7 @@ import pandas as pd
 # Add the src directory to the path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
-from data.storage.database import get_db_manager
+from src.data.storage.database import get_db_manager
 
 # Configure logging
 logging.basicConfig(

@@ -588,15 +588,18 @@ class InteractiveChartBuilder:
                 xanchor='center'
             ),
             height=600 + (total_rows - 1) * 150,  # Dynamic height based on subplots
-            margin=dict(l=50, r=50, t=80, b=50),
+            margin=dict(l=50, r=170, t=80, b=50),  # Increased right margin for vertical legend
             plot_bgcolor='white',
             paper_bgcolor='white',
             legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="right",
-                x=1
+                orientation="v",
+                yanchor="top",
+                y=1,
+                xanchor="left",
+                x=1.02,
+                bgcolor="rgba(255, 255, 255, 0.9)",
+                bordercolor="rgba(0, 0, 0, 0.1)",
+                borderwidth=1
             ),
             hovermode='x unified',
             # Advanced zoom and pan controls
