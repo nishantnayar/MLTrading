@@ -476,11 +476,12 @@ class APIRequestLogger:
             with self.db_manager.get_connection() as conn:
                 with conn.cursor() as cursor:
                     sql = """
-                    INSERT INTO api_request_logs 
-                    (timestamp, endpoint, method, status_code, duration_ms, 
-                     user_id, ip_address, user_agent, correlation_id, metadata)
-                    VALUES (%(timestamp)s, %(endpoint)s, %(method)s, %(status_code)s, 
-                            %(duration_ms)s, %(user_id)s, %(ip_address)s, %(user_agent)s, 
+                    INSERT INTO user_action_logs 
+                    (timestamp, action_type, user_id, ip_address, user_agent, 
+                     request_path, request_method, response_status, duration_ms, 
+                     correlation_id, metadata)
+                    VALUES (%(timestamp)s, 'api_call', %(user_id)s, %(ip_address)s, %(user_agent)s, 
+                            %(endpoint)s, %(method)s, %(status_code)s, %(duration_ms)s, 
                             %(correlation_id)s, %(metadata)s)
                     """
                     cursor.execute(sql, data)
