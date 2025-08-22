@@ -9,6 +9,9 @@ import sys
 import argparse
 from pathlib import Path
 
+# Add the project root to Python path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 
 def run_unit_tests():
     """Run unit tests."""
@@ -83,7 +86,7 @@ def run_quick_api_check():
         from tests.integration.test_api_integration import run_api_tests
         return run_api_tests()
     except ImportError:
-        print("❌ Could not import API test module")
+        print("Could not import API test module")
         return False
 
 

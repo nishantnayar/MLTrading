@@ -135,7 +135,7 @@ def setup_logger(name: str, log_file: str = None, level: str = "INFO",
 
 def get_ui_logger(component: str, enable_database_logging: bool = True) -> logging.Logger:
     """
-    Get a logger for UI components
+    Get a logger for UI components - now consolidated into single log file
     
     Args:
         component: Component name (e.g., 'api', 'dashboard')
@@ -146,7 +146,7 @@ def get_ui_logger(component: str, enable_database_logging: bool = True) -> loggi
     """
     return setup_logger(
         name=f"mltrading.ui.{component}",
-        log_file=f"ui_{component}.log",
+        log_file="ui_combined.log",  # All UI components use same log file
         enable_database_logging=enable_database_logging,
         file_log_level="DEBUG",
         db_log_level="INFO"
@@ -234,7 +234,7 @@ def log_system_event(event_type: str, details: str,
 def log_performance_event(operation: str, duration_ms: float, 
                          metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
-    Log performance metrics with structured data and database storage
+    Log performance metrics with structured data and resilient database storage
     
     Args:
         operation: Operation name
@@ -248,19 +248,18 @@ def log_performance_event(operation: str, duration_ms: float,
         'performance_data': metadata or {}
     }
     
-    # Log to regular logs
+    # Log to regular logs (file)
     log_structured_event('performance', 'INFO', 
                        f"Operation '{operation}' completed in {duration_ms:.2f}ms", 
                        perf_metadata, logger)
     
-    # Also log to database performance_logs table
+    # Use resilient database logger (async with circuit breaker)
     try:
-        from ..utils.database_logging import get_performance_logger
-        perf_logger = get_performance_logger()
+        from .resilient_database_logging import get_resilient_performance_logger
+        perf_logger = get_resilient_performance_logger()
         
-        # Extract component from metadata or correlation
+        # Extract component from metadata
         component = metadata.get('component') if metadata else None
-        correlation_id = metadata.get('correlation_id') if metadata else get_correlation_id()
         
         # Clean metadata to avoid conflicts with explicit parameters
         clean_perf_metadata = {k: v for k, v in (metadata or {}).items() 
@@ -273,13 +272,9 @@ def log_performance_event(operation: str, duration_ms: float,
             component=component or 'unknown',
             **clean_perf_metadata
         )
-    except Exception as e:
-        # Don't fail the operation if performance logging fails
-        if logger:
-            logger.warning(f"Failed to log performance to database: {e}")
-        else:
-            fallback_logger = logging.getLogger('performance_fallback')
-            fallback_logger.warning(f"Failed to log performance to database: {e}")
+    except Exception:
+        # Fail silently - primary logging to file already succeeded
+        pass
 
 def log_request(request_info: dict, logger: logging.Logger = None):
     """
@@ -311,6 +306,206 @@ def log_request(request_info: dict, logger: logging.Logger = None):
                        f"Request: {metadata['method']} {metadata['path']} - "
                        f"Status: {status_code} - Duration: {duration}ms", 
                        metadata, logger)
+    
+    # Also log to database API request logs
+    try:
+        from ..utils.database_logging import get_api_request_logger
+        api_logger = get_api_request_logger()
+        
+        api_logger.log_api_request(
+            endpoint=request_info.get('path', 'UNKNOWN'),
+            method=request_info.get('method', 'GET'),
+            status_code=status_code if isinstance(status_code, int) else None,
+            duration_ms=duration,
+            user_id=request_info.get('user_id'),
+            ip_address=request_info.get('ip_address'),
+            user_agent=request_info.get('user_agent'),
+            **{k: v for k, v in request_info.items() 
+               if k not in ['path', 'method', 'status_code', 'duration', 'user_id', 'ip_address', 'user_agent']}
+        )
+    except Exception as e:
+        if logger:
+            logger.warning(f"Failed to log API request to database: {e}")
+
+def log_data_collection_event(operation_type: str, data_source: str, 
+                             symbol: str = None, records_processed: int = None,
+                             duration_ms: float = None, status: str = 'success',
+                             logger: logging.Logger = None, **metadata):
+    """
+    Log data collection events with structured data and resilient database storage
+    
+    Args:
+        operation_type: Type of operation ('fetch', 'store', 'process')
+        data_source: Data source ('yahoo', 'alpaca', 'polygon')
+        symbol: Trading symbol (optional for bulk operations)
+        records_processed: Number of records processed
+        duration_ms: Duration in milliseconds
+        status: 'success', 'failed', 'partial'
+        logger: Logger instance (optional)
+        **metadata: Additional metadata
+    """
+    if logger is None:
+        logger = get_combined_logger("mltrading.data_collection")
+    
+    # Log as structured event to file
+    log_message = f"Data Collection - {operation_type} from {data_source}"
+    if symbol:
+        log_message += f" for {symbol}"
+    if records_processed is not None:
+        log_message += f" ({records_processed} records)"
+    if duration_ms is not None:
+        log_message += f" in {duration_ms:.2f}ms"
+    log_message += f" - Status: {status}"
+    
+    data_metadata = {
+        'operation_type': operation_type,
+        'data_source': data_source,
+        'symbol': symbol,
+        'records_processed': records_processed,
+        'duration_ms': duration_ms,
+        'status': status,
+        **metadata
+    }
+    
+    # Determine log level based on status
+    level = 'INFO' if status == 'success' else 'WARNING' if status == 'partial' else 'ERROR'
+    log_structured_event('data_collection', level, log_message, data_metadata, logger)
+    
+    # Use resilient database logger (async with circuit breaker)
+    try:
+        from .resilient_database_logging import get_resilient_data_collection_logger
+        dc_logger = get_resilient_data_collection_logger()
+        
+        dc_logger.log_data_collection(
+            operation_type=operation_type,
+            data_source=data_source,
+            symbol=symbol,
+            records_processed=records_processed,
+            duration_ms=duration_ms,
+            status=status,
+            **metadata
+        )
+    except Exception:
+        # Fail silently - primary logging to file already succeeded
+        pass
+
+def log_ui_interaction_event(component: str, action: str = None, 
+                           duration_ms: float = None, user_id: str = None,
+                           session_id: str = None, logger: logging.Logger = None, **metadata):
+    """
+    Log UI interaction events with structured data and database storage
+    
+    Args:
+        component: UI component name ('dashboard', 'chart', 'settings')
+        action: Action performed ('click', 'load', 'update')
+        duration_ms: Duration in milliseconds
+        user_id: User identifier
+        session_id: Session identifier
+        logger: Logger instance (optional)
+        **metadata: Additional metadata
+    """
+    if logger is None:
+        logger = get_ui_logger(component)
+    
+    # Log as structured event
+    log_message = f"UI Interaction - {component}"
+    if action:
+        log_message += f" ({action})"
+    if duration_ms is not None:
+        log_message += f" in {duration_ms:.2f}ms"
+    
+    ui_metadata = {
+        'component': component,
+        'action': action,
+        'duration_ms': duration_ms,
+        'user_id': user_id,
+        'session_id': session_id,
+        **metadata
+    }
+    
+    log_structured_event('ui_interaction', 'INFO', log_message, ui_metadata, logger)
+    
+    # Also log to database UI interaction logs
+    try:
+        from ..utils.database_logging import get_ui_interaction_logger
+        ui_logger = get_ui_interaction_logger()
+        
+        ui_logger.log_ui_interaction(
+            component=component,
+            action=action,
+            duration_ms=duration_ms,
+            user_id=user_id,
+            session_id=session_id,
+            **metadata
+        )
+    except Exception as e:
+        if logger:
+            logger.warning(f"Failed to log UI interaction to database: {e}")
+
+def log_error_event(error_type: str, error_message: str, component: str = None,
+                   severity: str = 'MEDIUM', stack_trace: str = None,
+                   source_file: str = None, source_line: int = None,
+                   source_function: str = None, user_impact: bool = False,
+                   logger: logging.Logger = None, **metadata):
+    """
+    Log error events with structured data and resilient database storage
+    
+    Args:
+        error_type: Type of error ('ValueError', 'ConnectionError', etc.)
+        error_message: Error message
+        component: Component where error occurred
+        severity: Error severity ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')
+        stack_trace: Stack trace string
+        source_file: Source file where error occurred
+        source_line: Line number where error occurred
+        source_function: Function where error occurred
+        user_impact: Whether error impacts users
+        logger: Logger instance (optional)
+        **metadata: Additional metadata
+    """
+    if logger is None:
+        logger = get_combined_logger(f"mltrading.{component or 'error'}")
+    
+    # Log as structured event to file
+    log_message = f"Error - {error_type}: {error_message}"
+    if component:
+        log_message = f"[{component}] " + log_message
+    
+    error_metadata = {
+        'error_type': error_type,
+        'component': component,
+        'severity': severity,
+        'source_file': source_file,
+        'source_line': source_line,
+        'source_function': source_function,
+        'user_impact': user_impact,
+        **metadata
+    }
+    
+    # Determine log level based on severity
+    level = 'ERROR' if severity in ['HIGH', 'CRITICAL'] else 'WARNING'
+    log_structured_event('error', level, log_message, error_metadata, logger)
+    
+    # Use resilient database logger (async with circuit breaker)
+    try:
+        from .resilient_database_logging import get_resilient_error_logger
+        err_logger = get_resilient_error_logger()
+        
+        err_logger.log_error(
+            error_type=error_type,
+            error_message=error_message,
+            component=component,
+            severity=severity,
+            stack_trace=stack_trace,
+            source_file=source_file,
+            source_line=source_line,
+            source_function=source_function,
+            user_impact=user_impact,
+            **metadata
+        )
+    except Exception:
+        # Fail silently - primary logging to file already succeeded
+        pass
 
 def log_dashboard_event(event_type: str, details: str, 
                        metadata: Dict[str, Any] = None, logger: logging.Logger = None):
@@ -427,8 +622,8 @@ def log_operation(operation_name: str, logger: logging.Logger = None,
         
         # Log performance event for failed operations too
         try:
-            from ..utils.database_logging import get_performance_logger
-            perf_logger = get_performance_logger()
+            from .resilient_database_logging import get_resilient_performance_logger
+            perf_logger = get_resilient_performance_logger()
             
             # Clean metadata to avoid conflicts
             error_metadata = {k: v for k, v in clean_metadata.items() 
@@ -442,8 +637,9 @@ def log_operation(operation_name: str, logger: logging.Logger = None,
                 component=clean_metadata.get('component', 'unknown'),
                 **error_metadata
             )
-        except Exception as perf_err:
-            logger.warning(f"Failed to log error performance to database: {perf_err}")
+        except Exception:
+            # Fail silently - primary logging to file already succeeded
+            pass
         
         raise
 

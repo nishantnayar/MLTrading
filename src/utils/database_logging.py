@@ -25,9 +25,9 @@ class DatabaseLogHandler(logging.Handler):
     
     def __init__(self, db_manager: DatabaseManager = None, 
                  table_name: str = "system_logs",
-                 max_queue_size: int = 1000,
-                 batch_size: int = 50,
-                 flush_interval: float = 5.0):
+                 max_queue_size: int = 2000,
+                 batch_size: int = 100,
+                 flush_interval: float = 10.0):
         """
         Initialize database log handler
         
@@ -190,25 +190,26 @@ class DatabaseLogHandler(logging.Handler):
         if not batch:
             return
         
+        conn = None
         try:
-            with self.db_manager.get_connection() as conn:
-                with conn.cursor() as cursor:
-                    # Prepare SQL
-                    sql = f"""
-                    INSERT INTO {self.table_name} 
-                    (timestamp, level, logger_name, correlation_id, message, 
-                     module, function_name, line_number, thread_name, process_id, metadata)
-                    VALUES (%(timestamp)s, %(level)s, %(logger_name)s, %(correlation_id)s, %(message)s,
-                            %(module)s, %(function_name)s, %(line_number)s, %(thread_name)s, %(process_id)s, %(metadata)s)
-                    """
-                    
-                    # Execute batch insert
-                    cursor.executemany(sql, batch)
-                    conn.commit()
-                    
-                    self.stats['logs_written'] += len(batch)
-                    self.stats['last_write'] = datetime.now()
-                    
+            conn = self.db_manager.get_connection()
+            with conn.cursor() as cursor:
+                # Prepare SQL
+                sql = f"""
+                INSERT INTO {self.table_name} 
+                (timestamp, level, logger_name, correlation_id, message, 
+                 module, function_name, line_number, thread_name, process_id, metadata)
+                VALUES (%(timestamp)s, %(level)s, %(logger_name)s, %(correlation_id)s, %(message)s,
+                        %(module)s, %(function_name)s, %(line_number)s, %(thread_name)s, %(process_id)s, %(metadata)s)
+                """
+                
+                # Execute batch insert
+                cursor.executemany(sql, batch)
+                conn.commit()
+                
+                self.stats['logs_written'] += len(batch)
+                self.stats['last_write'] = datetime.now()
+                
         except Exception as e:
             self.stats['write_errors'] += 1
             # Log to file as fallback (avoid infinite recursion)
@@ -217,6 +218,12 @@ class DatabaseLogHandler(logging.Handler):
                 fallback_logger.error(f"Failed to write {len(batch)} logs to database: {e}")
             except:
                 pass  # Give up if fallback also fails
+        finally:
+            if conn:
+                try:
+                    self.db_manager.return_connection(conn)
+                except:
+                    pass
     
     def flush(self):
         """
@@ -254,6 +261,301 @@ class DatabaseLogHandler(logging.Handler):
             'queue_size': self.log_queue.qsize(),
             'thread_alive': self.writer_thread.is_alive()
         }
+
+class BatchedLogger:
+    """
+    Base class for batched database logging with connection pooling optimization
+    """
+    
+    def __init__(self, db_manager: DatabaseManager = None, table_name: str = None,
+                 batch_size: int = 50, flush_interval: float = 5.0):
+        self.db_manager = db_manager or DatabaseManager()
+        self.table_name = table_name
+        self.batch_size = batch_size
+        self.flush_interval = flush_interval
+        self.batch = []
+        self.last_flush = time.time()
+        self._lock = threading.Lock()
+    
+    def _add_to_batch(self, data: Dict[str, Any]):
+        """Add data to batch and flush if necessary"""
+        with self._lock:
+            self.batch.append(data)
+            
+            # Check if we should flush
+            should_flush = (len(self.batch) >= self.batch_size or 
+                          time.time() - self.last_flush >= self.flush_interval)
+            
+            if should_flush:
+                self._flush_batch()
+    
+    def _flush_batch(self):
+        """Flush the current batch to database"""
+        if not self.batch:
+            return
+        
+        current_batch = self.batch.copy()
+        self.batch.clear()
+        self.last_flush = time.time()
+        
+        # Write batch in background thread to avoid blocking
+        threading.Thread(target=self._write_batch, args=(current_batch,), daemon=True).start()
+    
+    def _write_batch(self, batch: List[Dict[str, Any]]):
+        """Override in subclasses"""
+        pass
+
+class DataCollectionLogger(BatchedLogger):
+    """
+    Specialized logger for data collection events
+    """
+    
+    def __init__(self, db_manager: DatabaseManager = None):
+        super().__init__(db_manager, 'data_collection_logs', batch_size=25, flush_interval=3.0)
+    
+    def log_data_collection(self, operation_type: str, data_source: str, 
+                           symbol: str = None, records_processed: int = None,
+                           duration_ms: float = None, status: str = 'success',
+                           **metadata):
+        """
+        Log data collection event to database
+        
+        Args:
+            operation_type: Type of operation ('fetch', 'store', 'process')
+            data_source: Data source ('yahoo', 'alpaca', 'polygon')
+            symbol: Trading symbol (optional for bulk operations)
+            records_processed: Number of records processed
+            duration_ms: Duration in milliseconds
+            status: 'success', 'failed', 'partial'
+            **metadata: Additional metadata
+        """
+        try:
+            correlation_id = get_correlation_id()
+            
+            data = {
+                'timestamp': datetime.now(tz=timezone.utc),
+                'operation_type': operation_type,
+                'data_source': data_source,
+                'symbol': symbol,
+                'records_processed': records_processed or 0,
+                'duration_ms': duration_ms,
+                'status': status,
+                'correlation_id': correlation_id,
+                'metadata': json.dumps(metadata) if metadata else None
+            }
+            
+            # Add to batch instead of immediate write
+            self._add_to_batch(data)
+                    
+        except Exception as e:
+            fallback_logger = logging.getLogger('data_collection_fallback')
+            fallback_logger.error(f"Failed to log data collection event: {e}")
+    
+    def _write_batch(self, batch: List[Dict[str, Any]]):
+        """Write batch of data collection logs to database"""
+        if not batch:
+            return
+        
+        conn = None
+        try:
+            conn = self.db_manager.get_connection()
+            with conn.cursor() as cursor:
+                sql = """
+                INSERT INTO data_collection_logs 
+                (timestamp, operation_type, data_source, symbol, records_processed, 
+                 duration_ms, status, correlation_id, metadata)
+                VALUES (%(timestamp)s, %(operation_type)s, %(data_source)s, %(symbol)s, 
+                        %(records_processed)s, %(duration_ms)s, %(status)s, %(correlation_id)s, %(metadata)s)
+                """
+                cursor.executemany(sql, batch)
+                conn.commit()
+                
+        except Exception as e:
+            fallback_logger = logging.getLogger('data_collection_fallback')
+            fallback_logger.error(f"Failed to write data collection batch: {e}")
+        finally:
+            if conn:
+                try:
+                    self.db_manager.return_connection(conn)
+                except:
+                    pass
+
+class UIInteractionLogger:
+    """
+    Specialized logger for UI interaction events
+    """
+    
+    def __init__(self, db_manager: DatabaseManager = None):
+        self.db_manager = db_manager or DatabaseManager()
+    
+    def log_ui_interaction(self, component: str, action: str = None,
+                          user_id: str = None, session_id: str = None,
+                          duration_ms: float = None, **metadata):
+        """
+        Log UI interaction event to database
+        
+        Args:
+            component: UI component name ('dashboard', 'chart', 'settings')
+            action: Action performed ('click', 'load', 'update')
+            user_id: User identifier
+            session_id: Session identifier
+            duration_ms: Duration in milliseconds
+            **metadata: Additional metadata
+        """
+        try:
+            correlation_id = get_correlation_id()
+            
+            data = {
+                'timestamp': datetime.now(tz=timezone.utc),
+                'component': component,
+                'action': action,
+                'user_id': user_id,
+                'session_id': session_id,
+                'duration_ms': duration_ms,
+                'correlation_id': correlation_id,
+                'metadata': json.dumps(metadata) if metadata else None
+            }
+            
+            with self.db_manager.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    sql = """
+                    INSERT INTO ui_interaction_logs 
+                    (timestamp, component, action, user_id, session_id, 
+                     duration_ms, correlation_id, metadata)
+                    VALUES (%(timestamp)s, %(component)s, %(action)s, %(user_id)s, 
+                            %(session_id)s, %(duration_ms)s, %(correlation_id)s, %(metadata)s)
+                    """
+                    cursor.execute(sql, data)
+                    conn.commit()
+                    
+        except Exception as e:
+            fallback_logger = logging.getLogger('ui_interaction_fallback')
+            fallback_logger.error(f"Failed to log UI interaction: {e}")
+
+class APIRequestLogger:
+    """
+    Specialized logger for API request events
+    """
+    
+    def __init__(self, db_manager: DatabaseManager = None):
+        self.db_manager = db_manager or DatabaseManager()
+    
+    def log_api_request(self, endpoint: str, method: str = 'GET',
+                       status_code: int = None, duration_ms: float = None,
+                       user_id: str = None, ip_address: str = None,
+                       user_agent: str = None, **metadata):
+        """
+        Log API request event to database
+        
+        Args:
+            endpoint: API endpoint
+            method: HTTP method
+            status_code: HTTP status code
+            duration_ms: Duration in milliseconds
+            user_id: User identifier
+            ip_address: Client IP address
+            user_agent: User agent string
+            **metadata: Additional metadata
+        """
+        try:
+            correlation_id = get_correlation_id()
+            
+            data = {
+                'timestamp': datetime.now(tz=timezone.utc),
+                'endpoint': endpoint,
+                'method': method,
+                'status_code': status_code,
+                'duration_ms': duration_ms,
+                'user_id': user_id,
+                'ip_address': ip_address,
+                'user_agent': user_agent,
+                'correlation_id': correlation_id,
+                'metadata': json.dumps(metadata) if metadata else None
+            }
+            
+            with self.db_manager.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    sql = """
+                    INSERT INTO api_request_logs 
+                    (timestamp, endpoint, method, status_code, duration_ms, 
+                     user_id, ip_address, user_agent, correlation_id, metadata)
+                    VALUES (%(timestamp)s, %(endpoint)s, %(method)s, %(status_code)s, 
+                            %(duration_ms)s, %(user_id)s, %(ip_address)s, %(user_agent)s, 
+                            %(correlation_id)s, %(metadata)s)
+                    """
+                    cursor.execute(sql, data)
+                    conn.commit()
+                    
+        except Exception as e:
+            fallback_logger = logging.getLogger('api_request_fallback')
+            fallback_logger.error(f"Failed to log API request: {e}")
+
+class ErrorLogger:
+    """
+    Specialized logger for error events
+    """
+    
+    def __init__(self, db_manager: DatabaseManager = None):
+        self.db_manager = db_manager or DatabaseManager()
+    
+    def log_error(self, error_type: str, error_message: str, component: str = None,
+                  severity: str = 'MEDIUM', stack_trace: str = None,
+                  source_file: str = None, source_line: int = None,
+                  source_function: str = None, user_impact: bool = False, **metadata):
+        """
+        Log error event to database
+        
+        Args:
+            error_type: Type of error ('ValueError', 'ConnectionError', etc.)
+            error_message: Error message
+            component: Component where error occurred
+            severity: Error severity ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')
+            stack_trace: Stack trace string
+            source_file: Source file where error occurred
+            source_line: Line number where error occurred
+            source_function: Function where error occurred
+            user_impact: Whether error impacts users
+            **metadata: Additional metadata
+        """
+        try:
+            correlation_id = get_correlation_id()
+            
+            data = {
+                'timestamp': datetime.now(tz=timezone.utc),
+                'error_type': error_type,
+                'error_message': error_message,
+                'component': component,
+                'severity': severity,
+                'stack_trace': stack_trace,
+                'source_file': source_file,
+                'source_line': source_line,
+                'source_function': source_function,
+                'user_impact': user_impact,
+                'correlation_id': correlation_id,
+                'first_occurrence': datetime.now(tz=timezone.utc),
+                'occurrence_count': 1,
+                'resolution_status': 'open',
+                'metadata': json.dumps(metadata) if metadata else None
+            }
+            
+            with self.db_manager.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    sql = """
+                    INSERT INTO error_logs 
+                    (timestamp, error_type, error_message, component, severity, stack_trace,
+                     source_file, source_line, source_function, user_impact, correlation_id,
+                     first_occurrence, occurrence_count, resolution_status, metadata)
+                    VALUES (%(timestamp)s, %(error_type)s, %(error_message)s, %(component)s, 
+                            %(severity)s, %(stack_trace)s, %(source_file)s, %(source_line)s,
+                            %(source_function)s, %(user_impact)s, %(correlation_id)s,
+                            %(first_occurrence)s, %(occurrence_count)s, %(resolution_status)s, %(metadata)s)
+                    """
+                    cursor.execute(sql, data)
+                    conn.commit()
+                    
+        except Exception as e:
+            fallback_logger = logging.getLogger('error_fallback')
+            fallback_logger.error(f"Failed to log error to database: {e}")
 
 class TradingEventLogger:
     """
@@ -400,6 +702,10 @@ def log_performance_to_db(operation_name: str, component: str = None, **metadata
 # Global instances
 _trading_logger = None
 _performance_logger = None
+_data_collection_logger = None
+_ui_interaction_logger = None
+_api_request_logger = None
+_error_logger = None
 
 def get_trading_logger() -> TradingEventLogger:
     """Get global trading event logger"""
@@ -414,3 +720,31 @@ def get_performance_logger() -> PerformanceLogger:
     if _performance_logger is None:
         _performance_logger = PerformanceLogger()
     return _performance_logger
+
+def get_data_collection_logger() -> DataCollectionLogger:
+    """Get global data collection logger"""
+    global _data_collection_logger
+    if _data_collection_logger is None:
+        _data_collection_logger = DataCollectionLogger()
+    return _data_collection_logger
+
+def get_ui_interaction_logger() -> UIInteractionLogger:
+    """Get global UI interaction logger"""
+    global _ui_interaction_logger
+    if _ui_interaction_logger is None:
+        _ui_interaction_logger = UIInteractionLogger()
+    return _ui_interaction_logger
+
+def get_api_request_logger() -> APIRequestLogger:
+    """Get global API request logger"""
+    global _api_request_logger
+    if _api_request_logger is None:
+        _api_request_logger = APIRequestLogger()
+    return _api_request_logger
+
+def get_error_logger() -> ErrorLogger:
+    """Get global error logger"""
+    global _error_logger
+    if _error_logger is None:
+        _error_logger = ErrorLogger()
+    return _error_logger

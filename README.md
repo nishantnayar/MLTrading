@@ -43,6 +43,8 @@ A comprehensive machine learning-based trading system with **professional-grade 
 - ✅ **Pairs Trading Strategy**: Complete implementation with ATEN-INGM pair
 - ✅ **Strategy Framework**: Advanced strategy management system
 - ✅ **System Reliability**: Enhanced error handling and graceful degradation
+- ✅ **Prefect Integration**: Workflow orchestration with PostgreSQL schema separation
+- ✅ **Repository Organization**: Clean directory structure with consolidated run commands
 - 🔄 **ML Pipeline**: Feature engineering in development
 - 🔄 **Live Trading**: Alpaca integration in progress
 
@@ -79,18 +81,58 @@ A comprehensive machine learning-based trading system with **professional-grade 
 4. **Load market data**:
    ```bash
    # Extract historical data from Yahoo Finance
-   python src/data/collectors/yahoo_collector.py
+   python run.py collector
    ```
 
 5. **Run the application**:
    ```bash
-   python run_ui.py
+   python run.py ui
    ```
 
 ### 🌐 Access the System
 
 - **📊 Dashboard**: http://localhost:8050 - Interactive trading dashboard
 - **📚 API Documentation**: http://localhost:8000/docs - FastAPI backend docs
+
+## 🎮 Available Commands
+
+### Main Runner Commands
+The system provides a unified `run.py` entry point for all operations:
+
+```bash
+# Show all available commands
+python run.py
+
+# Start the dashboard (FastAPI + Dash)
+python run.py ui
+
+# Run tests
+python run.py tests                  # Quick API health check
+python run.py regression             # Full regression test suite
+
+# Data collection
+python run.py collector             # Run Yahoo Finance data collector
+
+# System operations
+python run.py cleanup               # Clean repository (logs, cache, etc.)
+python run.py prefect              # Setup Prefect workflow orchestration
+```
+
+### Alternative Direct Access
+You can also run scripts directly from the `scripts/` directory:
+
+```bash
+# Testing
+python scripts/run_tests.py --type all
+python scripts/run_regression_tests.py
+
+# Data collection
+python scripts/run_yahoo_collector.py
+
+# System maintenance
+python scripts/comprehensive_cleanup.py
+python scripts/setup_prefect.py
+```
 
 ## 📊 Interactive Charts
 
@@ -189,19 +231,19 @@ MLTrading/
 
 ### Testing
 ```bash
-# Automated regression test suite (CI/CD compatible)
-python run_regression_tests.py
+# Main runner commands
+python run.py regression             # Automated regression tests
+python run.py tests                  # Quick API health check
+python run.py cleanup                # Clean repository
 
-# Quick API health check
-python run_tests.py --type quick
-
-# Run all tests
-python run_tests.py --type all
+# Direct script access (alternative)
+python scripts/run_regression_tests.py  # Regression tests
+python scripts/run_tests.py --type all  # All tests
 
 # Specific test types
-python run_tests.py --type unit      # Unit tests
-python run_tests.py --type api       # API tests
-python run_tests.py --type integration  # Integration tests
+python scripts/run_tests.py --type unit        # Unit tests
+python scripts/run_tests.py --type api         # API tests  
+python scripts/run_tests.py --type integration # Integration tests
 ```
 
 ### Automated Testing Features

@@ -31,3 +31,6 @@ pytz>=2023.3
 
 # Data Collection
 yfinance>=0.2.18,<0.2.65 
+
+# Workflow Orchestration
+prefect>=3.4.14

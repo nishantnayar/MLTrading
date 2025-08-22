@@ -108,8 +108,14 @@ This document outlines the architecture for a personal machine learning-based tr
 #### 1.4 Infrastructure
 - **API Layer**: FastAPI for backend APIs and data serving
 - **Dashboard**: Dash for interactive web dashboard and visualization
-- **Orchestration**: Prefect for workflow management and scheduling
+- **Orchestration**: Prefect 3.x with PostgreSQL schema separation for workflow management
 - **Monitoring**: Basic logging and performance tracking
+
+#### 1.5 Workflow Orchestration (Prefect 3.x)
+- **Schema Separation**: Dedicated `prefect` schema in existing PostgreSQL database
+- **Cross-Schema Integration**: Application data (`public` schema) + workflow data (`prefect` schema)
+- **Automated Setup**: `python run.py prefect` for complete Prefect initialization
+- **Example Workflows**: Data collection, signal generation, risk management
 
 ### Directory Structure
 

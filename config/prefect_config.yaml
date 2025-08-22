@@ -1,0 +1,240 @@
+# Prefect 3.x Configuration for ML Trading System
+# Schema-separated PostgreSQL database configuration
+
+# Database Configuration
+database:
+  # Use existing PostgreSQL database with dedicated schema
+  connection_url: "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+  schema: "prefect"
+  
+  # Connection pool settings (shared with main application)
+  pool_settings:
+    max_connections: 20
+    min_connections: 5
+    connection_timeout: 30
+    idle_timeout: 300
+
+# Prefect 3.4.14 Server Configuration
+server:
+  host: "0.0.0.0"
+  port: 4200
+  
+  # Database connection for Prefect server
+  database:
+    connection_url: "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?options=-csearch_path%3Dprefect"
+    
+  # API settings (3.4.14 enhanced)
+  api:
+    host: "0.0.0.0"
+    port: 4200
+    cors_allowed_origins: ["http://localhost:8050", "http://localhost:3000"]
+    keepalive_timeout: 5
+    limit_max_requests: 1000
+    
+  # Enhanced logging in 3.4.14
+  logging:
+    level: "INFO"
+    extra_loggers: ["mltrading", "yahoo_collector"]
+
+# Work Pool Configuration
+work_pools:
+  default:
+    name: "ml-trading-pool"
+    type: "process"
+    max_workers: 10
+    
+  data_collection:
+    name: "data-collection-pool"
+    type: "process"
+    max_workers: 5
+    
+  signal_generation:
+    name: "signal-generation-pool"
+    type: "process"
+    max_workers: 8
+    
+  risk_management:
+    name: "risk-management-pool"
+    type: "process"
+    max_workers: 3
+
+# Task Runner Configuration (3.4.14 optimized)
+task_runners:
+  concurrent:
+    max_workers: 10
+    thread_pool_max_workers: 20
+    # 3.4.14 new features
+    worker_init_timeout: 60
+    submit_timeout: 30
+  
+  thread_pool:
+    max_workers: 15
+    thread_name_prefix: "ml-trading"
+  
+  sequential:
+    enabled: true
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - [%(correlation_id)s] - %(message)s"
+  
+  # Integration with existing logging system
+  handlers:
+    database:
+      enabled: true
+      schema: "public"  # Log to main application schema
+      table: "system_logs"
+    
+    file:
+      enabled: true
+      path: "logs/prefect_workflows.log"
+      max_bytes: 50000000  # 50MB
+      backup_count: 5
+
+# Retry Configuration
+retries:
+  max_retries: 3
+  retry_delay_seconds: [1, 5, 15]  # Exponential backoff
+  retry_jitter: true
+
+# Deployment Configuration
+deployments:
+  storage_type: "local"
+  work_queue_name: "ml-trading-pool"
+  
+  # Environment-specific settings
+  environments:
+    development:
+      schedules_enabled: false
+      max_concurrent_flows: 5
+      
+    staging:
+      schedules_enabled: true
+      max_concurrent_flows: 8
+      
+    production:
+      schedules_enabled: true
+      max_concurrent_flows: 15
+
+# Workflow Schedules
+schedules:
+  market_data_collection:
+    enabled: true
+    cron: "*/15 9-16 * * 1-5"
+    timezone: "America/New_York"
+    max_concurrent_runs: 1
+    
+  signal_generation:
+    enabled: true
+    cron: "*/5 9-16 * * 1-5"
+    timezone: "America/New_York"
+    max_concurrent_runs: 2
+    
+  risk_management:
+    enabled: true
+    cron: "0 */2 9-16 * * 1-5"
+    timezone: "America/New_York"
+    max_concurrent_runs: 1
+    
+  eod_analytics:
+    enabled: true
+    cron: "0 17 * * 1-5"
+    timezone: "America/New_York"
+    max_concurrent_runs: 1
+    
+  weekend_maintenance:
+    enabled: true
+    cron: "0 2 * * 0"  # Sunday 2 AM
+    timezone: "America/New_York"
+    max_concurrent_runs: 1
+
+# Integration Settings
+integrations:
+  # Existing system integration
+  database_manager:
+    module: "src.data.storage.database"
+    class: "DatabaseManager"
+    
+  logging_system:
+    module: "src.utils.logging_config"
+    correlation_id_enabled: true
+    
+  # External services
+  alpaca:
+    enabled: true
+    paper_trading: true
+    
+  yahoo_finance:
+    enabled: true
+    rate_limit: 2000  # requests per hour
+
+# Security Settings
+security:
+  # API key for Prefect Cloud (if using)
+  api_key: "${PREFECT_API_KEY}"
+  
+  # Workspace settings
+  workspace: "ml-trading-workspace"
+  
+  # Encryption settings for sensitive data
+  encryption:
+    enabled: true
+    algorithm: "AES-256-GCM"
+
+# Monitoring & Observability
+monitoring:
+  metrics_enabled: true
+  health_check_interval: 60  # seconds
+  
+  # Integration with existing dashboard
+  dashboard_integration:
+    enabled: true
+    webhook_url: "http://localhost:8050/api/prefect-updates"
+    
+  # Alerting
+  alerts:
+    flow_failure:
+      enabled: true
+      channels: ["database", "file"]
+      
+    task_retry_limit:
+      enabled: true
+      threshold: 3
+      
+    performance_degradation:
+      enabled: true
+      latency_threshold_seconds: 300
+
+# Resource Limits
+resources:
+  memory_limit: "2GB"
+  cpu_limit: "2"
+  disk_space_limit: "10GB"
+  
+  # Per-flow resource limits
+  flow_limits:
+    market_data_collection:
+      memory_limit: "512MB"
+      cpu_limit: "0.5"
+      
+    signal_generation:
+      memory_limit: "1GB"
+      cpu_limit: "1"
+      
+    eod_analytics:
+      memory_limit: "2GB"
+      cpu_limit: "2"
+
+# Development Settings
+development:
+  debug_mode: false
+  hot_reload: false
+  
+  # Testing
+  test_mode: false
+  mock_external_apis: false
+  
+  # Performance profiling
+  profiling_enabled: false
+  profiling_output: "logs/prefect_profile.log"

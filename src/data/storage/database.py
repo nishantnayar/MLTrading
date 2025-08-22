@@ -25,8 +25,8 @@ class DatabaseManager:
     
     def __init__(self, host: str = 'localhost', port: int = 5432, 
                  database: str = 'mltrading', user: str = 'postgres', 
-                 password: str = 'nishant', min_conn: int = 1, 
-                 max_conn: int = 10):
+                 password: str = 'nishant', min_conn: int = 2, 
+                 max_conn: int = 25):
         """Initialize database manager with connection pool."""
         self.host = host
         self.port = port
@@ -554,8 +554,21 @@ class DatabaseManager:
 db_manager = None
 
 def get_db_manager() -> DatabaseManager:
-    """Get the global database manager instance."""
+    """Get the global database manager instance using environment variables."""
     global db_manager
     if db_manager is None:
-        db_manager = DatabaseManager()
+        # Use environment variables for database configuration
+        host = os.getenv('DB_HOST', 'localhost')
+        port = int(os.getenv('DB_PORT', '5432'))
+        database = os.getenv('DB_NAME', 'mltrading')
+        user = os.getenv('DB_USER', 'postgres')
+        password = os.getenv('DB_PASSWORD', 'nishant')  # fallback to hardcoded for backward compatibility
+        
+        db_manager = DatabaseManager(
+            host=host,
+            port=port,
+            database=database,
+            user=user,
+            password=password
+        )
     return db_manager 
