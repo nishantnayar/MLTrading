@@ -20,7 +20,10 @@ try:
     ALPACA_AVAILABLE = True
 except ImportError:
     ALPACA_AVAILABLE = False
-    print("[WARNING] alpaca-trade-api not installed. Run: pip install alpaca-trade-api")
+    print("[WARNING] alpaca-trade-api not installed.")
+    print("         Due to dependency conflicts with Prefect, install separately:")
+    print("         pip install alpaca-trade-api==3.1.1")
+    print("         Note: This will conflict with Prefect's websockets requirements")
 
 from ...utils.logging_config import get_ui_logger
 

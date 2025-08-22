@@ -6,9 +6,12 @@ pytest>=7.4.0
 pytest-cov>=4.1.0
 psutil>=5.9.0
 
-# Trading
-alpaca-trade-api>=3.1.1
+# Core Trading
 python-dotenv>=1.0.0
+
+# Optional Trading APIs (install separately due to dependency conflicts)
+# For Alpaca: pip install alpaca-trade-api==3.1.1
+# Note: alpaca-trade-api conflicts with prefect due to websockets versions
 
 # Database
 psycopg2-binary>=2.9.0

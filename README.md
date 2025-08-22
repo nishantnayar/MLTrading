@@ -67,6 +67,12 @@ A comprehensive machine learning-based trading system with **professional-grade 
    ```bash
    pip install -r requirements.txt
    ```
+   
+   **Note**: Alpaca trading integration has dependency conflicts with Prefect. Install separately if needed:
+   ```bash
+   # For Alpaca integration (optional)
+   pip install alpaca-trade-api==3.1.1
+   ```
 
 3. **Set up database**:
    ```bash
