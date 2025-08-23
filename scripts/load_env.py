@@ -13,14 +13,14 @@ def load_environment():
     
     if env_file.exists():
         load_dotenv(env_file)
-        print(f"✅ Loaded environment from {env_file}")
+        print(f"Loaded environment from {env_file}")
         return True
     else:
         env_example = project_root / "env.example"
         if env_example.exists():
-            print(f"❌ .env file not found. Please copy {env_example} to .env and configure your settings")
+            print(f".env file not found. Please copy {env_example} to .env and configure your settings")
         else:
-            print("❌ No environment configuration found")
+            print("No environment configuration found")
         return False
 
 def get_database_url():

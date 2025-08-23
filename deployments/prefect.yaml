@@ -1,0 +1,31 @@
+# Prefect deployment configuration
+name: yahoo-finance-data-collection
+description: Yahoo Finance data collection during market hours
+
+# Build configuration
+build: null
+
+# Push configuration  
+push: null
+
+# Pull configuration
+pull:
+- prefect.deployments.steps.set_working_directory:
+    directory: D:\PythonProjects\MLTrading
+
+# Deployment configurations
+deployments:
+- name: yahoo-market-hours-hourly
+  description: Collects Yahoo Finance data every hour during market hours (9:00 AM - 4:00 PM EST) on weekdays
+  tags:
+  - yahoo
+  - market-data
+  - hourly
+  - production
+  schedule:
+    cron: "0 9-16 * * 1-5"
+    timezone: America/New_York
+  entrypoint: src/workflows/data_pipeline/yahoo_market_hours_flow.py:yahoo_market_hours_collection_flow
+  work_pool:
+    name: yahoo-data-pool
+  parameters: {}

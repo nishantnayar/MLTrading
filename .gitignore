@@ -101,3 +101,9 @@ Thumbs.db
 *.npy
 /notebooks/fig
 *.jpg
+# Cleanup-related ignores
+*.log*
+*.pyc
+.claude/
+cleanup_report.md
+# ML/Data files

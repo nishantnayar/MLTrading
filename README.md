@@ -119,9 +119,13 @@ python run.py regression             # Full regression test suite
 # Data collection
 python run.py collector             # Run Yahoo Finance data collector
 
+# Prefect workflows
+python run.py prefect               # Setup Prefect workflow orchestration
+python deployments/yahoo_market_hours_deployment.py    # Scheduled data collection (market hours)
+python deployments/yahoo_ondemand_deployment.py        # On-demand data collection (anytime)
+
 # System operations
 python run.py cleanup               # Clean repository (logs, cache, etc.)
-python run.py prefect              # Setup Prefect workflow orchestration
 ```
 
 ### Alternative Direct Access
@@ -179,6 +183,31 @@ Enhanced Service Layer
 - **fills**: Order execution tracking
 - **models**: ML model metadata
 - **predictions**: Model prediction storage
+
+### Workflow Orchestration (Prefect 3.x)
+The system includes automated data collection workflows using Prefect for reliable, scheduled operations:
+
+#### 🕘 **Scheduled Market Hours Workflow**
+- **Purpose**: Automated data collection during trading hours
+- **Schedule**: Every hour from 9 AM - 4 PM EST (Monday-Friday)
+- **Behavior**: Automatically skips when markets are closed
+- **File**: `src/workflows/data_pipeline/yahoo_market_hours_flow.py`
+- **Usage**: `python deployments/yahoo_market_hours_deployment.py`
+
+#### ⚡ **On-Demand Workflow** 
+- **Purpose**: Manual data collection anytime
+- **Schedule**: None - triggered manually
+- **Behavior**: Runs regardless of market hours
+- **File**: `src/workflows/data_pipeline/yahoo_ondemand_flow.py`
+- **Usage**: `python deployments/yahoo_ondemand_deployment.py`
+
+**Workflow Features:**
+- **Concurrent Processing**: Up to 5 parallel symbol collections
+- **Retry Logic**: Automatic retry on failures with exponential backoff
+- **Database Integration**: Seamless integration with PostgreSQL
+- **Performance Logging**: Comprehensive metrics and execution tracking
+- **Symbol Management**: Dynamic symbol selection from database
+- **Market Hours Detection**: Timezone-aware market status checking
 
 ### Performance Metrics
 - **Initial Load**: 6.5s → 0.6s (90% improvement)
@@ -303,9 +332,27 @@ INDICATOR_CONFIG = {
 2. **Missing Data**: Verify symbol exists in database
 3. **Interactive Features**: Ensure JavaScript is enabled
 
+### Workflow Issues
+1. **Scheduled Collection Not Running**: 
+   - Check if Prefect server is running: http://localhost:4200
+   - Verify market hours workflow deployment is active
+   - Ensure work pool `yahoo-data-pool` exists
+
+2. **On-Demand Collection Needed**: 
+   - Use on-demand workflow for immediate data collection
+   - Run: `python deployments/yahoo_ondemand_deployment.py`
+   - Or directly: `python src/workflows/data_pipeline/yahoo_ondemand_flow.py`
+
+3. **Market Hours Restriction**: 
+   - Scheduled workflow only runs during market hours (9AM-4PM EST, Mon-Fri)
+   - For off-hours collection, use the on-demand workflow
+   - Custom parameters: `symbols_limit`, `period`, `run_type`
+
 ## 🚀 Recent Improvements
 
 ### ✅ August 2025 - Latest System Enhancements
+- **Prefect Workflow Orchestration**: Complete Prefect 3.x integration with PostgreSQL schema separation
+- **Dual Collection Workflows**: Scheduled market hours collection + on-demand collection workflows
 - **Chart Controls Upgrade**: Eliminated dropdown clipping with professional button-based interface
 - **Connection Pool Fix**: Resolved database connection exhaustion for improved stability
 - **Clean UI Design**: Removed duplicate data displays for streamlined user experience
