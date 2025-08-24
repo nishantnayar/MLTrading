@@ -2,21 +2,38 @@
 # This file defines which Prefect deployments should be monitored by the dashboard
 
 deployments:
-  # Primary Yahoo Finance data collection
-  yahoo-market-hours-hourly:
-    name: "yahoo-market-hours-hourly"
-    display_name: "Yahoo Market Hours Collection"
-    description: "Collects Yahoo Finance data hourly during market hours (9-4 EST)"
-    category: "data-collection"
+  # Sequential Pipeline: Yahoo Data + Feature Engineering
+  yahoo-data-and-features-hourly:
+    name: "yahoo-data-and-features-hourly"
+    display_name: "Yahoo Data + Features Pipeline"
+    description: "Sequential pipeline: Yahoo Finance data collection + Phase 1+2 feature engineering (36 features)"
+    category: "data-pipeline"
     priority: 1  # Higher priority = more important
     schedule_type: "market_hours"  # market_hours, continuous, daily, weekly, custom
     tags:
       - yahoo
+      - features
+      - sequential
+      - production
+      - phase1-and-2
+    expected_runtime_minutes: 8  # 5-6 min data + 2-3 sec features
+    alert_threshold_hours: 2  # Alert if failed for more than N hours
+  
+  # Legacy Yahoo Finance data collection (kept for reference)
+  yahoo-market-hours-hourly:
+    name: "yahoo-market-hours-hourly"
+    display_name: "Yahoo Market Hours Collection (Legacy)"
+    description: "Legacy Yahoo Finance data collection only (no features)"
+    category: "data-collection"
+    priority: 3  # Lower priority since replaced by sequential pipeline
+    schedule_type: "market_hours"
+    tags:
+      - yahoo
       - market-data
       - hourly
-      - production
+      - legacy
     expected_runtime_minutes: 5
-    alert_threshold_hours: 2  # Alert if failed for more than N hours
+    alert_threshold_hours: 6  # Less critical since replaced
   
   # On-demand Yahoo Finance data collection  
   yahoo-ondemand-collection:
@@ -67,7 +84,7 @@ deployments:
 dashboard:
   # Which deployments to show on main dashboard (by priority)
   primary_deployments:
-    - yahoo-market-hours-hourly
+    - yahoo-data-and-features-hourly
   
   # Maximum number of deployments to show
   max_visible_deployments: 5

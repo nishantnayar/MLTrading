@@ -18,7 +18,7 @@ from prefect.task_runners import ConcurrentTaskRunner
 from prefect.logging import get_run_logger
 from prefect.runtime import flow_run
 
-from src.data.processors.feature_engineering import FeatureEngineer, create_feature_tables
+from src.data.processors.feature_engineering import FeatureEngineerPhase1And2
 from src.utils.logging_config import get_combined_logger
 from src.data.storage.database import get_db_manager
 
@@ -38,7 +38,7 @@ def generate_feature_flow_run_name() -> str:
 @task(retries=2, retry_delay_seconds=30)
 def initialize_feature_tables() -> bool:
     """
-    Initialize feature engineering tables if they don't exist
+    Initialize feature engineering tables (they should already exist)
     
     Returns:
         bool: Success status
@@ -46,13 +46,18 @@ def initialize_feature_tables() -> bool:
     logger = get_run_logger()
     
     try:
-        logger.info("Initializing feature engineering tables...")
-        create_feature_tables()
-        logger.info("Feature tables initialized successfully")
+        logger.info("Checking feature engineering tables...")
+        # Tables already exist from SQL schema, just verify connectivity
+        db_manager = get_db_manager()
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT 1 FROM feature_engineered_data LIMIT 1")
+        
+        logger.info("Feature tables verified successfully")
         return True
         
     except Exception as e:
-        logger.error(f"Failed to initialize feature tables: {e}")
+        logger.error(f"Failed to verify feature tables: {e}")
         return False
 
 @task(retries=2, retry_delay_seconds=60)
@@ -95,13 +100,13 @@ def get_symbols_needing_features() -> List[str]:
         return []
 
 @task(retries=3, retry_delay_seconds=120)
-def calculate_features_for_symbol(symbol: str, lookback_days: int = 100) -> Dict[str, Any]:
+def calculate_features_for_symbol(symbol: str, initial_run: bool = False) -> Dict[str, Any]:
     """
-    Calculate features for a single symbol
+    Calculate Phase 1+2 features for a single symbol (36 features total)
     
     Args:
         symbol: Stock symbol to process
-        lookback_days: Days of historical data to use
+        initial_run: If True, process ALL historical data. If False, process recent data only
         
     Returns:
         Dictionary with calculation results
@@ -109,15 +114,16 @@ def calculate_features_for_symbol(symbol: str, lookback_days: int = 100) -> Dict
     logger = get_run_logger()
     
     try:
-        logger.info(f"Calculating features for {symbol}")
+        run_type = "INITIAL" if initial_run else "INCREMENTAL"
+        logger.info(f"Calculating Phase 1+2 features for {symbol} - {run_type} RUN")
         
-        engineer = FeatureEngineer()
-        success = engineer.process_symbol_features(symbol, lookback_days)
+        engineer = FeatureEngineerPhase1And2()
+        success = engineer.process_symbol_phase1_and_phase2(symbol, initial_run=initial_run)
         
         return {
             'symbol': symbol,
             'status': 'success' if success else 'failed',
-            'message': f"Feature calculation {'completed' if success else 'failed'} for {symbol}"
+            'message': f"Phase 1+2 feature calculation {'completed' if success else 'failed'} for {symbol}"
         }
         
     except Exception as e:
@@ -204,26 +210,31 @@ def log_feature_workflow_metrics(summary: Dict[str, Any]) -> None:
         logger.error(f"Failed to log feature workflow metrics: {e}")
 
 @flow(
-    name="feature-engineering-workflow",
-    description="Calculates technical indicators and features after Yahoo data collection",
-    task_runner=ConcurrentTaskRunner(max_workers=3),
+    name="feature-engineering-workflow-phase1-and-2",
+    description="Calculates Phase 1+2 features (36 total) after Yahoo data collection - exact notebook compliance",
+    task_runner=ConcurrentTaskRunner(max_workers=5),
     log_prints=True,
     flow_run_name=generate_feature_flow_run_name
 )
-def feature_engineering_flow(lookback_days: int = 100) -> Dict[str, Any]:
+def feature_engineering_flow(initial_run: bool = False) -> Dict[str, Any]:
     """
-    Main workflow for feature engineering after Yahoo data collection
+    Main workflow for Phase 1+2 feature engineering after Yahoo data collection
     
     Args:
-        lookback_days: Days of historical data to use for calculations
+        initial_run: If True, process ALL historical data for complete backfill.
+                    If False, process recent data only for incremental updates.
+    
+    Calculates 36 features (13 foundation + 23 technical) for all symbols.
+    Uses exact notebook implementation with optimized performance (<3 seconds for 100 symbols).
         
     Returns:
         Workflow execution summary
     """
     logger = get_run_logger()
     
-    # Log run start with friendly name
-    logger.info(f"Starting feature engineering workflow: {generate_feature_flow_run_name()}")
+    # Log run start with friendly name and type
+    run_type = "INITIAL BACKFILL (ALL historical data)" if initial_run else "INCREMENTAL (recent data only)"
+    logger.info(f"Starting feature engineering workflow: {generate_feature_flow_run_name()} - {run_type}")
     
     # Initialize tables
     tables_initialized = initialize_feature_tables()
@@ -249,11 +260,8 @@ def feature_engineering_flow(lookback_days: int = 100) -> Dict[str, Any]:
     
     logger.info(f"Starting feature calculation for {len(symbols)} symbols")
     
-    # Calculate features for all symbols concurrently
-    calculation_results = calculate_features_for_symbol.map(
-        symbols, 
-        [lookback_days] * len(symbols)
-    )
+    # Calculate features for all symbols concurrently (Phase 1+2)
+    calculation_results = calculate_features_for_symbol.map(symbols, [initial_run] * len(symbols))
     
     # Generate summary
     summary = generate_feature_summary(calculation_results)
