@@ -1,6 +1,29 @@
 
 # 📚 ML Trading System - Complete Documentation
 
+## 📋 Table of Contents
+
+1. [🎯 System Features Overview](#-system-features-overview)
+   - [Prefect Workflow Management](#️-prefect-workflow-management)
+   - [Dashboard System Health](#-dashboard-system-health)
+2. [🏗️ Core System Capabilities](#️-core-system-capabilities)
+   - [Chart Controls Revolution](#️-chart-controls-revolution)
+   - [System Stability Enhancements](#-system-stability-enhancements)
+   - [User Experience Improvements](#-user-experience-improvements)
+3. [System Architecture](#system-architecture)
+4. [Database Setup](#database-setup)
+5. [Data Extraction](#data-extraction)
+6. [UI Setup](#ui-setup)
+7. [Development Roadmap](#development-roadmap)
+8. [Technology Stack](#technology-stack)
+9. [Quick Start Guide](#quick-start-guide)
+10. [Configuration](#configuration)
+11. [Monitoring & Performance](#monitoring--performance)
+12. [Troubleshooting](#troubleshooting)
+13. [📖 Additional Documentation](#-additional-documentation)
+
+---
+
 ## 🎯 **System Features Overview**
 
 ### 🏷️ **Prefect Workflow Management**
@@ -32,20 +55,6 @@
 - **✅ Clean Chart Titles**: Removed duplicate data range displays for streamlined interface
 - **✅ Information Hierarchy**: Consolidated data status to overview page only
 - **✅ Visual Clarity**: Improved focus on chart content without UI clutter
-
-## 📋 Table of Contents
-
-1. [System Architecture](#system-architecture)
-2. [Database Setup](#database-setup)
-3. [Data Extraction](#data-extraction)
-4. [UI Setup](#ui-setup)
-5. [Development Roadmap](#development-roadmap)
-6. [Technology Stack](#technology-stack)
-7. [Quick Start Guide](#quick-start-guide)
-8. [Configuration](#configuration)
-9. [Monitoring & Performance](#monitoring--performance)
-10. [Troubleshooting](#troubleshooting)
-11. [📖 Additional Documentation](#additional-documentation)
 
 ## 📖 Additional Documentation
 

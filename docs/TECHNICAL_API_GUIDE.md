@@ -1,5 +1,25 @@
 # 📚 Technical API & Services Guide
 
+## 📋 Table of Contents
+
+1. [Overview](#overview)
+2. [🎯 Core Technical Features](#-core-technical-features)
+   - [🔧 Database Connection Pool Management](#-database-connection-pool-management)
+   - [🎛️ Service Layer Enhancements](#-service-layer-enhancements)
+   - [🔍 Code Quality Improvements](#-code-quality-improvements)
+3. [System Architecture](#system-architecture)
+4. [API Endpoints](#api-endpoints)
+   - [Health Check](#health-check)
+   - [Market Data](#market-data)
+   - [Stock Information](#stock-information)
+   - [Sector and Industry Data](#sector-and-industry-data)
+5. [Service Layer](#service-layer)
+6. [Database Operations](#database-operations)
+7. [Interactive Chart System](#interactive-chart-system)
+8. [Technical Implementation](#technical-implementation)
+9. [Performance Optimizations](#performance-optimizations)
+10. [Error Handling](#error-handling)
+
 ## Overview
 
 This comprehensive guide covers the ML Trading System's API endpoints, services, and technical implementation details for both data extraction and interactive chart features.

@@ -2,6 +2,32 @@
 
 A comprehensive machine learning-based trading system with **professional-grade interactive charts** and real-time technical analysis.
 
+## 📋 Table of Contents
+
+1. [🚀 Features](#-features)
+   - [📈 Interactive Charting System](#-interactive-charting-system)
+   - [🎯 Dashboard Features](#-dashboard-features)
+   - [⚡ Performance Optimizations](#-performance-optimizations)
+2. [📚 Documentation](#-documentation)
+3. [🏁 Quick Start](#-quick-start)
+   - [Prerequisites](#prerequisites)
+   - [Installation](#installation)
+   - [🌐 Access the System](#-access-the-system)
+4. [🎮 Available Commands](#-available-commands)
+5. [📊 Interactive Charts](#-interactive-charts)
+6. [🏗️ Architecture](#-architecture)
+   - [Service Architecture](#service-architecture)
+   - [Database Schema](#database-schema)
+   - [Workflow Orchestration (Prefect 3.x)](#workflow-orchestration-prefect-3x)
+7. [🎛️ Dashboard Components](#-dashboard-components)
+8. [🔧 Development](#-development)
+9. [⚙️ Configuration](#-configuration)
+10. [🛠️ Troubleshooting](#-troubleshooting)
+11. [🏗️ System Architecture](#-system-architecture)
+12. [📋 Next Steps](#-next-steps)
+13. [📄 Documentation](#-documentation-1)
+14. [🏆 System Capabilities](#-system-capabilities)
+
 ## 🚀 Features
 
 ### 📈 **Interactive Charting System**
