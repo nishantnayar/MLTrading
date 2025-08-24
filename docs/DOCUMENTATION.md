@@ -1,21 +1,21 @@
 
 # 📚 ML Trading System - Complete Documentation
 
-## 🆕 **Latest System Updates - August 23, 2025**
+## 🎯 **System Features Overview**
 
-### 🏷️ **Prefect Flow Run Naming**
-- **✅ User-Friendly Names**: Replaced auto-generated names (`grumpy-meerkat`) with descriptive ones (`yahoo-data-2025-08-23-1330EST-market-open`)
-- **✅ Market Context**: Flow names include market status (market-open, pre-market, after-market, weekend)
+### 🏷️ **Prefect Workflow Management**
+- **✅ User-Friendly Flow Names**: Descriptive names (`yahoo-data-2025-08-23-1330EST-market-open`) replace auto-generated ones (`grumpy-meerkat`)
+- **✅ Market Context Awareness**: Flow names include market status (market-open, pre-market, after-market, weekend)
 - **✅ Searchable Format**: Timestamp-based naming for easy filtering and sorting in Prefect UI
 - **✅ Professional Appearance**: Clean, consistent naming across all workflow deployments
 
-### 📊 **Dashboard System Health Updates**
-- **✅ Configuration-Driven**: System health now focuses on configured deployments only
-- **✅ Multiple Deployment Support**: Enhanced to monitor multiple Prefect workflows
-- **✅ Improved Status Display**: Better handling of scheduled vs completed runs
-- **✅ Data Consistency**: Fixed discrepancies between system health and pipeline status
+### 📊 **Dashboard System Health**
+- **✅ Configuration-Driven**: System health focuses on configured deployments from `config/deployments_config.yaml`
+- **✅ Multiple Deployment Support**: Monitor multiple Prefect workflows from single configuration
+- **✅ Intelligent Status Display**: Handles both scheduled and completed runs with appropriate time displays
+- **✅ Data Consistency**: Unified health metrics across pipeline status and system overview
 
-## 📋 Previous Updates - August 17, 2025
+## 🏗️ **Core System Capabilities**
 
 ### 🎛️ **Chart Controls Revolution**
 - **✅ Dropdown Clipping Eliminated**: Replaced problematic dropdowns with professional button-based interface
@@ -1856,9 +1856,9 @@ A comprehensive machine learning-powered trading dashboard with advanced stock a
   - Drawing tool integration
   - Real-time updates and analysis
 
-### Recent Improvements
+### Architecture Features
 
-#### **Architecture Simplification**
+#### **Simplified Design Architecture**
 - **Single-Page Design**: Moved from multi-page to tabbed interface for better UX
 - **Removed Theme Toggling**: Simplified to light theme only for consistency
 - **Consolidated CSS**: Combined custom CSS with Bootstrap for better performance

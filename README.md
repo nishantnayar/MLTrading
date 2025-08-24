@@ -34,7 +34,7 @@ A comprehensive machine learning-based trading system with **professional-grade 
 - **[🧪 Comprehensive Testing Guide](docs/COMPREHENSIVE_TESTING_GUIDE.md)** - Complete testing framework and procedures
 - **[📋 Change Log](docs/CHANGELOG.md)** - Development history and feature releases
 
-### 🎯 System Status (August 2025)
+### 🎯 System Status
 - ✅ **Interactive Charting**: Bloomberg Terminal-quality technical analysis with button-based controls
 - ✅ **Performance Optimization**: 90% faster with intelligent caching  
 - ✅ **Professional UI**: Enterprise-grade responsive dashboard with accessibility improvements
@@ -44,6 +44,9 @@ A comprehensive machine learning-based trading system with **professional-grade 
 - ✅ **Strategy Framework**: Advanced strategy management system
 - ✅ **System Reliability**: Enhanced error handling and graceful degradation
 - ✅ **Prefect Integration**: Workflow orchestration with PostgreSQL integration
+- ✅ **User-Friendly Flow Names**: Descriptive Prefect run names with market context
+- ✅ **Multi-Deployment Support**: Configuration-driven deployment monitoring
+- ✅ **Dashboard System Health**: Real-time pipeline status with intelligent health metrics
 - ✅ **Repository Organization**: Clean directory structure with consolidated run commands
 - 🔄 **ML Pipeline**: Feature engineering in development
 - 🔄 **Live Trading**: Alpaca integration in progress
@@ -185,7 +188,7 @@ Enhanced Service Layer
 - **predictions**: Model prediction storage
 
 ### Workflow Orchestration (Prefect 3.x)
-The system includes automated data collection workflows using Prefect for reliable, scheduled operations:
+The system includes automated data collection workflows using Prefect for reliable, scheduled operations with professional naming and configuration management:
 
 #### 🕘 **Scheduled Market Hours Workflow**
 - **Purpose**: Automated data collection during trading hours
@@ -208,6 +211,34 @@ The system includes automated data collection workflows using Prefect for reliab
 - **Performance Logging**: Comprehensive metrics and execution tracking
 - **Symbol Management**: Dynamic symbol selection from database
 - **Market Hours Detection**: Timezone-aware market status checking
+- **User-Friendly Naming**: Descriptive flow run names with context and timestamps
+- **Configuration-Driven**: YAML-based deployment management with multiple workflow support
+
+#### 🏷️ **Prefect Flow Run Naming**
+Instead of auto-generated names like `grumpy-meerkat`, flows now use descriptive names:
+
+**Market Hours Collection:**
+- `yahoo-data-2025-08-23-1330EST-market-open` (during trading hours)
+- `yahoo-data-2025-08-23-0800EST-pre-market` (before market opens)
+- `yahoo-data-2025-08-23-1700EST-after-market` (after market closes)
+- `yahoo-data-2025-08-23-1200EST-weekend` (weekend runs)
+
+**On-Demand Collection:**
+- `yahoo-ondemand-2025-08-23-1445EST` (manual triggers)
+- `yahoo-data-2025-08-23-1445EST-manual-testing` (with custom context)
+
+**Benefits:**
+- ✅ Clear purpose and timing context for easy identification
+- ✅ Searchable and filterable in Prefect UI
+- ✅ Market status awareness (pre-market, market-open, after-market, weekend)
+- ✅ Professional appearance with consistent naming convention
+
+#### 📊 **Dashboard System Health**
+Real-time monitoring of Prefect workflows with intelligent status display:
+- **Multi-Deployment Support**: Monitors all configured deployments from `config/deployments_config.yaml`
+- **Smart Status Display**: Shows "Scheduled", "Running", "Completed", or time until first run
+- **Configuration-Driven Health**: System health focuses on your configured deployments, not all Prefect flows
+- **Pipeline Status Accuracy**: Handles both scheduled and completed runs with appropriate time displays
 
 ### Performance Metrics
 - **Initial Load**: 6.5s → 0.6s (90% improvement)
@@ -245,7 +276,14 @@ MLTrading/
 │   │   ├── collectors/        # Yahoo Finance data collection
 │   │   ├── processors/        # Data processing modules
 │   │   └── storage/           # Enhanced database operations
-│   └── utils/                 # Utilities and helpers
+│   ├── utils/                 # Utilities and helpers
+│   │   ├── deployment_config.py    # Deployment configuration manager
+│   │   ├── prefect_naming.py       # Flow run naming utilities
+│   │   └── logging_config.py       # Centralized logging configuration
+│   └── workflows/             # Prefect workflow definitions
+│       └── data_pipeline/     # Data collection workflows with user-friendly names
+├── config/                    # Configuration files
+│   └── deployments_config.yaml    # Multi-deployment configuration
 ├── docs/                      # Comprehensive documentation
 ├── tests/                     # Test suite
 └── requirements.txt           # Dependencies
@@ -302,6 +340,30 @@ DatabaseManager(
 )
 ```
 
+### Deployment Configuration
+```yaml
+# config/deployments_config.yaml - Configure multiple Prefect deployments
+deployments:
+  yahoo-market-hours-hourly:
+    name: "yahoo-market-hours-hourly"
+    display_name: "Yahoo Market Hours Collection"
+    description: "Collects Yahoo Finance data hourly during market hours"
+    category: "data-collection"
+    priority: 1
+    schedule_type: "market_hours"  # Automatic market context
+    tags: [yahoo, market-data, hourly, production]
+    expected_runtime_minutes: 5
+    alert_threshold_hours: 2
+
+# Dashboard display settings
+dashboard:
+  primary_deployments: [yahoo-market-hours-hourly]
+  max_visible_deployments: 5
+  refresh_intervals:
+    pipeline_status: 30
+    system_health: 60
+```
+
 ### Chart Configuration
 ```python
 # Technical Indicator Settings
@@ -348,31 +410,30 @@ INDICATOR_CONFIG = {
    - For off-hours collection, use the on-demand workflow
    - Custom parameters: `symbols_limit`, `period`, `run_type`
 
-## 🚀 Recent Improvements
+## 🏗️ System Architecture
 
-### ✅ August 2025 - Latest System Enhancements
-- **Prefect Workflow Orchestration**: Complete Prefect 3.x integration with PostgreSQL database
-- **Dual Collection Workflows**: Scheduled market hours collection + on-demand collection workflows
-- **Chart Controls Upgrade**: Eliminated dropdown clipping with professional button-based interface
-- **Connection Pool Fix**: Resolved database connection exhaustion for improved stability
-- **Clean UI Design**: Removed duplicate data displays for streamlined user experience
-- **Mobile Optimization**: Touch-friendly controls with responsive design patterns
-- **System Reliability**: Enhanced error handling and graceful degradation patterns
+The system is built with a modern, scalable architecture featuring:
 
-### ✅ Interactive Chart System (Complete)
+### ✅ Core Systems
 - **Professional Charting**: Trading-grade chart quality with 12+ technical indicators
-- **Performance**: 90% faster load times through optimization
-- **User Experience**: Professional controls and real-time analysis
+- **Performance Optimizations**: 90% faster load times with intelligent caching and batch queries
+- **Interactive Web Interface**: Modern responsive design with accessibility improvements
+- **Automated Testing**: Fully automated CI/CD-compatible regression test suite
+- **Service Architecture**: Modular design with comprehensive error handling and scalability
 
-### ✅ Performance Optimizations (Complete)  
-- **Caching Layer**: TTL-based caching with pattern invalidation
-- **Query Optimization**: Eliminated N+1 patterns (98% query reduction)
-- **Lazy Loading**: Component-based lazy loading system
+### ✅ Workflow Management
+- **Prefect Integration**: Complete workflow orchestration with PostgreSQL integration  
+- **User-Friendly Flow Names**: Descriptive names with market context instead of auto-generated ones
+- **Configuration-Driven**: YAML-based deployment management supporting multiple workflows
+- **Dual Collection Workflows**: Scheduled market hours + on-demand collection capabilities
+- **Multi-Deployment Monitoring**: Dashboard system health with intelligent status display
 
-### ✅ Service Architecture (Complete)
-- **Modular Design**: Separated concerns into focused services
-- **Error Handling**: Comprehensive error recovery and fallbacks
-- **Scalability**: Built for production-grade performance
+### ✅ User Experience
+- **Professional UI Controls**: Button-based interface eliminating dropdown issues
+- **Mobile Optimization**: Touch-friendly controls with responsive design
+- **Clean Interface Design**: Optimized content density and streamlined user experience
+- **Real-time Monitoring**: Live pipeline status with accurate time displays
+- **Test Reliability**: Enhanced test execution with proper timeout handling
 
 ## 📋 Next Steps
 

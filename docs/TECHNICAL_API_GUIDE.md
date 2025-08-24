@@ -4,7 +4,7 @@
 
 This comprehensive guide covers the ML Trading System's API endpoints, services, and technical implementation details for both data extraction and interactive chart features.
 
-## 🆕 **Recent Technical Improvements - August 17, 2025**
+## 🎯 **Core Technical Features**
 
 ### 🔧 **Database Connection Pool Management**
 - **Fixed**: Connection pool exhaustion in `MarketDataService`
