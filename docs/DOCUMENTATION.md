@@ -1,7 +1,21 @@
 
 # 📚 ML Trading System - Complete Documentation
 
-## 🆕 **Latest System Updates - August 17, 2025**
+## 🆕 **Latest System Updates - August 23, 2025**
+
+### 🏷️ **Prefect Flow Run Naming**
+- **✅ User-Friendly Names**: Replaced auto-generated names (`grumpy-meerkat`) with descriptive ones (`yahoo-data-2025-08-23-1330EST-market-open`)
+- **✅ Market Context**: Flow names include market status (market-open, pre-market, after-market, weekend)
+- **✅ Searchable Format**: Timestamp-based naming for easy filtering and sorting in Prefect UI
+- **✅ Professional Appearance**: Clean, consistent naming across all workflow deployments
+
+### 📊 **Dashboard System Health Updates**
+- **✅ Configuration-Driven**: System health now focuses on configured deployments only
+- **✅ Multiple Deployment Support**: Enhanced to monitor multiple Prefect workflows
+- **✅ Improved Status Display**: Better handling of scheduled vs completed runs
+- **✅ Data Consistency**: Fixed discrepancies between system health and pipeline status
+
+## 📋 Previous Updates - August 17, 2025
 
 ### 🎛️ **Chart Controls Revolution**
 - **✅ Dropdown Clipping Eliminated**: Replaced problematic dropdowns with professional button-based interface
@@ -108,14 +122,35 @@ This document outlines the architecture for a personal machine learning-based tr
 #### 1.4 Infrastructure
 - **API Layer**: FastAPI for backend APIs and data serving
 - **Dashboard**: Dash for interactive web dashboard and visualization
-- **Orchestration**: Prefect 3.x with PostgreSQL schema separation for workflow management
+- **Orchestration**: Prefect 3.x with PostgreSQL integration for workflow management
 - **Monitoring**: Basic logging and performance tracking
 
 #### 1.5 Workflow Orchestration (Prefect 3.x)
-- **Schema Separation**: Dedicated `prefect` schema in existing PostgreSQL database
-- **Cross-Schema Integration**: Application data (`public` schema) + workflow data (`prefect` schema)
+- **Database Integration**: Prefect workflows use existing PostgreSQL database
 - **Automated Setup**: `python run.py prefect` for complete Prefect initialization
+- **Scheduled Workflows**: Automated data collection during market hours (9 AM - 4 PM EST)
+- **On-Demand Workflows**: Manual data collection anytime regardless of market status
 - **Example Workflows**: Data collection, signal generation, risk management
+- **User-Friendly Naming**: Descriptive flow run names instead of auto-generated ones
+
+##### Flow Run Naming System
+Instead of auto-generated names like `grumpy-meerkat`, flows now use descriptive names:
+
+**Market Hours Collection:**
+- `yahoo-data-2025-08-23-1330EST-market-open` (during trading hours)
+- `yahoo-data-2025-08-23-0800EST-pre-market` (before market opens)
+- `yahoo-data-2025-08-23-1700EST-after-market` (after market closes)
+- `yahoo-data-2025-08-23-1200EST-weekend` (weekend runs)
+
+**On-Demand Collection:**
+- `yahoo-ondemand-2025-08-23-1445EST` (manual triggers)
+- `yahoo-data-2025-08-23-1445EST-manual-testing` (with custom context)
+
+**Benefits:**
+- ✅ Clear purpose and timing context
+- ✅ Easy searching and filtering
+- ✅ Market status awareness
+- ✅ Professional appearance in Prefect UI
 
 ### Directory Structure
 

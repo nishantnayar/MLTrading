@@ -1,0 +1,106 @@
+# Deployment Configuration for Dashboard Monitoring
+# This file defines which Prefect deployments should be monitored by the dashboard
+
+deployments:
+  # Primary Yahoo Finance data collection
+  yahoo-market-hours-hourly:
+    name: "yahoo-market-hours-hourly"
+    display_name: "Yahoo Market Hours Collection"
+    description: "Collects Yahoo Finance data hourly during market hours (9-4 EST)"
+    category: "data-collection"
+    priority: 1  # Higher priority = more important
+    schedule_type: "market_hours"  # market_hours, continuous, daily, weekly, custom
+    tags:
+      - yahoo
+      - market-data
+      - hourly
+      - production
+    expected_runtime_minutes: 5
+    alert_threshold_hours: 2  # Alert if failed for more than N hours
+  
+  # On-demand Yahoo Finance data collection  
+  yahoo-ondemand-collection:
+    name: "yahoo-ondemand-collection"
+    display_name: "Yahoo On-Demand Collection"
+    description: "On-demand Yahoo Finance data collection for testing and manual runs"
+    category: "data-collection"
+    priority: 2
+    schedule_type: "manual"  # No automatic schedule
+    tags:
+      - yahoo
+      - market-data
+      - ondemand
+      - testing
+    expected_runtime_minutes: 3
+    alert_threshold_hours: 24
+    
+  # Example additional deployments (commented out for now)
+  # yahoo-daily-summary:
+  #   name: "yahoo-daily-summary"
+  #   display_name: "Daily Market Summary"
+  #   description: "Generates daily market summary and analysis"
+  #   category: "analytics"
+  #   priority: 2
+  #   schedule_type: "daily"
+  #   tags:
+  #     - yahoo
+  #     - analytics
+  #     - daily
+  #   expected_runtime_minutes: 15
+  #   alert_threshold_hours: 24
+  
+  # weekly-portfolio-rebalance:
+  #   name: "weekly-portfolio-rebalance"
+  #   display_name: "Weekly Portfolio Rebalance"
+  #   description: "Weekly portfolio rebalancing and analysis"
+  #   category: "trading"
+  #   priority: 3
+  #   schedule_type: "weekly"
+  #   tags:
+  #     - portfolio
+  #     - rebalance
+  #     - weekly
+  #   expected_runtime_minutes: 30
+  #   alert_threshold_hours: 168  # 1 week
+
+# Dashboard display settings
+dashboard:
+  # Which deployments to show on main dashboard (by priority)
+  primary_deployments:
+    - yahoo-market-hours-hourly
+  
+  # Maximum number of deployments to show
+  max_visible_deployments: 5
+  
+  # Refresh intervals (in seconds)
+  refresh_intervals:
+    pipeline_status: 30
+    system_health: 60
+    data_freshness: 45
+
+# Schedule type definitions for next run calculation
+schedule_types:
+  market_hours:
+    cron: "0 9-16 * * 1-5"
+    timezone: "America/New_York"
+    description: "Hourly during market hours (9 AM - 4 PM EST, weekdays)"
+  
+  daily:
+    cron: "0 6 * * *"
+    timezone: "America/New_York"
+    description: "Daily at 6 AM EST"
+    
+  weekly:
+    cron: "0 6 * * 1"
+    timezone: "America/New_York"
+    description: "Weekly on Monday at 6 AM EST"
+    
+  continuous:
+    cron: "*/15 * * * *"
+    timezone: "UTC"
+    description: "Every 15 minutes"
+    
+  manual:
+    cron: null
+    timezone: "UTC"
+    description: "Manual trigger only, no automatic schedule"

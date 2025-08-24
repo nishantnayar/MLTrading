@@ -313,16 +313,24 @@ class AlpacaService:
             # Calculate next market open and close times
             current_time = datetime.now()
             
-            # If market is open or it's a trading day but before open
-            if clock.is_open or (next_trading_day.date == today and current_time.time() < next_trading_day.open.time()):
-                next_open = next_trading_day.open
-                next_close = next_trading_day.close
-            else:
+            # Initialize default values
+            next_open = next_trading_day.open
+            next_close = next_trading_day.close
+            
+            # If market is closed and it's after market close, find next trading day
+            if not clock.is_open and not (next_trading_day.date == today and current_time.time() < next_trading_day.open.time()):
                 # Market is closed, find next trading day
+                found_next = False
                 for day in calendar[1:]:  # Skip today
                     next_open = day.open
                     next_close = day.close
+                    found_next = True
                     break
+                
+                # If no next trading day found in calendar, use the current trading day
+                if not found_next:
+                    next_open = next_trading_day.open
+                    next_close = next_trading_day.close
             
             return {
                 'is_open': clock.is_open,

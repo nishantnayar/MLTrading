@@ -28,4 +28,10 @@ deployments:
   entrypoint: src/workflows/data_pipeline/yahoo_market_hours_flow.py:yahoo_market_hours_collection_flow
   work_pool:
     name: yahoo-data-pool
+    work_queue_name: default
   parameters: {}
+  job_variables:
+    # Environment variables that can be used by the flow
+    FLOW_ENVIRONMENT: production
+    DATA_SOURCE: yahoo_finance
+    COLLECTION_TYPE: market_hours

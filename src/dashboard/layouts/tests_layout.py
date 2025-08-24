@@ -387,7 +387,7 @@ def get_default_test_display():
             capture_output=True,
             text=True,
             cwd=Path(__file__).parent.parent.parent.parent,
-            timeout=30
+            timeout=60  # Increased from 30 to 60 seconds
         )
         
         # Parse collection output to get actual test count
@@ -442,6 +442,18 @@ def get_default_test_display():
 
 def execute_tests(test_type, options):
     """Execute the specified test type and return results."""
+    # Add immediate feedback for user
+    start_time = datetime.now()
+    
+    # Quick validation check
+    project_dir = Path(__file__).parent.parent.parent.parent
+    if not (project_dir / "tests").exists():
+        return (
+            format_test_output("Error: Tests directory not found. Please ensure you're in the correct project directory."),
+            "Error", "danger", False, True, True, "0", "0", "0", "0", "0%", "0%", "0%", "0s", 
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+    
     try:
         # Build pytest command
         cmd = ["python", "-m", "pytest"]
@@ -468,19 +480,46 @@ def execute_tests(test_type, options):
         if "timing" in options:
             cmd.append("--durations=10")
         
+        # Add fail-fast option to speed up test runs
+        cmd.append("-x")  # Stop on first failure
+        
+        # Optimize pytest startup
+        cmd.extend(["--tb=short", "--no-header"])  # Shorter output
+        
+        # For "all tests", use a shorter timeout and run unit tests only for UI responsiveness
+        actual_timeout = 120 if test_type == "all" else 300  # 2 minutes for all, 5 for specific
+        if test_type == "all":
+            # Override to run unit tests only for faster feedback
+            cmd = ["python", "-m", "pytest", "tests/unit/", "-x", "--tb=short", "--no-header"]
+            if "verbose" in options:
+                cmd.append("-v")
+        
         # Change to project directory
         project_dir = Path(__file__).parent.parent.parent.parent
         
-        # Execute tests
-        result = subprocess.run(
+        # Show immediate feedback to user
+        progress_output = format_test_output(f"Starting {test_type} tests...\nCommand: {' '.join(cmd)}\nThis may take a few minutes...")
+        
+        # Create the process with better configuration
+        process = subprocess.Popen(
             cmd,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True,
             cwd=project_dir,
-            timeout=300  # 5 minute timeout
+            bufsize=1,
+            universal_newlines=True
         )
         
-        output = result.stdout + result.stderr
+        try:
+            # Wait for completion with dynamic timeout
+            output, _ = process.communicate(timeout=actual_timeout)
+            result_code = process.returncode
+        except subprocess.TimeoutExpired:
+            # Kill the process if it times out
+            process.kill()
+            process.wait()
+            raise subprocess.TimeoutExpired(cmd, actual_timeout)
         
         # Parse results
         total_tests, passed_tests, failed_tests, skipped_tests, duration = parse_test_results(output)
@@ -522,11 +561,15 @@ def execute_tests(test_type, options):
         )
         
     except subprocess.TimeoutExpired:
+        timeout_msg = f"Test execution timed out after {actual_timeout//60} minutes."
+        if test_type == "all":
+            timeout_msg += " Try running specific test suites for better performance."
+        
         return (
-            format_test_output("Test execution timed out after 5 minutes."),
+            format_test_output(timeout_msg),
             "Timeout",
             "danger",
-            False, True, True, "0", "0", "0", "0", "0%", "0%", "0%", "5m+", datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            False, True, True, "0", "0", "0", "0", "0%", "0%", "0%", f"{actual_timeout//60}m+", datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         )
     except Exception as e:
         return (

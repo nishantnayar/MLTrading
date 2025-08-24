@@ -27,7 +27,7 @@ from src.dashboard.layouts.tests_layout import create_tests_layout
 from src.dashboard.layouts.trading_layout import create_trading_dashboard
 from src.dashboard.layouts.logs_layout import create_logs_layout, register_logs_callbacks
 from src.dashboard.layouts.author_layout import create_author_layout
-from src.dashboard.callbacks import register_chart_callbacks, register_overview_callbacks, register_comparison_callbacks
+from src.dashboard.callbacks import register_chart_callbacks, register_overview_callbacks, register_comparison_callbacks, register_pipeline_callbacks
 from src.dashboard.callbacks.interactive_chart_callbacks import register_interactive_chart_callbacks
 from src.dashboard.callbacks.trading_callbacks import register_trading_callbacks
 from src.dashboard.utils.date_formatters import get_current_timestamp
@@ -119,11 +119,23 @@ app.layout = dbc.Container([
         disabled=False
     ),
     
+    # Pipeline status interval for real-time updates
+    dcc.Interval(
+        id="pipeline-status-interval",
+        interval=30000,  # 30 seconds for pipeline status
+        n_intervals=0,
+        disabled=False
+    ),
+    
     # Navigation Bar
     create_navigation(),
     
     # Header
     create_header(),
+    
+    # Notification areas for pipeline status
+    html.Div(id="trigger-pipeline-notification"),
+    html.Div(id="pipeline-status-alert"),
     
     # Main Content Area
     dbc.Row([
@@ -207,6 +219,7 @@ def update_footer_timestamp(n_intervals):
 
 # Additional trading callbacks registration (logs callbacks already registered above)
 register_trading_callbacks(app)  # Register trading callbacks
+register_pipeline_callbacks(app)  # Register pipeline status callbacks
 
 if __name__ == '__main__':
     logger.info("Starting ML Trading Dashboard...")

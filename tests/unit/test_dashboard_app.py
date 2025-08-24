@@ -77,7 +77,7 @@ class TestDashboardApp:
         footer_div = col.children[0]
         assert footer_div is not None
         assert hasattr(footer_div, 'children')
-        assert len(footer_div.children) == 2  # Two span elements
+        assert len(footer_div.children) == 3  # Icon + two span elements
     
     @patch('src.dashboard.app.callback_context')
     @patch('src.dashboard.app.create_dashboard_content')

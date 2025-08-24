@@ -43,7 +43,7 @@ A comprehensive machine learning-based trading system with **professional-grade 
 - ✅ **Pairs Trading Strategy**: Complete implementation with ATEN-INGM pair
 - ✅ **Strategy Framework**: Advanced strategy management system
 - ✅ **System Reliability**: Enhanced error handling and graceful degradation
-- ✅ **Prefect Integration**: Workflow orchestration with PostgreSQL schema separation
+- ✅ **Prefect Integration**: Workflow orchestration with PostgreSQL integration
 - ✅ **Repository Organization**: Clean directory structure with consolidated run commands
 - 🔄 **ML Pipeline**: Feature engineering in development
 - 🔄 **Live Trading**: Alpaca integration in progress
@@ -351,7 +351,7 @@ INDICATOR_CONFIG = {
 ## 🚀 Recent Improvements
 
 ### ✅ August 2025 - Latest System Enhancements
-- **Prefect Workflow Orchestration**: Complete Prefect 3.x integration with PostgreSQL schema separation
+- **Prefect Workflow Orchestration**: Complete Prefect 3.x integration with PostgreSQL database
 - **Dual Collection Workflows**: Scheduled market hours collection + on-demand collection workflows
 - **Chart Controls Upgrade**: Eliminated dropdown clipping with professional button-based interface
 - **Connection Pool Fix**: Resolved database connection exhaustion for improved stability

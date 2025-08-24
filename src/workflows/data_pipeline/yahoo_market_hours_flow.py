@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from prefect import flow, task
 from prefect.task_runners import ConcurrentTaskRunner
 from prefect.logging import get_run_logger
+from prefect.runtime import flow_run
 
 from src.data.collectors.yahoo_collector import fetch_yahoo_data, prepare_data_for_insert
 from src.utils.logging_config import get_combined_logger
@@ -25,6 +26,37 @@ from src.data.storage.database import get_db_manager
 MARKET_TIMEZONE = pytz.timezone('America/New_York')
 MARKET_OPEN = time(9, 30)  # 9:30 AM EST
 MARKET_CLOSE = time(16, 0)  # 4:00 PM EST
+
+def generate_flow_run_name() -> str:
+    """
+    Generate a user-friendly name for the flow run
+    
+    Returns:
+        Formatted run name with timestamp and context
+    """
+    now = datetime.now(MARKET_TIMEZONE)
+    
+    # Determine market status
+    current_time = now.time()
+    is_weekday = now.weekday() < 5
+    is_market_hours = MARKET_OPEN <= current_time <= MARKET_CLOSE
+    market_open = is_weekday and is_market_hours
+    
+    # Create descriptive name
+    date_str = now.strftime("%Y-%m-%d")
+    time_str = now.strftime("%H%M")  # Remove colon and spaces
+    
+    if market_open:
+        status = "market-open"
+    elif is_weekday:
+        if current_time < MARKET_OPEN:
+            status = "pre-market"
+        else:
+            status = "after-market"
+    else:
+        status = "weekend"
+    
+    return f"yahoo-data-{date_str}-{time_str}EST-{status}"
 
 @task(retries=3, retry_delay_seconds=60)
 def check_market_hours() -> bool:
@@ -245,7 +277,8 @@ def log_workflow_metrics(summary: Dict[str, Any]) -> None:
     name="yahoo-market-hours-data-collection",
     description="Collects Yahoo Finance data during market hours on weekdays",
     task_runner=ConcurrentTaskRunner(max_workers=5),
-    log_prints=True
+    log_prints=True,
+    flow_run_name=generate_flow_run_name
 )
 def yahoo_market_hours_collection_flow() -> Dict[str, Any]:
     """
@@ -255,6 +288,9 @@ def yahoo_market_hours_collection_flow() -> Dict[str, Any]:
         Workflow execution summary
     """
     logger = get_run_logger()
+    
+    # Log run start with friendly name
+    logger.info(f"Starting Yahoo Finance data collection: {generate_flow_run_name()}")
     
     # Check if market is open
     market_open = check_market_hours()

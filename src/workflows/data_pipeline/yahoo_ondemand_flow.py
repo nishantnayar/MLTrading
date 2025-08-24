@@ -24,6 +24,19 @@ from src.data.storage.database import get_db_manager
 # Market hours configuration for reference
 MARKET_TIMEZONE = pytz.timezone('America/New_York')
 
+def generate_ondemand_run_name() -> str:
+    """
+    Generate a user-friendly name for the on-demand flow run
+    
+    Returns:
+        Formatted run name with timestamp
+    """
+    now = datetime.now(MARKET_TIMEZONE)
+    date_str = now.strftime("%Y-%m-%d")
+    time_str = now.strftime("%H%M")  # Remove colon and spaces
+    
+    return f"yahoo-ondemand-{date_str}-{time_str}EST"
+
 @task(retries=2, retry_delay_seconds=30)
 def get_symbols_for_collection(limit: int = 20) -> List[str]:
     """
@@ -180,7 +193,8 @@ def generate_ondemand_summary(results: List[Dict[str, Any]], run_type: str = "ma
     name="yahoo-ondemand-data-collection",
     description="On-demand Yahoo Finance data collection - can run anytime regardless of market hours",
     task_runner=ConcurrentTaskRunner(max_workers=5),
-    log_prints=True
+    log_prints=True,
+    flow_run_name=generate_ondemand_run_name
 )
 def yahoo_ondemand_collection_flow(
     symbols_limit: int = 20,

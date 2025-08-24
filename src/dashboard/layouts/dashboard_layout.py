@@ -21,6 +21,12 @@ from ..components.shared_components import (
     create_control_group,
     create_button_group
 )
+from ..components.pipeline_status import (
+    create_pipeline_status_card,
+    create_data_freshness_indicator,
+    create_pipeline_history_modal,
+    create_system_health_summary
+)
 from .interactive_chart import create_chart_controls
 
 
@@ -31,42 +37,20 @@ def create_overview_tab():
     return dbc.Tab(
         dbc.Card([
             dbc.CardBody([
-                # Hero Section with Professional Background
+                # Quick Status Overview
                 dbc.Row([
                     dbc.Col([
-                        dbc.Card([
-                            dbc.CardBody([
-                                html.Div([
-                                    # Background image using CSS
-                                    html.Div([
-                                        html.Div([
-                                            html.H1([
-                                                html.I(className="fas fa-chart-line me-3"),
-                                                "ML Trading Dashboard"
-                                            ], className="display-4 text-white fw-bold mb-3"),
-                                            html.P("Advanced market analysis and stock filtering platform powered by machine learning",
-                                                   className="lead text-white-50 mb-4"),
-                                            html.Div([
-                                                dbc.Badge("Live Data", color="success", className="me-2"),
-                                                dbc.Badge("Real-time Analysis", color="info", className="me-2"),
-                                                dbc.Badge("Smart Filtering", color="primary")
-                                            ])
-                                        ], className="hero-content p-4")
-                                    ], className="hero-section", style={
-                                        "background": "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)",
-                                        "background-image": "url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1000 200\"><polygon fill=\"%23ffffff08\" points=\"0,100 50,120 100,80 150,110 200,90 250,130 300,100 350,140 400,120 450,90 500,110 550,80 600,120 650,100 700,130 750,110 800,90 850,120 900,100 950,130 1000,110 1000,200 0,200\"/></svg>')",
-                                        "background-size": "cover",
-                                        "background-position": "center",
-                                        "border-radius": "12px",
-                                        "min-height": "200px",
-                                        "display": "flex",
-                                        "align-items": "center"
-                                    })
-                                ])
-                            ], className="p-0")
-                        ], style={**CARD_STYLE, "overflow": "hidden"})
+                        html.Div([
+                            html.Div([
+                                dbc.Badge("Live Data", color="success", className="me-2"),
+                                dbc.Badge("Real-time Analysis", color="info", className="me-2"),
+                                dbc.Badge("Smart Filtering", color="primary")
+                            ], className="mb-2"),
+                            html.P("Advanced market analysis and stock filtering platform", 
+                                   className="text-muted mb-0 small")
+                        ], className="text-center py-2")
                     ], width=12)
-                ], className="mb-4"),
+                ], className="mb-3"),
                 
                 # Market Status Cards
                 dbc.Row([
@@ -108,7 +92,17 @@ def create_overview_tab():
                             enhanced=True
                         )
                     ], width=3)
-                ], className="mb-4"),
+                ], className="mb-3"),
+                
+                # Data Pipeline Status Section
+                dbc.Row([
+                    dbc.Col([
+                        html.Div(id="pipeline-status-card")
+                    ], width=8),
+                    dbc.Col([
+                        html.Div(id="system-health-summary")
+                    ], width=4)
+                ], className="mb-3"),
                 
                 # Advanced Filtering Controls
                 dbc.Row([
@@ -173,7 +167,7 @@ def create_overview_tab():
                             ])
                         ], style=CARD_STYLE)
                     ], width=12)
-                ], className="mb-4"),
+                ], className="mb-3"),
                 
                 # Stock Filtering Charts Section
                 dbc.Row([
@@ -192,10 +186,13 @@ def create_overview_tab():
                     dbc.Col([
                         dbc.Card([
                             dbc.CardHeader([
-                                html.H5([
-                                    html.I(className="fas fa-industry me-2"),
-                                    "Sector Distribution"
-                                ], className="mb-0")
+                                html.Div([
+                                    html.H5([
+                                        html.I(className="fas fa-industry me-2"),
+                                        "Sector Distribution"
+                                    ], className="mb-0 d-inline"),
+                                    html.Div(id="data-freshness-indicator", className="d-inline ms-2")
+                                ], className="d-flex justify-content-between align-items-center")
                             ]),
                             dbc.CardBody([
                                 dcc.Graph(
@@ -240,7 +237,7 @@ def create_overview_tab():
                             ], className="p-0")
                         ], style=CARD_STYLE)
                     ], width=6)
-                ], className="mb-4"),
+                ], className="mb-3"),
                 
                 # Second Row: Volume, Performance, and Activity Charts
                 dbc.Row([
@@ -300,7 +297,7 @@ def create_overview_tab():
                             ], className="p-0")
                         ], style=CARD_STYLE)
                     ], width=4)
-                ], className="mb-4"),
+                ], className="mb-3"),
                 
                 # Enhanced Filtered Symbols Section
                 dbc.Row([
@@ -338,7 +335,7 @@ def create_overview_tab():
                             ])
                         ], style=CARD_STYLE)
                     ], width=12)
-                ], className="mb-4"),
+                ], className="mb-3"),
                 
                 # Quick Stats Footer
                 dbc.Row([
@@ -364,7 +361,7 @@ def create_overview_tab():
                             ], className="py-2")
                         ], style=CARD_STYLE, className="border-0 bg-light")
                     ], width=12)
-                ], className="mb-3"),
+                ], className="mb-2"),
                 
                 # Refresh Button for Charts
                 dbc.Row([
@@ -378,7 +375,10 @@ def create_overview_tab():
                         )
                     ], width="auto", className="ms-auto")
                 ], className="mb-3")
-            ], className="p-4")
+            ], className="p-3"),
+            
+            # Pipeline Status Modal (hidden by default)
+            create_pipeline_history_modal()
         ], style=CARD_STYLE_NONE),
         label="Overview",
         tab_id="overview-tab"
@@ -419,7 +419,7 @@ def create_charts_tab():
                             ], className="py-3")
                         ], style=CARD_STYLE)
                     ], width=12)
-                ], className="mb-4"),
+                ], className="mb-3"),
                 
                 # Interactive Chart Controls Row
                 dbc.Row([
@@ -584,7 +584,7 @@ def create_comparison_tab():
                             ])
                         ], style=CARD_STYLE)
                     ], width=12)
-                ], className="mb-4"),
+                ], className="mb-3"),
                 
                 # Comparison Results
                 html.Div(id="comparison-results", children=[
