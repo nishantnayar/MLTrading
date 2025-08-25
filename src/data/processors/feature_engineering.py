@@ -114,7 +114,8 @@ class FeatureEngineerPhase1And2:
         """
         with log_operation(f"get_market_data_{symbol}", logger, symbol=symbol):
             try:
-                with self.db_manager.get_connection() as conn:
+                conn = self.db_manager.get_connection()
+                try:
                     if initial_run:
                         # Initial run: Get ALL historical data for complete feature backfill
                         query = """
@@ -147,6 +148,9 @@ class FeatureEngineerPhase1And2:
                     
                     logger.info(f"Retrieved {len(df)} records for {symbol} ({data_description})")
                     return df
+                    
+                finally:
+                    self.db_manager.return_connection(conn)
                     
             except Exception as e:
                 logger.error(f"Failed to retrieve market data for {symbol}: {e}")

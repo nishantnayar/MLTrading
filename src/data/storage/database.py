@@ -26,7 +26,7 @@ class DatabaseManager:
     def __init__(self, host: str = 'localhost', port: int = 5432, 
                  database: str = 'mltrading', user: str = 'postgres', 
                  password: str = 'nishant', min_conn: int = 2, 
-                 max_conn: int = 25):
+                 max_conn: int = 10):
         """Initialize database manager with connection pool."""
         self.host = host
         self.port = port
@@ -56,8 +56,11 @@ class DatabaseManager:
             self.pool = None
             logger.warning("Database pool initialization failed, using fallback mode")
     
-    def get_connection(self):
-        """Get a connection from the pool."""
+    def get_connection(self, timeout=60):
+        """Get a connection from the pool with timeout and retry logic."""
+        import time
+        from psycopg2.pool import PoolError
+        
         if self.pool is None:
             # Fallback: create a direct connection
             try:
@@ -71,7 +74,26 @@ class DatabaseManager:
             except Exception as e:
                 logger.error(f"Failed to create fallback connection: {e}")
                 raise
-        return self.pool.getconn()
+        
+        # Try to get connection with retry and exponential backoff
+        max_retries = 5
+        base_delay = 0.1
+        
+        for attempt in range(max_retries):
+            try:
+                return self.pool.getconn()
+            except PoolError as e:
+                if "pool exhausted" in str(e).lower() and attempt < max_retries - 1:
+                    delay = base_delay * (2 ** attempt)  # Exponential backoff
+                    logger.warning(f"Connection pool exhausted, retry {attempt + 1}/{max_retries} in {delay:.2f}s")
+                    time.sleep(delay)
+                    continue
+                else:
+                    logger.error(f"Failed to get connection after {attempt + 1} attempts: {e}")
+                    raise
+            except Exception as e:
+                logger.error(f"Unexpected error getting connection: {e}")
+                raise
     
     def return_connection(self, conn):
         """Return a connection to the pool."""

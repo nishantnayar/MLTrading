@@ -21,7 +21,6 @@ from prefect.runtime import flow_run
 from src.data.collectors.yahoo_collector import fetch_yahoo_data, prepare_data_for_insert
 from src.utils.logging_config import get_combined_logger
 from src.data.storage.database import get_db_manager
-from src.workflows.data_pipeline.feature_engineering_flow import feature_engineering_flow
 
 # Market hours configuration
 MARKET_TIMEZONE = pytz.timezone('America/New_York')
@@ -275,29 +274,31 @@ def log_workflow_metrics(summary: Dict[str, Any]) -> None:
         logger.error(f"Failed to log workflow metrics: {e}")
 
 @flow(
-    name="yahoo-market-hours-data-collection-with-features",
-    description="Collects Yahoo Finance data during market hours and calculates Phase 1+2 features (36 total)",
+    name="yahoo-market-hours-data-collection",
+    description="Collects Yahoo Finance data during market hours with configurable time period",
     task_runner=ConcurrentTaskRunner(max_workers=5),
     log_prints=True,
     flow_run_name=generate_flow_run_name
 )
-def yahoo_market_hours_collection_flow() -> Dict[str, Any]:
+def yahoo_market_hours_collection_flow(data_period: str = "3d") -> Dict[str, Any]:
     """
-    Main workflow for collecting Yahoo Finance data during market hours,
-    followed by Phase 1+2 feature engineering (36 features total).
+    Main workflow for collecting Yahoo Finance data during market hours.
     
-    Sequential pipeline:
-    1. Yahoo Data Collection (5-10 minutes for 100 symbols)
-    2. Feature Engineering (2-3 seconds for 100 symbols) 
-    3. Dashboard ready with fresh data + features
+    Args:
+        data_period: Time period for data collection ('3d' for incremental, '1y' for comprehensive)
+    
+    Data Collection:
+    - 5-10 minutes for 3d period (incremental updates)
+    - 15-30 minutes for 1y period (comprehensive data)
+    - Concurrent processing with 5 workers
     
     Returns:
-        Workflow execution summary including both data collection and features
+        Workflow execution summary for data collection only
     """
     logger = get_run_logger()
     
-    # Log run start with friendly name
-    logger.info(f"Starting Yahoo Finance data collection: {generate_flow_run_name()}")
+    # Log run start with friendly name and data period
+    logger.info(f"Starting Yahoo Finance data collection: {generate_flow_run_name()} - Data Period: {data_period}")
     
     # Check if market is open
     market_open = check_market_hours()
@@ -326,8 +327,8 @@ def yahoo_market_hours_collection_flow() -> Dict[str, Any]:
     # Collect data for all symbols concurrently
     logger.info(f"Starting concurrent collection for {len(symbols)} symbols")
     
-    # Use Prefect's mapping for concurrent execution
-    collection_results = collect_symbol_data.map(symbols)
+    # Use Prefect's mapping for concurrent execution with specified data period
+    collection_results = collect_symbol_data.map(symbols, [data_period] * len(symbols))
     
     # Generate summary
     summary = generate_collection_summary(collection_results)
@@ -335,36 +336,11 @@ def yahoo_market_hours_collection_flow() -> Dict[str, Any]:
     # Log metrics
     log_workflow_metrics(summary)
     
-    logger.info("Yahoo Finance data collection completed successfully")
-    
-    # Chain feature engineering after successful data collection
-    feature_result = None
-    if summary['successful_collections'] > 0:
-        logger.info("Starting Phase 1+2 feature engineering pipeline...")
-        try:
-            feature_result = feature_engineering_flow()
-            logger.info("Feature engineering completed successfully")
-        except Exception as e:
-            logger.error(f"Feature engineering failed: {e}")
-            feature_result = {
-                'status': 'failed',
-                'error': str(e),
-                'timestamp': datetime.now(MARKET_TIMEZONE).isoformat()
-            }
-    else:
-        logger.warning("Skipping feature engineering - no successful data collections")
-        feature_result = {
-            'status': 'skipped', 
-            'reason': 'no_data_collected',
-            'timestamp': datetime.now(MARKET_TIMEZONE).isoformat()
-        }
-    
-    logger.info("Yahoo Finance + Feature Engineering workflow completed")
+    logger.info("Yahoo Finance data collection completed")
     
     return {
         'status': 'completed',
-        'data_collection': summary,
-        'feature_engineering': feature_result,
+        'summary': summary,
         'timestamp': datetime.now(MARKET_TIMEZONE).isoformat()
     }
 

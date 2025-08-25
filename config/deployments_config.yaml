@@ -2,54 +2,59 @@
 # This file defines which Prefect deployments should be monitored by the dashboard
 
 deployments:
-  # Sequential Pipeline: Yahoo Data + Feature Engineering
-  yahoo-data-and-features-hourly:
-    name: "yahoo-data-and-features-hourly"
-    display_name: "Yahoo Data + Features Pipeline"
-    description: "Sequential pipeline: Yahoo Finance data collection + Phase 1+2 feature engineering (36 features)"
-    category: "data-pipeline"
-    priority: 1  # Higher priority = more important
-    schedule_type: "market_hours"  # market_hours, continuous, daily, weekly, custom
+  # Complete On-Demand Pipeline: 1 Year Data + Features  
+  complete-data-and-features-ondemand:
+    name: "complete-data-and-features-ondemand"
+    display_name: "Complete Data + Features Pipeline"
+    description: "Comprehensive on-demand job: Yahoo Finance data (1 year) + Phase 1+2 feature engineering (36 features)"
+    category: "comprehensive-pipeline"
+    priority: 1  # Primary deployment
+    schedule_type: "manual"  # On-demand execution only
     tags:
       - yahoo
       - features
-      - sequential
-      - production
+      - comprehensive
+      - ondemand
+      - 1-year-data
       - phase1-and-2
-    expected_runtime_minutes: 8  # 5-6 min data + 2-3 sec features
-    alert_threshold_hours: 2  # Alert if failed for more than N hours
-  
-  # Legacy Yahoo Finance data collection (kept for reference)
-  yahoo-market-hours-hourly:
-    name: "yahoo-market-hours-hourly"
-    display_name: "Yahoo Market Hours Collection (Legacy)"
-    description: "Legacy Yahoo Finance data collection only (no features)"
+    expected_runtime_minutes: 30  # 20-30 min for 1 year data + features
+    alert_threshold_hours: 24  # Less critical since manual
+
+  # Production Feature Engineering with Subprocess Isolation
+  feature-engineering-production-subprocess:
+    name: "feature-engineering-production-subprocess"
+    display_name: "Production Feature Engineering"
+    description: "Production feature engineering with subprocess isolation (36 features) - runs hourly after data collection for 100% reliability"
+    category: "production-pipeline"
+    priority: 2  # Critical production deployment
+    schedule_type: "market_hours_offset"  # 5 minutes after market hours
+    tags:
+      - features
+      - production
+      - hourly
+      - subprocess
+      - reliable
+      - phase1-and-2
+    expected_runtime_minutes: 10  # ~2s per symbol * 100 symbols
+    alert_threshold_hours: 2  # Critical - alert quickly if fails
+
+  # Production Yahoo Data Collection
+  yahoo-production-data-collection:
+    name: "yahoo-production-data-collection"
+    display_name: "Yahoo Finance Data Collection"
+    description: "Production Yahoo Finance data collection (3-day optimized) - runs hourly during market hours"
     category: "data-collection"
-    priority: 3  # Lower priority since replaced by sequential pipeline
+    priority: 3  # Supporting production deployment
     schedule_type: "market_hours"
     tags:
       - yahoo
-      - market-data
+      - production
       - hourly
-      - legacy
-    expected_runtime_minutes: 5
-    alert_threshold_hours: 6  # Less critical since replaced
+      - optimized
+      - data-collection
+    expected_runtime_minutes: 8  # 5-10 minutes for data collection
+    alert_threshold_hours: 2  # Critical - alert quickly if fails
   
-  # On-demand Yahoo Finance data collection  
-  yahoo-ondemand-collection:
-    name: "yahoo-ondemand-collection"
-    display_name: "Yahoo On-Demand Collection"
-    description: "On-demand Yahoo Finance data collection for testing and manual runs"
-    category: "data-collection"
-    priority: 2
-    schedule_type: "manual"  # No automatic schedule
-    tags:
-      - yahoo
-      - market-data
-      - ondemand
-      - testing
-    expected_runtime_minutes: 3
-    alert_threshold_hours: 24
     
   # Example additional deployments (commented out for now)
   # yahoo-daily-summary:
@@ -84,7 +89,9 @@ deployments:
 dashboard:
   # Which deployments to show on main dashboard (by priority)
   primary_deployments:
-    - yahoo-data-and-features-hourly
+    - complete-data-and-features-ondemand
+    - feature-engineering-production-subprocess
+    - yahoo-production-data-collection
   
   # Maximum number of deployments to show
   max_visible_deployments: 5
@@ -101,6 +108,11 @@ schedule_types:
     cron: "0 9-16 * * 1-5"
     timezone: "America/New_York"
     description: "Hourly during market hours (9 AM - 4 PM EST, weekdays)"
+  
+  market_hours_offset:
+    cron: "5 9-16 * * 1-5"
+    timezone: "America/New_York"
+    description: "5 minutes after each hour during market hours (9:05 AM - 4:05 PM EST, weekdays)"
   
   daily:
     cron: "0 6 * * *"

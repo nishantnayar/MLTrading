@@ -1,6 +1,6 @@
-# Prefect deployment configuration
-name: yahoo-finance-data-collection
-description: Yahoo Finance data collection during market hours
+# Prefect deployment configuration for ML Trading System
+name: ml-trading-deployments
+description: ML Trading System with Yahoo Finance data collection and feature engineering
 
 # Build configuration
 build: null
@@ -13,25 +13,70 @@ pull:
 - prefect.deployments.steps.set_working_directory:
     directory: D:\PythonProjects\MLTrading
 
-# Deployment configurations
+# Production deployment configurations
 deployments:
-- name: yahoo-market-hours-hourly
-  description: Collects Yahoo Finance data every hour during market hours (9:00 AM - 4:00 PM EST) on weekdays
+# Regular Yahoo Finance data collection (production)
+- name: yahoo-production-data-collection
+  description: Production Yahoo Finance data collection (3-day optimized) - runs hourly during market hours
   tags:
   - yahoo
-  - market-data
-  - hourly
   - production
+  - hourly
+  - optimized
   schedule:
-    cron: "0 9-16 * * 1-5"
+    cron: "0 9-16 * * 1-5"  # Every hour from 9-16 EST on Monday-Friday
     timezone: America/New_York
   entrypoint: src/workflows/data_pipeline/yahoo_market_hours_flow.py:yahoo_market_hours_collection_flow
   work_pool:
     name: yahoo-data-pool
     work_queue_name: default
-  parameters: {}
+  parameters:
+    data_period: "3d"  # Optimized 3-day period for incremental updates
   job_variables:
-    # Environment variables that can be used by the flow
     FLOW_ENVIRONMENT: production
     DATA_SOURCE: yahoo_finance
-    COLLECTION_TYPE: market_hours
+    COLLECTION_TYPE: incremental
+
+# Sequential feature engineering with subprocess isolation (production)  
+- name: feature-engineering-production-subprocess
+  description: Production feature engineering with subprocess isolation (36 features) - runs hourly after data collection for 100% reliability
+  tags:
+  - features
+  - production  
+  - hourly
+  - subprocess
+  - reliable
+  schedule:
+    cron: "5 9-16 * * 1-5"  # 5 minutes after each hour during market hours
+    timezone: America/New_York
+  entrypoint: src/workflows/data_pipeline/feature_engineering_flow_updated.py:feature_engineering_flow_subprocess
+  work_pool:
+    name: feature-engineering-pool
+    work_queue_name: default
+  parameters:
+    initial_run: false  # Incremental mode for production
+  job_variables:
+    FLOW_ENVIRONMENT: production
+    FEATURE_MODE: incremental_subprocess
+    FEATURE_VERSION: "2.0"
+    RELIABILITY_MODE: "subprocess_isolation"
+
+# Complete on-demand job (manual trigger)
+- name: complete-data-and-features-ondemand
+  description: COMPREHENSIVE - 1-year data collection + initial feature engineering for ALL stocks - one-time setup job
+  tags:
+  - comprehensive
+  - ondemand
+  - all-stocks
+  - 1-year-data
+  - initial-run
+  schedule: null  # Manual trigger only
+  entrypoint: deployments/complete_data_and_features_ondemand.py:complete_pipeline_flow
+  work_pool:
+    name: comprehensive-pool
+    work_queue_name: default
+  parameters: {}
+  job_variables:
+    FLOW_ENVIRONMENT: setup
+    DATA_PERIOD: comprehensive
+    FEATURE_MODE: initial
