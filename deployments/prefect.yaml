@@ -26,7 +26,7 @@ deployments:
   schedule:
     cron: "0 9-16 * * 1-5"  # Every hour from 9-16 EST on Monday-Friday
     timezone: America/New_York
-  entrypoint: src/workflows/data_pipeline/yahoo_market_hours_flow.py:yahoo_market_hours_collection_flow
+  entrypoint: deployments/yahoo_production_deployment.py:production_data_flow
   work_pool:
     name: yahoo-data-pool
     work_queue_name: default
@@ -49,7 +49,7 @@ deployments:
   schedule:
     cron: "5 9-16 * * 1-5"  # 5 minutes after each hour during market hours
     timezone: America/New_York
-  entrypoint: src/workflows/data_pipeline/feature_engineering_flow_updated.py:feature_engineering_flow_subprocess
+  entrypoint: deployments/feature_engineering_production_deployment.py:production_features_flow
   work_pool:
     name: feature-engineering-pool
     work_queue_name: default
