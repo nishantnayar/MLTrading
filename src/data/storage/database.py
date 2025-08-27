@@ -7,6 +7,7 @@ import os
 import warnings
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
+from contextlib import contextmanager
 import psycopg2
 from psycopg2.extras import RealDictCursor, execute_batch
 from psycopg2.pool import SimpleConnectionPool
@@ -16,6 +17,7 @@ import pandas as pd
 warnings.filterwarnings('ignore', message='pandas only supports SQLAlchemy')
 
 from ...utils.logging_config import get_combined_logger, log_operation
+from ...utils.connection_config import ConnectionConfig, get_safe_db_config
 
 logger = get_combined_logger("mltrading.data.database", enable_database_logging=True)
 
@@ -23,23 +25,27 @@ logger = get_combined_logger("mltrading.data.database", enable_database_logging=
 class DatabaseManager:
     """Manages PostgreSQL database connections and operations."""
     
-    def __init__(self, host: str = 'localhost', port: int = 5432, 
-                 database: str = 'mltrading', user: str = 'postgres', 
-                 password: str = 'nishant', min_conn: int = 2, 
-                 max_conn: int = 10):
-        """Initialize database manager with connection pool."""
-        self.host = host
-        self.port = port
-        self.database = database
-        self.user = user
-        self.password = password
-        self.min_conn = min_conn
-        self.max_conn = max_conn
+    def __init__(self, host: str = None, port: int = None, 
+                 database: str = None, user: str = None, 
+                 password: str = None, min_conn: int = None, 
+                 max_conn: int = None):
+        """Initialize database manager with connection pool using safe defaults."""
+        # Use safe configuration defaults
+        safe_config = get_safe_db_config()
+        
+        self.host = host or safe_config['host']
+        self.port = port or safe_config['port']
+        self.database = database or safe_config['database']
+        self.user = user or safe_config['user']
+        self.password = password or safe_config['password']
+        self.min_conn = min_conn or safe_config['min_conn']
+        self.max_conn = max_conn or safe_config['max_conn']
+        self.timeout = safe_config['timeout']
         self.pool = None
         self._init_pool()
         
     def _init_pool(self):
-        """Initialize connection pool."""
+        """Initialize connection pool with safe limits."""
         try:
             self.pool = SimpleConnectionPool(
                 self.min_conn, self.max_conn,
@@ -47,12 +53,15 @@ class DatabaseManager:
                 port=self.port,
                 database=self.database,
                 user=self.user,
-                password=self.password
+                password=self.password,
+                connect_timeout=self.timeout
             )
-            logger.info(f"Database pool initialized with {self.min_conn}-{self.max_conn} connections")
+            logger.info(f"Database pool initialized with {self.min_conn}-{self.max_conn} connections (timeout: {self.timeout}s)")
+            ConnectionConfig.log_configuration()
         except Exception as e:
             logger.error(f"Failed to initialize database pool: {e}")
-            # Create a fallback connection for testing
+            logger.warning("Falling back to direct connection mode")
+            # Set pool to None to trigger fallback mode
             self.pool = None
             logger.warning("Database pool initialization failed, using fallback mode")
     
@@ -97,14 +106,36 @@ class DatabaseManager:
     
     def return_connection(self, conn):
         """Return a connection to the pool."""
-        if self.pool is None:
-            # Close the fallback connection
+        if conn is None:
+            return
+            
+        try:
+            if self.pool is None:
+                # Close the fallback connection
+                conn.close()
+            else:
+                self.pool.putconn(conn)
+        except Exception as e:
+            logger.error(f"Error returning connection to pool: {e}")
+            # If we can't return to pool, close the connection
             try:
                 conn.close()
-            except Exception as e:
-                logger.error(f"Error closing fallback connection: {e}")
-        else:
-            self.pool.putconn(conn)
+            except:
+                pass
+    
+    @contextmanager
+    def get_connection_context(self):
+        """Context manager for safe connection handling."""
+        conn = None
+        try:
+            conn = self.get_connection()
+            yield conn
+        except Exception as e:
+            logger.error(f"Error in connection context: {e}")
+            raise
+        finally:
+            if conn is not None:
+                self.return_connection(conn)
     
     def check_tables_exist(self) -> bool:
         """Check if all required tables exist in the database."""

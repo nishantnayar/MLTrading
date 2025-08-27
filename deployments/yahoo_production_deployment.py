@@ -11,7 +11,20 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Patch logging to avoid rotation conflicts in production
+try:
+    from src.utils.production_logging import patch_for_production
+    patch_for_production()
+except ImportError:
+    pass  # Continue if production logging not available
+
 from src.workflows.data_pipeline.yahoo_market_hours_flow import yahoo_market_hours_collection_flow
+from prefect import flow
+
+@flow(name="yahoo-production-data-collection")
+def production_data_flow():
+    """Production data collection with 3-day optimized window"""
+    return yahoo_market_hours_collection_flow(data_period="3d")
 
 if __name__ == "__main__":
     print("Starting Production Yahoo Finance Data Collection...")
@@ -20,14 +33,6 @@ if __name__ == "__main__":
     print("Performance: 5-10 minutes for 100+ symbols")
     print("Purpose: Regular data ingestion for trading operations")
     print("=" * 70)
-    
-    # Define a Prefect flow for production data collection
-    from prefect import flow
-    
-    @flow(name="yahoo-production-data-collection")
-    def production_data_flow():
-        """Production data collection with 3-day optimized window"""
-        return yahoo_market_hours_collection_flow(data_period="3d")
     
     # Serve the flow
     production_data_flow.serve(

@@ -12,7 +12,20 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Patch logging to avoid rotation conflicts in production
+try:
+    from src.utils.production_logging import patch_for_production
+    patch_for_production()
+except ImportError:
+    pass  # Continue if production logging not available
+
 from src.workflows.data_pipeline.feature_engineering_flow_updated import feature_engineering_flow_subprocess
+from prefect import flow
+
+@flow(name="feature-engineering-production-subprocess")
+def production_features_flow():
+    """Production feature engineering with subprocess isolation for 100% reliability"""
+    return feature_engineering_flow_subprocess(initial_run=False)
 
 if __name__ == "__main__":
     print("Starting Production Feature Engineering with Subprocess Isolation...")
@@ -23,14 +36,6 @@ if __name__ == "__main__":
     print("Performance: ~2s per symbol with complete connection cleanup")
     print("Purpose: Reliable feature calculation for trading operations")
     print("=" * 70)
-    
-    # Define a Prefect flow for production feature engineering
-    from prefect import flow
-    
-    @flow(name="feature-engineering-production-subprocess")
-    def production_features_flow():
-        """Production feature engineering with subprocess isolation for 100% reliability"""
-        return feature_engineering_flow_subprocess(initial_run=False)
     
     # Serve the flow
     production_features_flow.serve(

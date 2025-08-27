@@ -17,10 +17,11 @@ sys.path.insert(0, str(project_root))
 
 from src.data.storage.database import get_db_manager
 
+
 def get_remaining_symbols() -> List[str]:
     """Get symbols that need feature engineering."""
     db_manager = get_db_manager()
-    
+
     try:
         conn = db_manager.get_connection()
         try:

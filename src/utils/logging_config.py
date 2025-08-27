@@ -85,22 +85,34 @@ def setup_logger(name: str, log_file: str = None, level: str = "INFO",
     logger.addHandler(console_handler)
     
     # Combined log handler (all components write to this)
-    combined_handler = logging.handlers.RotatingFileHandler(
-        logs_dir / "mltrading_combined.log",
-        maxBytes=50*1024*1024,  # 50MB
-        backupCount=3
-    )
+    try:
+        from .concurrent_safe_logging import ConcurrentSafeRotatingFileHandler
+        combined_handler = ConcurrentSafeRotatingFileHandler(
+            logs_dir / "mltrading_combined.log",
+            maxBytes=50*1024*1024,  # 50MB
+            backupCount=3
+        )
+    except ImportError:
+        # Fallback to regular file handler if concurrent safe handler not available
+        combined_handler = logging.FileHandler(logs_dir / "mltrading_combined.log")
+    
     combined_handler.setLevel(logging.DEBUG)
     combined_handler.setFormatter(detailed_formatter)
     logger.addHandler(combined_handler)
     
     # Individual file handler (if log_file specified)
     if log_file:
-        file_handler = logging.handlers.RotatingFileHandler(
-            logs_dir / log_file,
-            maxBytes=10*1024*1024,  # 10MB
-            backupCount=5
-        )
+        try:
+            from .concurrent_safe_logging import ConcurrentSafeRotatingFileHandler
+            file_handler = ConcurrentSafeRotatingFileHandler(
+                logs_dir / log_file,
+                maxBytes=10*1024*1024,  # 10MB
+                backupCount=5
+            )
+        except ImportError:
+            # Fallback to regular file handler
+            file_handler = logging.FileHandler(logs_dir / log_file)
+            
         file_handler.setLevel(getattr(logging, file_log_level.upper()))
         file_handler.setFormatter(detailed_formatter)
         logger.addHandler(file_handler)
