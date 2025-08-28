@@ -276,7 +276,7 @@ def log_workflow_metrics(summary: Dict[str, Any]) -> None:
 @flow(
     name="yahoo-market-hours-data-collection",
     description="Collects Yahoo Finance data during market hours with configurable time period",
-    task_runner=ConcurrentTaskRunner(max_workers=5),
+    task_runner=ConcurrentTaskRunner(max_workers=3),
     log_prints=True,
     flow_run_name=generate_flow_run_name
 )

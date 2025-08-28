@@ -57,10 +57,10 @@ class FeatureEngineerPhase1And2:
         self.VOL_WINDOWS = [12, 24, 120]  # 12h, 1d, 5d
 
         self.RSI_WINDOWS = {
-            'rsi_1d': 24,        # 1 day
-            'rsi_3d': 72,        # 3 days
-            'rsi_1w': 168,       # 1 week
-            'rsi_2w': 336        # 2 weeks
+            'rsi_1d': 7,         # 1 day (~7 intraday records)
+            'rsi_3d': 21,        # 3 days (~21 intraday records)
+            'rsi_1w': 35,        # 1 week (~35 intraday records, 5 trading days)
+            'rsi_2w': 70         # 2 weeks (~70 intraday records, 10 trading days)
         }
 
         self.LAG_PERIODS = [1, 2, 4, 8, 24]  # 1h, 2h, 4h, 8h, 1day

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Feature Engineering Processor - Final implementation
-Processes all symbols with proper connection management
+Comprehensive Feature Engineering Processor - Phase 1+2+3 (90+ features)
+Processes all symbols with comprehensive features including RSI, volume indicators, and advanced ML features
+Uses subprocess isolation for reliable processing
 """
 
 import os
@@ -19,18 +20,20 @@ from src.data.storage.database import get_db_manager
 
 
 def get_remaining_symbols() -> List[str]:
-    """Get symbols that need feature engineering."""
+    """Get symbols that need comprehensive feature engineering (Phase 1+2+3)."""
     db_manager = get_db_manager()
 
     try:
         conn = db_manager.get_connection()
         try:
             with conn.cursor() as cursor:
+                # Get symbols that need comprehensive features (missing RSI features)
                 cursor.execute("""
                     SELECT DISTINCT md.symbol
                     FROM market_data md
                     LEFT JOIN feature_engineered_data fed ON md.symbol = fed.symbol
-                    WHERE fed.symbol IS NULL
+                    WHERE fed.symbol IS NULL 
+                       OR fed.rsi_1d IS NULL
                     ORDER BY md.symbol
                 """)
                 symbols = [row[0] for row in cursor.fetchall()]
@@ -56,7 +59,7 @@ from src.data.processors.feature_engineering import FeatureEngineerPhase1And2
 
 try:
     engineer = FeatureEngineerPhase1And2()
-    success = engineer.process_symbol_phase1_and_phase2("{symbol}", initial_run=True)
+    success = engineer.process_symbol_phase3_comprehensive("{symbol}", initial_run=True)
     print("SUCCESS" if success else "FAILED")
     sys.exit(0 if success else 1)
 except Exception as e:
@@ -101,7 +104,8 @@ except Exception as e:
 def main():
     """Process all symbols using subprocess isolation."""
     
-    print("FEATURE ENGINEERING PROCESSOR")
+    print("COMPREHENSIVE FEATURE ENGINEERING PROCESSOR")
+    print("Phase 1+2+3 Features: 90+ indicators including RSI, volume analysis, and advanced ML features")
     print("Using subprocess isolation for complete connection management")
     print("="*70)
     

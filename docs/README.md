@@ -1,96 +1,351 @@
-# MLTrading System Documentation
+# ML Trading System Documentation
 
-## Overview
+A comprehensive machine learning trading system with real-time data collection, advanced feature engineering, and automated deployment.
 
-The MLTrading system is a comprehensive quantitative trading platform that provides real-time data processing, advanced feature engineering, and professional-grade analytics for algorithmic trading operations.
+## 📋 Table of Contents
 
-## Core Documentation
+- [🏗️ System Architecture](#️-system-architecture)
+- [🚀 Getting Started](#-getting-started)
+- [📊 Feature Engineering](#-feature-engineering)
+- [🔄 Deployment & Operations](#-deployment--operations)
+- [🧪 Testing & Development](#-testing--development)
+- [🔧 API Reference](#-api-reference)
 
-### System Architecture
-- **[System Architecture Guide](SYSTEM_ARCHITECTURE.md)** - Complete technical architecture, data pipeline design, and performance specifications
-- **[Feature Engineering Architecture](FEATURE_ENGINEERING_ARCHITECTURE.md)** - Detailed feature engineering system with subprocess isolation and technical indicators
+## 🏗️ System Architecture
 
-### Deployment & Operations  
-- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Complete deployment procedures, configuration management, and production operations
-- **[Implementation Guide](IMPLEMENTATION_GUIDE.md)** - Development procedures, performance optimizations, and interactive features
-- **[Comprehensive Testing Guide](COMPREHENSIVE_TESTING_GUIDE.md)** - Complete testing framework and automated test procedures
+### Core Components
 
-### API & Development
-- **[Technical API Guide](TECHNICAL_API_GUIDE.md)** - Complete API documentation, service architecture, and development reference
-- **[CI/CD Guide](CI_CD_GUIDE.md)** - Continuous integration and deployment procedures
+1. **Data Pipeline**
+   - Yahoo Finance data collection (hourly during market hours)
+   - Real-time market data ingestion and storage
+   - 3-day optimized window for incremental updates
 
-### Legacy Documentation
-- **[Trading System Architecture](TRADING_SYSTEM_ARCHITECTURE.md)** - Original architectural design and trading implementation details
-- **[Documentation](DOCUMENTATION.md)** - Historical feature development and system capabilities overview
+2. **Feature Engineering**
+   - **Phase 1**: Foundation features (13) - basic price and time features
+   - **Phase 2**: Core Technical (23) - moving averages, volatility, Bollinger bands
+   - **Phase 3**: Advanced ML (54+) - RSI multi-timeframe, volume indicators, lagged features
+   - **Total**: 90+ comprehensive features for advanced ML analysis
 
-## Quick Start
+3. **Database Layer**
+   - PostgreSQL with connection pooling
+   - Optimized table structure for time-series data
+   - Feature-engineered data storage with proper indexing
 
-### System Requirements
-- Python 3.8+ with pandas, numpy, scipy
-- PostgreSQL 12+ database
-- Prefect 3.x for workflow orchestration
-- 8GB+ RAM recommended for full symbol processing
+4. **Dashboard & Analytics**
+   - Real-time trading dashboard with Dash/Plotly
+   - Technical indicator visualization
+   - Pipeline status monitoring
+   - Database-first feature architecture (10-50x performance improvement)
 
-### Initial Setup
+5. **Orchestration**
+   - Prefect workflows with subprocess isolation
+   - Automated deployment scheduling
+   - Production-ready error handling and monitoring
+
+### Data Flow
+
+```
+Market Data → Yahoo Collector → PostgreSQL → Feature Engineering → ML-Ready Features → Dashboard
+     ↓              ↓              ↓              ↓                    ↓            ↓
+  API Calls    3-day Window   Connection Pool  90+ Features      Real-time UI   Analytics
+```
+
+### Deployment Architecture
+
+**Current Production Setup:**
+- **Yahoo Data Collection**: Runs hourly (9 AM - 4 PM EST, weekdays)
+- **Comprehensive Feature Engineering**: Runs every 2 hours (90+ features)
+- **Dashboard**: Real-time monitoring and analysis interface
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Python 3.8+
+- PostgreSQL 12+
+- Prefect 2.0+
+
+### Installation
+
+1. **Clone and Setup**
+   ```bash
+   git clone <repository>
+   cd MLTrading
+   pip install -r requirements.txt
+   ```
+
+2. **Environment Configuration**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your database and API credentials
+   ```
+
+3. **Database Setup**
+   ```bash
+   python scripts/test_db_connection.py
+   ```
+
+4. **Start Services**
+   ```bash
+   # Start Prefect server
+   prefect server start
+   
+   # Deploy workflows
+   prefect deploy --all
+   
+   # Start dashboard
+   python -m src.dashboard.app
+   ```
+
+### Quick Test
+
+```python
+# Test data collection
+python scripts/run_yahoo_collector.py
+
+# Test feature engineering
+python scripts/feature_engineering_processor.py
+
+# Test dashboard
+# Navigate to http://localhost:8050
+```
+
+## 📊 Feature Engineering
+
+### Architecture Overview
+
+Our feature engineering system processes market data through three phases:
+
+**Phase 1: Foundation Features (13)**
+- Price returns and log returns
+- Price ratios (high/close, low/close, etc.)
+- Time-based features (hour, day of week, month)
+
+**Phase 2: Core Technical Indicators (23)**
+- Moving averages (SMA/EMA: 12, 24, 120, 480 periods)
+- Volatility measures (rolling std, ATR)
+- Bollinger Bands (20-period, 2 std dev)
+- MACD (12/26/9 configuration)
+
+**Phase 3: Advanced ML Features (54+)**
+- **RSI Multi-timeframe**: 1d, 3d, 1w, 2w, EMA-based
+- **Volume Indicators**: Volume oscillator, price-volume trend
+- **Intraday Features**: Daily reference points
+- **Lagged Features**: 1h, 2h, 4h, 8h, 24h lags
+- **Rolling Statistics**: 6h, 12h, 24h windows
+
+### RSI Calculation
+
+Optimized for intraday data (7 records/day):
+```python
+RSI_WINDOWS = {
+    'rsi_1d': 7,         # 1 day (~7 intraday records)
+    'rsi_3d': 21,        # 3 days
+    'rsi_1w': 35,        # 1 week (5 trading days)
+    'rsi_2w': 70         # 2 weeks (10 trading days)
+}
+```
+
+### Usage
+
+```python
+# Process single symbol with comprehensive features
+from src.data.processors.feature_engineering import FeatureEngineerPhase1And2
+engineer = FeatureEngineerPhase1And2()
+success = engineer.process_symbol_phase3_comprehensive("AAPL", initial_run=True)
+
+# Bulk processing
+python scripts/feature_engineering_processor.py
+```
+
+### Database Schema
+
+**Key Tables:**
+- `market_data`: OHLCV data with timestamps
+- `feature_engineered_data`: All calculated features (90+ columns)
+- Connection pooling for optimal performance
+
+## 🔄 Deployment & Operations
+
+### Production Deployments
+
+**1. Yahoo Finance Data Collection**
+```yaml
+name: yahoo-production-data-collection
+schedule: "0 9-16 * * 1-5"  # Hourly during market hours
+purpose: Regular 3-day incremental data collection
+performance: 5-10 minutes for 100+ symbols
+```
+
+**2. Comprehensive Feature Engineering**
+```yaml
+name: comprehensive-feature-engineering-production-subprocess
+schedule: "10 9-15/2 * * 1-5"  # Every 2 hours during market
+purpose: Calculate 90+ ML-ready features
+performance: ~4s per symbol with subprocess isolation
+reliability: 100% success rate
+```
+
+### Monitoring & Health
+
+- **Pipeline Status**: Real-time deployment monitoring
+- **Data Freshness**: Automatic alerts for stale data
+- **System Health**: Success rates and performance metrics
+- **Connection Management**: Optimized database pooling
+
+### Configuration Files
+
+- `deployments/prefect.yaml`: Deployment definitions
+- `config/deployments_config.yaml`: Dashboard monitoring config
+- `.env`: Environment variables and credentials
+
+## 🧪 Testing & Development
+
+### Test Structure
+
 ```bash
-# 1. Deploy complete data and features (one-time setup)
-python deployments/complete_data_and_features_ondemand.py
-
-# 2. Start production data collection
-python deployments/yahoo_production_deployment.py
-
-# 3. Start production feature engineering  
-python deployments/feature_engineering_production_deployment.py
+tests/
+├── unit/           # Unit tests for individual components
+├── integration/    # Integration tests for workflows  
+├── e2e/           # End-to-end system tests
+└── performance/   # Performance and load tests
 ```
 
-### System Status
-The MLTrading system is production-ready with the following capabilities:
+### Running Tests
 
-**Core Features**
-- ✅ **Feature Engineering**: 36 technical indicators with 100% reliability
-- ✅ **Data Pipeline**: Hourly Yahoo Finance data collection during market hours
-- ✅ **Subprocess Architecture**: Process isolation prevents resource exhaustion
-- ✅ **Professional UI**: Trading-grade dashboard with interactive charts
-- ✅ **API Backend**: FastAPI with comprehensive endpoints
-- ✅ **Database Integration**: Optimized PostgreSQL with connection pooling
+```bash
+# All tests
+python scripts/run_tests.py
 
-**Performance Metrics**
-- **Processing Speed**: ~2 seconds per symbol for feature engineering
-- **Success Rate**: 100% across 1000+ symbols tested
-- **Dashboard Performance**: 98% reduction in database queries
-- **Data Freshness**: Real-time updates during market hours
+# Specific test suites
+pytest tests/unit/test_feature_engineering.py
+pytest tests/integration/test_data_pipeline.py
 
-## Architecture Overview
-
-```
-Yahoo Finance → Data Collection → Feature Engineering → Dashboard
-     ↓              ↓                  ↓               ↓
-yfinance API   Prefect Workflows   PostgreSQL      FastAPI + Dash
-OHLCV Data     Hourly Schedule     36 Features     Professional UI
+# Performance tests
+python scripts/test_optimized_ui_features.py
 ```
 
-**Key Components**:
-- **Data Sources**: Yahoo Finance API with 3-day rolling windows
-- **Processing Engine**: Subprocess isolation for 100% reliability
-- **Storage**: PostgreSQL with optimized schemas and indexing
-- **Feature Engineering**: 36 technical indicators including MA, MACD, RSI, Bollinger Bands
-- **API Layer**: FastAPI backend with async/await support
-- **Frontend**: Professional trading dashboard with interactive charts
+### Development Workflow
 
-## Production Deployment
+1. **Feature Development**
+   ```bash
+   # Create feature branch
+   git checkout -b feature/new-indicator
+   
+   # Develop with tests
+   pytest tests/unit/test_new_feature.py
+   
+   # Integration testing
+   python scripts/feature_engineering_processor.py
+   ```
 
-The system uses a three-tier deployment strategy:
+2. **Database Testing**
+   ```bash
+   # Test connections
+   python scripts/test_db_connection.py
+   
+   # Verify feature data
+   SELECT COUNT(*) FROM feature_engineered_data WHERE rsi_1d IS NOT NULL;
+   ```
 
-1. **Complete Setup** (Manual): Full historical data and feature backfill
-2. **Data Collection** (Hourly): Incremental Yahoo Finance data during market hours  
-3. **Feature Engineering** (Hourly+5min): Real-time technical indicator calculation
+3. **Deployment Testing**
+   ```bash
+   # Test deployments
+   python scripts/test_deployments.py
+   
+   # Verify production readiness
+   python scripts/verify_production_readiness.py
+   ```
 
-All deployments are configured through `deployments/prefect.yaml` and monitored via `config/deployments_config.yaml`.
+## 🔧 API Reference
 
-## Support
+### Core Classes
 
-For detailed information on specific components, refer to the individual documentation files listed above. Each guide provides comprehensive technical details, configuration instructions, and operational procedures for production environments.
+**FeatureEngineerPhase1And2**
+```python
+# Phase 1+2 features (36 indicators)
+engineer = FeatureEngineerPhase1And2()
+success = engineer.process_symbol_phase1_and_phase2(symbol, initial_run=True)
+
+# Phase 1+2+3 comprehensive features (90+ indicators) 
+success = engineer.process_symbol_phase3_comprehensive(symbol, initial_run=True)
+```
+
+**DatabaseManager**
+```python
+from src.data.storage.database import get_db_manager
+db = get_db_manager()
+conn = db.get_connection()
+```
+
+**PrefectService**
+```python
+from src.services.prefect_service import get_prefect_service
+service = get_prefect_service()
+status = service.get_deployment_status("deployment-name")
+```
+
+### Dashboard Services
+
+**FeatureDataService** - Database-first feature access
+```python
+from src.dashboard.services.feature_data_service import FeatureDataService
+service = FeatureDataService()
+features = service.get_all_indicators_from_db(symbol="AAPL")
+```
+
+**TechnicalIndicatorService** - Optimized technical indicators
+```python
+from src.dashboard.services.technical_indicators import TechnicalIndicatorService
+service = TechnicalIndicatorService()
+rsi = service.get_rsi_optimized(symbol="AAPL", period=14)
+```
+
+### Configuration
+
+**Environment Variables**
+```bash
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=trading_data
+DB_USER=postgres
+DB_PASSWORD=admin123
+PREFECT_API_URL=http://localhost:4200/api
+```
+
+**Feature Engineering Windows**
+```python
+RSI_WINDOWS = {
+    'rsi_1d': 7, 'rsi_3d': 21, 'rsi_1w': 35, 'rsi_2w': 70
+}
+MOVING_WINDOWS = [12, 24, 120, 480]  # Short, medium, long, very long
+VOLATILITY_WINDOWS = [12, 24, 120]  # 12h, 1d, 5d
+```
 
 ---
 
-*The MLTrading system provides enterprise-grade reliability and performance for quantitative trading operations with comprehensive documentation for deployment, development, and maintenance.*
+## 📝 Recent Updates
+
+- **RSI Fix**: Corrected RSI calculation windows for intraday data frequency
+- **Consolidated Deployments**: Streamlined to 2 core deployments for optimal performance  
+- **Database Optimization**: 10-50x performance improvement with database-first architecture
+- **Comprehensive Features**: Full 90+ feature implementation with Phase 1+2+3
+- **Dashboard Enhancement**: Real-time monitoring with detailed analysis tabs
+
+## 📚 Additional Documentation
+
+For specialized topics, see these focused guides:
+
+- **[Troubleshooting Connection Issues](TROUBLESHOOTING-CONNECTION-ISSUES.md)** - Database connection pooling and PostgreSQL optimization
+- **[Testing Deployments](TESTING-DEPLOYMENTS.md)** - Comprehensive deployment testing strategy independent of market hours
+
+## 🔗 Quick Links
+
+- **Dashboard**: http://localhost:8050
+- **Prefect UI**: http://localhost:4200
+- **Database**: PostgreSQL on localhost:5432
+- **Logs**: `scripts/logs/`
+
+---
+
+*Last updated: August 2025*
