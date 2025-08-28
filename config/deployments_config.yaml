@@ -1,42 +1,34 @@
 # Deployment Configuration for Dashboard Monitoring
 # This file defines which Prefect deployments should be monitored by the dashboard
+# 
+# FEATURE ENGINEERING LEVELS:
+# - Phase 1+2+3: Comprehensive Advanced (90+ features) - Complete ML analysis
+#
+# DEPLOYMENT PRIORITIES:
+# 1. High: Comprehensive feature engineering (every 2h during market) - 90+ features
+# 2. Supporting: Data collection (hourly during market)
 
 deployments:
-  # Complete On-Demand Pipeline: 1 Year Data + Features  
-  complete-data-and-features-ondemand:
-    name: "complete-data-and-features-ondemand"
-    display_name: "Complete Data + Features Pipeline"
-    description: "Comprehensive on-demand job: Yahoo Finance data (1 year) + Phase 1+2 feature engineering (36 features)"
-    category: "comprehensive-pipeline"
-    priority: 1  # Primary deployment
-    schedule_type: "manual"  # On-demand execution only
-    tags:
-      - yahoo
-      - features
-      - comprehensive
-      - ondemand
-      - 1-year-data
-      - phase1-and-2
-    expected_runtime_minutes: 30  # 20-30 min for 1 year data + features
-    alert_threshold_hours: 24  # Less critical since manual
-
-  # Production Feature Engineering with Subprocess Isolation
-  feature-engineering-production-subprocess:
-    name: "feature-engineering-production-subprocess"
-    display_name: "Production Feature Engineering"
-    description: "Production feature engineering with subprocess isolation (36 features) - runs hourly after data collection for 100% reliability"
-    category: "production-pipeline"
-    priority: 2  # Critical production deployment
-    schedule_type: "market_hours_offset"  # 5 minutes after market hours
+  # Comprehensive Feature Engineering (Phase 1+2+3) - 90+ Features
+  comprehensive-feature-engineering-production-subprocess:
+    name: "comprehensive-feature-engineering-production-subprocess"
+    display_name: "Comprehensive Feature Engineering (90+ Features)"
+    description: "Production comprehensive feature engineering (Phase 1+2+3) with subprocess isolation - runs every 2 hours for complete feature sets"
+    category: "advanced-pipeline"
+    priority: 1  # High priority for advanced features
+    schedule_type: "comprehensive_schedule"  # Every 2 hours during market hours
     tags:
       - features
       - production
-      - hourly
+      - comprehensive
+      - phase3
       - subprocess
       - reliable
-      - phase1-and-2
-    expected_runtime_minutes: 10  # ~2s per symbol * 100 symbols
-    alert_threshold_hours: 2  # Critical - alert quickly if fails
+      - advanced
+      - 90-features
+    expected_runtime_minutes: 20  # ~4s per symbol * 100 symbols
+    alert_threshold_hours: 3  # Important - alert if fails
+
 
   # Production Yahoo Data Collection
   yahoo-production-data-collection:
@@ -44,7 +36,7 @@ deployments:
     display_name: "Yahoo Finance Data Collection"
     description: "Production Yahoo Finance data collection (3-day optimized) - runs hourly during market hours"
     category: "data-collection"
-    priority: 3  # Supporting production deployment
+    priority: 2  # Supporting production deployment
     schedule_type: "market_hours"
     tags:
       - yahoo
@@ -54,47 +46,16 @@ deployments:
       - data-collection
     expected_runtime_minutes: 8  # 5-10 minutes for data collection
     alert_threshold_hours: 2  # Critical - alert quickly if fails
-  
-    
-  # Example additional deployments (commented out for now)
-  # yahoo-daily-summary:
-  #   name: "yahoo-daily-summary"
-  #   display_name: "Daily Market Summary"
-  #   description: "Generates daily market summary and analysis"
-  #   category: "analytics"
-  #   priority: 2
-  #   schedule_type: "daily"
-  #   tags:
-  #     - yahoo
-  #     - analytics
-  #     - daily
-  #   expected_runtime_minutes: 15
-  #   alert_threshold_hours: 24
-  
-  # weekly-portfolio-rebalance:
-  #   name: "weekly-portfolio-rebalance"
-  #   display_name: "Weekly Portfolio Rebalance"
-  #   description: "Weekly portfolio rebalancing and analysis"
-  #   category: "trading"
-  #   priority: 3
-  #   schedule_type: "weekly"
-  #   tags:
-  #     - portfolio
-  #     - rebalance
-  #     - weekly
-  #   expected_runtime_minutes: 30
-  #   alert_threshold_hours: 168  # 1 week
 
 # Dashboard display settings
 dashboard:
   # Which deployments to show on main dashboard (by priority)
   primary_deployments:
-    - complete-data-and-features-ondemand
-    - feature-engineering-production-subprocess
+    - comprehensive-feature-engineering-production-subprocess
     - yahoo-production-data-collection
   
   # Maximum number of deployments to show
-  max_visible_deployments: 5
+  max_visible_deployments: 2
   
   # Refresh intervals (in seconds)
   refresh_intervals:
@@ -109,27 +70,32 @@ schedule_types:
     timezone: "America/New_York"
     description: "Hourly during market hours (9 AM - 4 PM EST, weekdays)"
   
-  market_hours_offset:
-    cron: "5 9-16 * * 1-5"
-    timezone: "America/New_York"
-    description: "5 minutes after each hour during market hours (9:05 AM - 4:05 PM EST, weekdays)"
   
-  daily:
-    cron: "0 6 * * *"
+  comprehensive_schedule:
+    cron: "10 9-15/2 * * 1-5"
     timezone: "America/New_York"
-    description: "Daily at 6 AM EST"
+    description: "Every 2 hours during market hours (9:10 AM, 11:10 AM, 1:10 PM, 3:10 PM EST, weekdays)"
+
+# Feature Engineering Categories Reference
+# This documents what's included in each phase for monitoring purposes
+feature_categories:
+  phase_1_foundation:
+    count: 13
+    description: "Basic price and time features"
+    includes: ["returns", "log_returns", "price_ratios", "time_features"]
     
-  weekly:
-    cron: "0 6 * * 1"
-    timezone: "America/New_York"
-    description: "Weekly on Monday at 6 AM EST"
+  phase_2_core_technical:
+    count: 23
+    description: "Core technical indicators"
+    includes: ["moving_averages", "volatility_measures", "bollinger_bands", "macd", "atr"]
     
-  continuous:
-    cron: "*/15 * * * *"
-    timezone: "UTC"
-    description: "Every 15 minutes"
+  phase_3_advanced:
+    count: 54
+    description: "Advanced ML-ready features"
+    includes: ["volume_indicators", "rsi_multi_timeframe", "intraday_features", "lagged_features", "rolling_statistics"]
     
-  manual:
-    cron: null
-    timezone: "UTC"
-    description: "Manual trigger only, no automatic schedule"
+  total_comprehensive:
+    count: 90
+    description: "Complete feature set for advanced ML analysis"
+    database_table: "feature_engineered_data"
+    version: "3.0"

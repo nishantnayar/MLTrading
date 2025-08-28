@@ -602,18 +602,265 @@ def create_comparison_tab():
     )
 
 def create_analysis_tab():
-    """Create the analysis tab content"""
+    """Create the comprehensive detailed analysis tab content"""
     return dbc.Tab(
         dbc.Card([
-            dbc.CardHeader("Analysis", className="text-center p-2"),
-            dbc.CardBody([
+            dbc.CardHeader([
                 html.Div([
-                    html.H5("Trading Analysis", className="text-center mb-3"),
-                    html.P("Advanced trading analysis and insights will be displayed here.", className="text-center text-muted")
-                ], className="p-4")
+                    html.H4([
+                        html.I(className="fas fa-microscope me-2 text-primary"),
+                        "Detailed Analysis"
+                    ], className="mb-0"),
+                    html.P("Comprehensive 90+ Features & Advanced Indicators", 
+                           className="text-muted mb-0 small")
+                ], className="text-center")
+            ], className="py-3"),
+            dbc.CardBody([
+                # Symbol selector for detailed analysis
+                dbc.Row([
+                    dbc.Col([
+                        html.Label("Select Symbol for Detailed Analysis:", className="fw-bold mb-2"),
+                        dcc.Dropdown(
+                            id="detailed-analysis-symbol",
+                            options=[],
+                            value="AAPL",
+                            placeholder="Choose symbol for comprehensive analysis",
+                            searchable=True,
+                            clearable=False,
+                            className="mb-3"
+                        )
+                    ], width=6),
+                    dbc.Col([
+                        html.Label("Analysis Period:", className="fw-bold mb-2"),
+                        dcc.Dropdown(
+                            id="detailed-analysis-period",
+                            options=[
+                                {"label": "Last 7 Days", "value": 7},
+                                {"label": "Last 30 Days", "value": 30},
+                                {"label": "Last 90 Days", "value": 90}
+                            ],
+                            value=30,
+                            clearable=False,
+                            className="mb-3"
+                        )
+                    ], width=3),
+                    dbc.Col([
+                        html.Label("Feature Version:", className="fw-bold mb-2"),
+                        dcc.Dropdown(
+                            id="feature-version-selector",
+                            options=[
+                                {"label": "v3.0 - Comprehensive (90+ features)", "value": "3.0"},
+                                {"label": "v2.0 - Core (36 features)", "value": "2.0"}
+                            ],
+                            value="3.0",
+                            clearable=False,
+                            className="mb-3"
+                        )
+                    ], width=3)
+                ], className="mb-4"),
+                
+                # Feature categories tabs
+                dbc.Tabs([
+                    # Technical Indicators Tab
+                    dbc.Tab([
+                        dbc.Row([
+                            # RSI Multi-timeframe
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("RSI Multiple Timeframes"),
+                                    dbc.CardBody([
+                                        dcc.Graph(id="rsi-multi-chart")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=6),
+                            
+                            # Bollinger Bands + Position
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("Bollinger Bands Analysis"),
+                                    dbc.CardBody([
+                                        dcc.Graph(id="bollinger-detailed-chart")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=6)
+                        ], className="mb-4"),
+                        
+                        dbc.Row([
+                            # MACD Detailed
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("MACD Comprehensive"),
+                                    dbc.CardBody([
+                                        dcc.Graph(id="macd-detailed-chart")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=6),
+                            
+                            # Moving Averages + Ratios
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("Moving Averages & Ratios"),
+                                    dbc.CardBody([
+                                        dcc.Graph(id="ma-ratios-chart")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=6)
+                        ])
+                    ], label="Technical Indicators", tab_id="tech-indicators"),
+                    
+                    # Volatility Analysis Tab
+                    dbc.Tab([
+                        dbc.Row([
+                            # Comprehensive Volatility
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("Volatility Spectrum"),
+                                    dbc.CardBody([
+                                        dcc.Graph(id="volatility-spectrum-chart")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=6),
+                            
+                            # Volatility Ratios
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("Volatility Ratios & Regime"),
+                                    dbc.CardBody([
+                                        dcc.Graph(id="vol-ratios-chart")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=6)
+                        ], className="mb-4"),
+                        
+                        dbc.Row([
+                            # Garman-Klass vs Realized
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("Advanced Volatility Estimators"),
+                                    dbc.CardBody([
+                                        dcc.Graph(id="advanced-vol-chart")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=12)
+                        ])
+                    ], label="Volatility Analysis", tab_id="volatility-analysis"),
+                    
+                    # Volume Analysis Tab
+                    dbc.Tab([
+                        dbc.Row([
+                            # Volume Indicators
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("Volume Indicators"),
+                                    dbc.CardBody([
+                                        dcc.Graph(id="volume-indicators-chart")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=6),
+                            
+                            # Money Flow Index
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("Money Flow Analysis"),
+                                    dbc.CardBody([
+                                        dcc.Graph(id="money-flow-chart")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=6)
+                        ], className="mb-4"),
+                        
+                        dbc.Row([
+                            # Volume Price Trend
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("Volume Price Trend (VPT)"),
+                                    dbc.CardBody([
+                                        dcc.Graph(id="vpt-chart")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=12)
+                        ])
+                    ], label="Volume Analysis", tab_id="volume-analysis"),
+                    
+                    # Advanced Features Tab
+                    dbc.Tab([
+                        dbc.Row([
+                            # Intraday Features
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("Intraday Reference Points"),
+                                    dbc.CardBody([
+                                        dcc.Graph(id="intraday-features-chart")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=6),
+                            
+                            # Lagged Features Heatmap
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("Lagged Features Correlation"),
+                                    dbc.CardBody([
+                                        dcc.Graph(id="lagged-features-heatmap")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=6)
+                        ], className="mb-4"),
+                        
+                        dbc.Row([
+                            # Rolling Statistics
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("Rolling Statistics (Mean, Std, Skew, Kurtosis)"),
+                                    dbc.CardBody([
+                                        dcc.Graph(id="rolling-stats-chart")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=12)
+                        ])
+                    ], label="Advanced Features", tab_id="advanced-features"),
+                    
+                    # Feature Summary Tab
+                    dbc.Tab([
+                        dbc.Row([
+                            # Data Availability
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("Data Availability & Coverage"),
+                                    dbc.CardBody([
+                                        html.Div(id="data-availability-summary")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=6),
+                            
+                            # Feature Statistics
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("Feature Statistics"),
+                                    dbc.CardBody([
+                                        html.Div(id="feature-statistics-table")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=6)
+                        ], className="mb-4"),
+                        
+                        dbc.Row([
+                            # Feature Categories Overview
+                            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader("All Available Features by Category"),
+                                    dbc.CardBody([
+                                        html.Div(id="feature-categories-overview")
+                                    ])
+                                ], style=CARD_STYLE)
+                            ], width=12)
+                        ])
+                    ], label="Feature Summary", tab_id="feature-summary")
+                    
+                ], id="detailed-analysis-tabs", active_tab="tech-indicators")
+                
             ], className="p-0")
         ], style=CARD_STYLE_NONE),
-        label="Analysis",
+        label="Detailed Analysis",
         tab_id="analysis-tab"
     )
 

@@ -263,7 +263,7 @@ def _create_no_deployment_card(error_msg: str) -> dbc.Card:
                 f"Deployment not found: {error_msg}"
             ], color="info", className="mb-3"),
             
-            html.P("Make sure the 'yahoo-market-hours-hourly' deployment is created and running.", 
+            html.P("Make sure the deployment is created and running with Prefect.", 
                    className="mb-2"),
             
             dbc.Button(

@@ -1,6 +1,6 @@
 # Prefect deployment configuration for ML Trading System
 name: ml-trading-deployments
-description: ML Trading System with Yahoo Finance data collection and feature engineering
+description: ML Trading System with Yahoo Finance data collection and comprehensive feature engineering (90+ features)
 
 # Build configuration
 build: null
@@ -14,6 +14,11 @@ pull:
     directory: D:\PythonProjects\MLTrading
 
 # Production deployment configurations
+# 
+# Current Architecture:
+# 1. Yahoo Finance data collection (hourly during market hours)
+# 2. Comprehensive feature engineering (every 2 hours, 90+ features, Phase 1+2+3)
+#
 deployments:
 # Regular Yahoo Finance data collection (production)
 - name: yahoo-production-data-collection
@@ -37,46 +42,30 @@ deployments:
     DATA_SOURCE: yahoo_finance
     COLLECTION_TYPE: incremental
 
-# Sequential feature engineering with subprocess isolation (production)  
-- name: feature-engineering-production-subprocess
-  description: Production feature engineering with subprocess isolation (36 features) - runs hourly after data collection for 100% reliability
+# Comprehensive feature engineering with subprocess isolation (production)
+- name: comprehensive-feature-engineering-production-subprocess
+  description: Production comprehensive feature engineering (Phase 1+2+3) with subprocess isolation - runs every 2 hours for complete feature sets
   tags:
   - features
-  - production  
-  - hourly
+  - production
+  - comprehensive
+  - phase3
   - subprocess
   - reliable
+  - advanced
+  - 90-features
   schedule:
-    cron: "5 9-16 * * 1-5"  # 5 minutes after each hour during market hours
+    cron: "10 9-15/2 * * 1-5"  # 10 minutes after 9, 11, 13, 15 EST during market hours
     timezone: America/New_York
-  entrypoint: deployments/feature_engineering_production_deployment.py:production_features_flow
+  entrypoint: deployments/comprehensive_feature_engineering_deployment.py:production_comprehensive_features_flow
   work_pool:
-    name: feature-engineering-pool
+    name: comprehensive-feature-engineering-pool
     work_queue_name: default
   parameters:
     initial_run: false  # Incremental mode for production
   job_variables:
     FLOW_ENVIRONMENT: production
     FEATURE_MODE: incremental_subprocess
-    FEATURE_VERSION: "2.0"
+    FEATURE_VERSION: "3.0"
     RELIABILITY_MODE: "subprocess_isolation"
-
-# Complete on-demand job (manual trigger)
-- name: complete-data-and-features-ondemand
-  description: COMPREHENSIVE - 1-year data collection + initial feature engineering for ALL stocks - one-time setup job
-  tags:
-  - comprehensive
-  - ondemand
-  - all-stocks
-  - 1-year-data
-  - initial-run
-  schedule: null  # Manual trigger only
-  entrypoint: deployments/complete_data_and_features_ondemand.py:complete_pipeline_flow
-  work_pool:
-    name: comprehensive-pool
-    work_queue_name: default
-  parameters: {}
-  job_variables:
-    FLOW_ENVIRONMENT: setup
-    DATA_PERIOD: comprehensive
-    FEATURE_MODE: initial
+    FEATURE_PHASES: "1+2+3"
