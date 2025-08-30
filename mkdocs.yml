@@ -6,19 +6,28 @@ theme:
   palette:
     primary: blue
     accent: cyan
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.highlight
 
 nav:
   - Home: index.md
+  - User Guide:
+    - Quick Start: guides/quickstart.md
+    - Configuration: guides/configuration.md
+    - Deployment: deployment/deployments.md
   - Architecture:
     - System Overview: architecture/SYSTEM_ARCHITECTURE.md
     - Connection Pool Solution: architecture/CONNECTION_POOL_SOLUTION.md
-  - Deployment:
-    - Deployment Guide: deployment/deployments.md
-    - Testing Deployments: deployment/TESTING-DEPLOYMENTS.md
-  - Troubleshooting:
-    - Connection Issues: troubleshooting/TROUBLESHOOTING-CONNECTION-ISSUES.md
   - Testing:
     - Manual Tests: testing/regression_test_manual.md
+    - Deployment Testing: deployment/TESTING-DEPLOYMENTS.md
+  - Troubleshooting:
+    - Connection Issues: troubleshooting/TROUBLESHOOTING-CONNECTION-ISSUES.md
+  - API Reference: 
+    - API Documentation: api/index.md
   - About: about.md
 
 markdown_extensions:

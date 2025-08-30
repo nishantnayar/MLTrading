@@ -107,3 +107,5 @@ Thumbs.db
 .claude/
 cleanup_report.md
 # ML/Data files
+/api-docs
+/site
