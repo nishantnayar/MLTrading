@@ -81,8 +81,7 @@ NAV_ITEMS = [
     {"label": "Trading", "id": "nav-trading"},
     {"label": "Tests", "id": "nav-tests"},
     {"label": "Logs", "id": "nav-logs"},
-    {"label": "Help", "id": "nav-help"},
-    {"label": "Author", "id": "nav-author"}
+    {"label": "Help", "id": "nav-help"}
 ]
 
 # Card Styling

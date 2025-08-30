@@ -83,15 +83,14 @@ class TestDashboardApp:
     @patch('src.dashboard.app.create_dashboard_content')
     @patch('src.dashboard.app.create_help_layout')
     @patch('src.dashboard.app.create_logs_layout')
-    @patch('src.dashboard.app.create_author_layout')
-    def test_display_page_default(self, mock_author, mock_logs, mock_help, 
+    def test_display_page_default(self, mock_logs, mock_help, 
                                   mock_dashboard, mock_ctx):
         """Test default page display (dashboard)."""
         # Mock callback context with no triggers
         mock_ctx.triggered = []
         mock_dashboard.return_value = "dashboard_content"
         
-        result = display_page(None, None, None, None, None, None, None)
+        result = display_page(None, None, None, None, None, None)
         
         mock_dashboard.assert_called_once()
         assert result == "dashboard_content"
@@ -104,7 +103,7 @@ class TestDashboardApp:
         mock_ctx.triggered = [{'prop_id': 'nav-help.n_clicks'}]
         mock_help.return_value = "help_content"
         
-        result = display_page(None, None, 1, None, None, None, None)
+        result = display_page(None, None, 1, None, None, None)
         
         mock_help.assert_called_once()
         assert result == "help_content"
@@ -117,23 +116,11 @@ class TestDashboardApp:
         mock_ctx.triggered = [{'prop_id': 'nav-logs.n_clicks'}]
         mock_logs.return_value = "logs_content"
         
-        result = display_page(None, None, None, None, 1, None, None)
+        result = display_page(None, None, None, None, 1, None)
         
         mock_logs.assert_called_once()
         assert result == "logs_content"
     
-    @patch('src.dashboard.app.callback_context')
-    @patch('src.dashboard.app.create_author_layout')
-    def test_display_page_author(self, mock_author, mock_ctx):
-        """Test author page display."""
-        # Mock callback context with author button trigger
-        mock_ctx.triggered = [{'prop_id': 'nav-author.n_clicks'}]
-        mock_author.return_value = "author_content"
-        
-        result = display_page(None, None, None, None, None, 1, None)
-        
-        mock_author.assert_called_once()
-        assert result == "author_content"
     
     def test_handle_initial_load_first_run(self):
         """Test initial load handling on first run."""

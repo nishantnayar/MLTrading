@@ -26,7 +26,6 @@ from src.dashboard.layouts.help_layout import create_help_layout
 from src.dashboard.layouts.tests_layout import create_tests_layout
 from src.dashboard.layouts.trading_layout import create_trading_dashboard
 from src.dashboard.layouts.logs_layout import create_logs_layout, register_logs_callbacks
-from src.dashboard.layouts.author_layout import create_author_layout
 from src.dashboard.callbacks import register_chart_callbacks, register_overview_callbacks, register_comparison_callbacks, register_pipeline_callbacks
 from src.dashboard.callbacks.interactive_chart_callbacks import register_interactive_chart_callbacks
 from src.dashboard.callbacks.trading_callbacks import register_trading_callbacks
@@ -161,9 +160,9 @@ app.layout = dbc.Container([
      Input("nav-tests", "n_clicks"),
      Input("nav-help", "n_clicks"),
      Input("nav-logs", "n_clicks"),
-     Input("nav-author", "n_clicks")]
+    ]
 )
-def display_page(pathname, nav_dashboard, nav_trading, nav_tests, nav_help, nav_logs, nav_author):
+def display_page(pathname, nav_dashboard, nav_trading, nav_tests, nav_help, nav_logs):
     """Display different pages based on navigation"""
     ctx = callback_context
     
@@ -181,8 +180,6 @@ def display_page(pathname, nav_dashboard, nav_trading, nav_tests, nav_help, nav_
         return create_help_layout()
     elif button_id == "nav-logs" or pathname == "/logs":
         return create_logs_layout()
-    elif button_id == "nav-author" or pathname == "/author":
-        return create_author_layout()
     else:
         # Default to dashboard
         return create_dashboard_content()

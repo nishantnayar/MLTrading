@@ -19,6 +19,7 @@ nav:
     - Connection Issues: troubleshooting/TROUBLESHOOTING-CONNECTION-ISSUES.md
   - Testing:
     - Manual Tests: testing/regression_test_manual.md
+  - About: about.md
 
 markdown_extensions:
   - admonition

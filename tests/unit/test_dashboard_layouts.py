@@ -15,7 +15,6 @@ sys.path.insert(0, str(project_root))
 from src.dashboard.layouts.dashboard_layout import create_dashboard_content
 from src.dashboard.layouts.help_layout import create_help_layout
 from src.dashboard.layouts.logs_layout import create_logs_layout
-from src.dashboard.layouts.author_layout import create_author_layout
 from src.dashboard.layouts.chart_components import (
     create_empty_chart,
     create_loading_chart,
@@ -123,36 +122,9 @@ class TestLogsLayout:
         # Should still create content (with "no logs" message)
         assert logs_content is not None
         assert hasattr(logs_content, 'children')
-
-
-class TestAuthorLayout:
-    """Test suite for author layout."""
-    
-    def test_create_author_layout(self):
-        """Test author layout creation."""
-        author_content = create_author_layout()
         
-        # Check that author content is created
-        assert author_content is not None
-        assert hasattr(author_content, 'children')
-        
-        # Author content should contain author information
-        assert len(author_content.children) > 0
-    
-    def test_author_layout_structure(self):
-        """Test author layout has expected structure."""
-        author_content = create_author_layout()
-        
-        # Should have main container
-        assert author_content is not None
-        
-        # Container should have children (author info sections)
-        children = author_content.children
-        assert len(children) > 0
-        
-        # Should contain profile information
-        first_child = children[0]
-        assert first_child is not None
+        # Should have children
+        assert len(logs_content.children) > 0
 
 
 class TestChartComponents:
@@ -225,7 +197,6 @@ class TestLayoutIntegration:
         layouts = [
             create_dashboard_content,
             create_help_layout,
-            create_author_layout
         ]
         
         for layout_func in layouts:
@@ -253,7 +224,6 @@ class TestLayoutIntegration:
         layouts = {
             "dashboard": create_dashboard_content,
             "help": create_help_layout,
-            "author": create_author_layout
         }
         
         for name, layout_func in layouts.items():
