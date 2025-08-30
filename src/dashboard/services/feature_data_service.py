@@ -83,9 +83,8 @@ class FeatureDataService(BaseDashboardService):
             
             df = pd.DataFrame(result, columns=columns)
             
-            # Convert timestamp to datetime
+            # Convert timestamp to datetime and reset index to make it a column
             df['timestamp'] = pd.to_datetime(df['timestamp'])
-            df.set_index('timestamp', inplace=True)
             
             self.logger.info(f"Retrieved {len(df)} feature records for {symbol}")
             return df

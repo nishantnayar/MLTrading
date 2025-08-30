@@ -198,6 +198,8 @@ class DeploymentConfigManager:
             
             if cron == "0 9-16 * * 1-5":  # Market hours pattern
                 return self._calculate_market_hours_next_run(current_time, tz)
+            elif cron == "10 9-15/2 * * 1-5":  # Every 2 hours during market, 10 minutes after
+                return self._calculate_every_two_hours_next_run(current_time, tz)
             elif cron.startswith("0 ") and cron.count(" ") == 4:  # Daily patterns
                 hour = int(cron.split()[1])
                 return self._calculate_daily_next_run(current_time, tz, hour)
@@ -265,6 +267,37 @@ class DeploymentConfigManager:
             next_run = current_time.replace(minute=next_boundary, second=0, microsecond=0)
         
         return next_run
+    
+    def _calculate_every_two_hours_next_run(self, current_time: datetime, tz: pytz.BaseTzInfo) -> datetime:
+        """Calculate next run for every 2 hours during market hours (9, 11, 1, 3 PM)"""
+        # Convert to market timezone
+        market_time = current_time.astimezone(tz)
+        
+        # Market hours schedule: 9:10, 11:10, 13:10, 15:10 EST
+        market_hours = [9, 11, 13, 15]
+        minute = 10  # 10 minutes past the hour
+        
+        # Check if today is a weekday
+        if market_time.weekday() >= 5:  # Saturday or Sunday
+            # Find next Monday
+            days_until_monday = 7 - market_time.weekday()
+            next_monday = market_time.replace(hour=9, minute=minute, second=0, microsecond=0) + timedelta(days=days_until_monday)
+            return next_monday.astimezone(pytz.UTC)
+        
+        # Find next run time today
+        for hour in market_hours:
+            potential_run = market_time.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            if potential_run > market_time:
+                return potential_run.astimezone(pytz.UTC)
+        
+        # All runs for today are past, find next weekday
+        next_day = market_time + timedelta(days=1)
+        while next_day.weekday() >= 5:  # Skip weekends
+            next_day += timedelta(days=1)
+        
+        # First run of next trading day
+        next_run = next_day.replace(hour=9, minute=minute, second=0, microsecond=0)
+        return next_run.astimezone(pytz.UTC)
     
     def should_alert(self, deployment_name: str, last_failure_time: datetime) -> bool:
         """Check if an alert should be raised for a failed deployment"""

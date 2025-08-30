@@ -101,6 +101,10 @@ class DatabaseManager:
                     logger.error(f"Failed to get connection after {attempt + 1} attempts: {e}")
                     raise
             except Exception as e:
+                error_msg = str(e)
+                if "too many clients already" in error_msg:
+                    logger.error(f"Connection limit exceeded - consider reducing concurrency or max_workers")
+                    logger.error(f"Current pool: {self.min_conn}-{self.max_conn} connections")
                 logger.error(f"Unexpected error getting connection: {e}")
                 raise
     

@@ -14,8 +14,9 @@ def setup_production_logger(name: str, log_level: str = "INFO") -> logging.Logge
     Set up a production logger that avoids rotation conflicts.
     Uses timestamped log files to prevent concurrent access issues.
     """
-    # Create logs directory
-    logs_dir = Path("logs")
+    # Create logs directory in project root
+    project_root = Path(__file__).parent.parent.parent
+    logs_dir = project_root / "logs"
     logs_dir.mkdir(exist_ok=True)
     
     # Create logger

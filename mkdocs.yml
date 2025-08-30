@@ -1,0 +1,34 @@
+site_name: MLTrading Documentation
+site_description: ML-powered trading system with feature engineering and deployment automation
+
+theme:
+  name: material
+  palette:
+    primary: blue
+    accent: cyan
+
+nav:
+  - Home: index.md
+  - Architecture:
+    - System Overview: architecture/SYSTEM_ARCHITECTURE.md
+    - Connection Pool Solution: architecture/CONNECTION_POOL_SOLUTION.md
+  - Deployment:
+    - Deployment Guide: deployment/deployments.md
+    - Testing Deployments: deployment/TESTING-DEPLOYMENTS.md
+  - Troubleshooting:
+    - Connection Issues: troubleshooting/TROUBLESHOOTING-CONNECTION-ISSUES.md
+  - Testing:
+    - Manual Tests: testing/regression_test_manual.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+
+docs_dir: docs
+site_dir: site
+
+exclude_docs: |
+  logs/
+  __pycache__/

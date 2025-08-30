@@ -1,49 +1,46 @@
 # Deployment Configuration for Dashboard Monitoring
 # This file defines which Prefect deployments should be monitored by the dashboard
 # 
-# FEATURE ENGINEERING LEVELS:
-# - Phase 1+2+3: Comprehensive Advanced (90+ features) - Complete ML analysis
+# UPDATED DEPLOYMENT STRUCTURE:
+# - All deployments consolidated in deployments/ folder
+# - Yahoo data collection and feature engineering using refactored flows
 #
 # DEPLOYMENT PRIORITIES:
-# 1. High: Comprehensive feature engineering (every 2h during market) - 90+ features
+# 1. High: Feature engineering (every 2h during market) - Comprehensive processing
 # 2. Supporting: Data collection (hourly during market)
 
 deployments:
-  # Comprehensive Feature Engineering (Phase 1+2+3) - 90+ Features
-  comprehensive-feature-engineering-production-subprocess:
-    name: "comprehensive-feature-engineering-production-subprocess"
-    display_name: "Comprehensive Feature Engineering (90+ Features)"
-    description: "Production comprehensive feature engineering (Phase 1+2+3) with subprocess isolation - runs every 2 hours for complete feature sets"
+  # Feature Engineering (Refactored)
+  feature-engineering:
+    name: "feature-engineering"
+    display_name: "Feature Engineering (Comprehensive)"
+    description: "Comprehensive feature engineering (working processor) - refactored deployment"
     category: "advanced-pipeline"
-    priority: 1  # High priority for advanced features
+    priority: 1  # High priority for features
     schedule_type: "comprehensive_schedule"  # Every 2 hours during market hours
     tags:
       - features
       - production
+      - working
       - comprehensive
-      - phase3
-      - subprocess
-      - reliable
-      - advanced
-      - 90-features
-    expected_runtime_minutes: 20  # ~4s per symbol * 100 symbols
+      - refactored
+    expected_runtime_minutes: 20  # Processing time
     alert_threshold_hours: 3  # Important - alert if fails
 
 
-  # Production Yahoo Data Collection
-  yahoo-production-data-collection:
-    name: "yahoo-production-data-collection"
+  # Yahoo Data Collection (Refactored)
+  yahoo-data-collection:
+    name: "yahoo-data-collection"
     display_name: "Yahoo Finance Data Collection"
-    description: "Production Yahoo Finance data collection (3-day optimized) - runs hourly during market hours"
+    description: "Yahoo Finance data collection (working collector) - refactored deployment"
     category: "data-collection"
     priority: 2  # Supporting production deployment
     schedule_type: "market_hours"
     tags:
       - yahoo
       - production
-      - hourly
-      - optimized
-      - data-collection
+      - working
+      - refactored
     expected_runtime_minutes: 8  # 5-10 minutes for data collection
     alert_threshold_hours: 2  # Critical - alert quickly if fails
 
@@ -51,8 +48,8 @@ deployments:
 dashboard:
   # Which deployments to show on main dashboard (by priority)
   primary_deployments:
-    - comprehensive-feature-engineering-production-subprocess
-    - yahoo-production-data-collection
+    - feature-engineering
+    - yahoo-data-collection
   
   # Maximum number of deployments to show
   max_visible_deployments: 2

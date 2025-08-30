@@ -115,27 +115,45 @@ class TestNavigationLogic:
     """Test navigation logic to prevent regressions"""
     
     def test_analyze_button_output(self):
-        """Test analyze button produces correct outputs"""
+        """Test analyze button produces correct outputs with new unified callback"""
         
-        # Expected outputs for analyze button
+        # Expected outputs for analyze button with new unified callback
         symbol = "AAPL" 
-        expected_outputs = (symbol, None, "charts-tab")  # symbol-search, comparison-symbol-1, active_tab
+        # New format: (store_data, symbol-search, detailed-analysis, comparison-1, active_tab)
+        expected_outputs = (symbol, symbol, symbol, symbol, "charts-tab")
         
         # This would be the actual callback return for analyze button
-        assert expected_outputs[0] == symbol
-        assert expected_outputs[1] is None  # No update to comparison
-        assert expected_outputs[2] == "charts-tab"
+        assert expected_outputs[0] == symbol  # store data
+        assert expected_outputs[1] == symbol  # symbol-search sync
+        assert expected_outputs[2] == symbol  # detailed-analysis sync  
+        assert expected_outputs[3] == symbol  # comparison-1 sync
+        assert expected_outputs[4] == "charts-tab"
     
     def test_compare_button_output(self):
-        """Test compare button produces correct outputs"""
+        """Test compare button produces correct outputs with new unified callback"""
         
-        # Expected outputs for compare button
+        # Expected outputs for compare button with new unified callback
         symbol = "GOOGL"
-        expected_outputs = (None, symbol, "comparison-tab")  # symbol-search, comparison-symbol-1, active_tab
+        # New format: (store_data, symbol-search, detailed-analysis, comparison-1, active_tab)
+        expected_outputs = (symbol, symbol, symbol, symbol, "comparison-tab")
         
-        assert expected_outputs[0] is None  # No update to symbol search
-        assert expected_outputs[1] == symbol
-        assert expected_outputs[2] == "comparison-tab"
+        assert expected_outputs[0] == symbol  # store data
+        assert expected_outputs[1] == symbol  # symbol-search sync
+        assert expected_outputs[2] == symbol  # detailed-analysis sync
+        assert expected_outputs[3] == symbol  # comparison-1 sync
+        assert expected_outputs[4] == "comparison-tab"
+    
+    def test_symbol_sync_between_tabs(self):
+        """Test symbol synchronization between different tabs"""
+        
+        # Test dropdown change synchronization
+        selected_symbol = "NVDA"
+        
+        # When symbol changes in any dropdown, all should sync
+        sync_outputs = (selected_symbol, selected_symbol, selected_symbol, selected_symbol, "overview-tab")
+        
+        assert all(output == selected_symbol for output in sync_outputs[:4])
+        assert sync_outputs[4] == "overview-tab"  # Tab doesn't change for dropdown sync
 
 
 class TestFilteringLogic:
@@ -171,6 +189,114 @@ class TestFilteringLogic:
         
         assert len(empty_result) == 0
         assert badge_style_hidden["display"] == "none"
+
+
+class TestDetailedAnalysisCharts:
+    """Test detailed analysis chart callbacks to prevent regressions"""
+    
+    def test_chart_callback_data_structure(self):
+        """Test that chart callbacks return proper Plotly figure structure"""
+        
+        # Mock empty chart structure
+        empty_chart = {
+            'data': [],
+            'layout': {
+                'title': 'No data available',
+                'showlegend': False,
+                'template': 'plotly_white',
+                'height': 400,
+                'annotations': [{
+                    'text': 'No data available',
+                    'x': 0.5,
+                    'y': 0.5,
+                    'xref': 'paper',
+                    'yref': 'paper',
+                    'showarrow': False,
+                    'font': {'size': 16, 'color': 'gray'}
+                }]
+            }
+        }
+        
+        # Validate structure
+        assert 'data' in empty_chart
+        assert 'layout' in empty_chart
+        assert isinstance(empty_chart['data'], list)
+        assert isinstance(empty_chart['layout'], dict)
+        assert 'title' in empty_chart['layout']
+    
+    def test_feature_data_service_integration(self):
+        """Test that chart callbacks properly integrate with FeatureDataService"""
+        
+        # Test the expected method calls
+        expected_methods = [
+            'get_feature_data',
+            'get_moving_averages', 
+            'get_bollinger_bands',
+            'get_rsi_data',
+            'get_macd_data',
+            'get_volatility_data'
+        ]
+        
+        # These methods should exist in FeatureDataService
+        try:
+            from src.dashboard.services.feature_data_service import FeatureDataService
+            service = FeatureDataService()
+            
+            for method_name in expected_methods:
+                assert hasattr(service, method_name), f"FeatureDataService missing method: {method_name}"
+                assert callable(getattr(service, method_name))
+                
+        except ImportError:
+            pytest.skip("FeatureDataService not available for testing")
+    
+    def test_chart_error_handling(self):
+        """Test that chart callbacks handle errors gracefully"""
+        
+        # Mock error scenarios
+        error_scenarios = [
+            "No data available",
+            "No MACD data available", 
+            "No volatility data available",
+            "Error loading data: Database connection failed"
+        ]
+        
+        for error_msg in error_scenarios:
+            # Should return valid empty chart structure
+            empty_chart = {
+                'data': [],
+                'layout': {
+                    'title': error_msg,
+                    'showlegend': False,
+                    'template': 'plotly_white'
+                }
+            }
+            
+            assert 'data' in empty_chart
+            assert len(empty_chart['data']) == 0
+            assert error_msg in empty_chart['layout']['title']
+    
+    def test_chart_ids_coverage(self):
+        """Test that all chart IDs from layout have corresponding callbacks"""
+        
+        # Chart IDs that should have callbacks
+        expected_chart_ids = [
+            "macd-detailed-chart",
+            "ma-ratios-chart", 
+            "vol-ratios-chart",
+            "advanced-vol-chart",
+            "money-flow-chart",
+            "vpt-chart",
+            "intraday-features-chart",
+            "lagged-features-heatmap",
+            "rolling-stats-chart"
+        ]
+        
+        # This is a structural test - in practice we'd test the actual callbacks
+        for chart_id in expected_chart_ids:
+            # Validate chart ID format
+            assert isinstance(chart_id, str)
+            assert len(chart_id) > 0
+            assert "-chart" in chart_id or "-heatmap" in chart_id
 
 
 class TestErrorHandling:

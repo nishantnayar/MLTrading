@@ -73,8 +73,9 @@ def setup_concurrent_safe_logger(name: str,
     Returns:
         Configured logger
     """
-    # Create logs directory
-    logs_dir = Path("logs")
+    # Create logs directory in project root
+    project_root = Path(__file__).parent.parent.parent
+    logs_dir = project_root / "logs"
     logs_dir.mkdir(exist_ok=True)
     
     # Create logger
@@ -160,7 +161,8 @@ def cleanup_old_process_logs(max_age_hours: int = 24):
     Clean up old process-specific log files.
     Should be called periodically in a maintenance task.
     """
-    logs_dir = Path("logs")
+    project_root = Path(__file__).parent.parent.parent
+    logs_dir = project_root / "logs"
     if not logs_dir.exists():
         return
     

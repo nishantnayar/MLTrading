@@ -210,7 +210,10 @@ def generate_test_report(automated_passed):
 For comprehensive testing, run the manual test checklist in tests/regression_test_manual.md
 """
 
-    report_path = Path("regression_test_report.md")
+    # Generate report in logs folder
+    logs_dir = Path("logs")
+    logs_dir.mkdir(exist_ok=True)
+    report_path = logs_dir / "regression_test_report.md"
     with open(report_path, "w", encoding='utf-8') as f:
         f.write(report)
 

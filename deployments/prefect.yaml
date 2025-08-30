@@ -1,11 +1,11 @@
-# Prefect deployment configuration for ML Trading System
-name: ml-trading-deployments
-description: ML Trading System with Yahoo Finance data collection and comprehensive feature engineering (90+ features)
+# Simple Yahoo Finance Data Collection Deployment
+name: yahoo-data-collection
+description: Simple Yahoo Finance data collection using the working collector
 
 # Build configuration
 build: null
 
-# Push configuration  
+# Push configuration
 push: null
 
 # Pull configuration
@@ -13,59 +13,43 @@ pull:
 - prefect.deployments.steps.set_working_directory:
     directory: D:\PythonProjects\MLTrading
 
-# Production deployment configurations
-# 
-# Current Architecture:
-# 1. Yahoo Finance data collection (hourly during market hours)
-# 2. Comprehensive feature engineering (every 2 hours, 90+ features, Phase 1+2+3)
-#
+# Deployments
 deployments:
-# Regular Yahoo Finance data collection (production)
-- name: yahoo-production-data-collection
-  description: Production Yahoo Finance data collection (3-day optimized) - runs hourly during market hours
+- name: combined-sequential
+  description: Sequential Yahoo data collection followed by feature engineering
+  tags:
+  - sequential
+  - production
+  - working
+  - combined
+  schedule:
+    cron: "0 10,12,14,16 * * 1-5"  # Every 2 hours during market hours
+    timezone: America/New_York
+  entrypoint: combined_flow.py:combined_sequential_flow
+  work_pool:
+    name: features-pool
+
+- name: yahoo-data-collection
+  description: Yahoo Finance data collection (working collector) - standalone
   tags:
   - yahoo
   - production
-  - hourly
-  - optimized
-  schedule:
-    cron: "0 9-16 * * 1-5"  # Every hour from 9-16 EST on Monday-Friday
-    timezone: America/New_York
-  entrypoint: deployments/yahoo_production_deployment.py:production_data_flow
+  - working
+  - standalone
+  schedule: null  # Disabled - use combined flow instead
+  entrypoint: yahoo_flow.py:yahoo_data_collection_flow
   work_pool:
-    name: yahoo-data-pool
-    work_queue_name: default
-  parameters:
-    data_period: "3d"  # Optimized 3-day period for incremental updates
-  job_variables:
-    FLOW_ENVIRONMENT: production
-    DATA_SOURCE: yahoo_finance
-    COLLECTION_TYPE: incremental
+    name: features-pool
 
-# Comprehensive feature engineering with subprocess isolation (production)
-- name: comprehensive-feature-engineering-production-subprocess
-  description: Production comprehensive feature engineering (Phase 1+2+3) with subprocess isolation - runs every 2 hours for complete feature sets
+- name: feature-engineering
+  description: Comprehensive feature engineering (working processor) - standalone
   tags:
   - features
   - production
+  - working
   - comprehensive
-  - phase3
-  - subprocess
-  - reliable
-  - advanced
-  - 90-features
-  schedule:
-    cron: "10 9-15/2 * * 1-5"  # 10 minutes after 9, 11, 13, 15 EST during market hours
-    timezone: America/New_York
-  entrypoint: deployments/comprehensive_feature_engineering_deployment.py:production_comprehensive_features_flow
+  - standalone
+  schedule: null  # Disabled - use combined flow instead
+  entrypoint: feature_engineering_flow.py:feature_engineering_flow
   work_pool:
-    name: comprehensive-feature-engineering-pool
-    work_queue_name: default
-  parameters:
-    initial_run: false  # Incremental mode for production
-  job_variables:
-    FLOW_ENVIRONMENT: production
-    FEATURE_MODE: incremental_subprocess
-    FEATURE_VERSION: "3.0"
-    RELIABILITY_MODE: "subprocess_isolation"
-    FEATURE_PHASES: "1+2+3"
+    name: features-pool

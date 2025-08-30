@@ -21,6 +21,7 @@ from prefect.runtime import flow_run
 from src.data.collectors.yahoo_collector import fetch_yahoo_data, prepare_data_for_insert
 from src.utils.logging_config import get_combined_logger
 from src.data.storage.database import get_db_manager
+from src.utils.sequential_task_runner import get_safe_task_runner
 
 # Market hours configuration
 MARKET_TIMEZONE = pytz.timezone('America/New_York')
@@ -275,8 +276,7 @@ def log_workflow_metrics(summary: Dict[str, Any]) -> None:
 
 @flow(
     name="yahoo-market-hours-data-collection",
-    description="Collects Yahoo Finance data during market hours with configurable time period",
-    task_runner=ConcurrentTaskRunner(max_workers=3),
+    description="Collects Yahoo Finance data during market hours with sequential processing (default) to prevent connection exhaustion",
     log_prints=True,
     flow_run_name=generate_flow_run_name
 )

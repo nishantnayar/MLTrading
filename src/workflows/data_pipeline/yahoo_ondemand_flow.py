@@ -190,9 +190,8 @@ def generate_ondemand_summary(results: List[Dict[str, Any]], run_type: str = "ma
     return summary
 
 @flow(
-    name="yahoo-ondemand-data-collection",
-    description="On-demand Yahoo Finance data collection - can run anytime regardless of market hours",
-    task_runner=ConcurrentTaskRunner(max_workers=5),
+    name="yahoo-ondemand-data-collection", 
+    description="On-demand Yahoo Finance data collection with sequential processing (default) to prevent connection exhaustion",
     log_prints=True,
     flow_run_name=generate_ondemand_run_name
 )

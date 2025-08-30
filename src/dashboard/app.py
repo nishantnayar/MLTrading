@@ -31,6 +31,7 @@ from src.dashboard.callbacks import register_chart_callbacks, register_overview_
 from src.dashboard.callbacks.interactive_chart_callbacks import register_interactive_chart_callbacks
 from src.dashboard.callbacks.trading_callbacks import register_trading_callbacks
 from src.dashboard.callbacks.detailed_analysis_callbacks import register_detailed_analysis_callbacks
+from src.dashboard.callbacks.symbol_sync_callbacks import register_symbol_sync_callbacks
 from src.dashboard.utils.date_formatters import get_current_timestamp
 
 # Initialize logger
@@ -222,6 +223,7 @@ def update_footer_timestamp(n_intervals):
 register_trading_callbacks(app)  # Register trading callbacks
 register_pipeline_callbacks(app)  # Register pipeline status callbacks
 register_detailed_analysis_callbacks(app)  # Register detailed analysis callbacks
+register_symbol_sync_callbacks(app)  # Register symbol synchronization callbacks
 
 if __name__ == '__main__':
     logger.info("Starting ML Trading Dashboard...")

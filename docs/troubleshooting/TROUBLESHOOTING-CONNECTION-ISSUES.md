@@ -10,15 +10,17 @@
 ## Solution Implemented
 
 ### 1. Reduced Connection Pool Sizes
-**Before**: Each DatabaseManager used 2-10 connections
-**After**: Each DatabaseManager uses 1-3 connections
+**Before**: Each DatabaseManager used 2-10 connections  
+**After**: Each DatabaseManager uses 1-2 connections (ultra-conservative)
 
 ### 2. Smart Connection Configuration
 - **PostgreSQL max_connections**: 100
 - **System reserved**: 20 connections
 - **Available for MLTrading**: 80 connections
 - **Expected concurrent processes**: 10
-- **Connections per process**: 3 (conservative limit)
+- **Updated workflow concurrency**: Reduced from 5 to 2 workers max
+- **Connections per process**: 2 (ultra-conservative limit)  
+- **Yahoo workflow**: 2 concurrent workers max (reduced from 5)
 
 ### 3. Improved Connection Management
 - Added connection timeout (30 seconds)

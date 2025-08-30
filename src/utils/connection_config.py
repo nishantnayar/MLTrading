@@ -23,7 +23,12 @@ class ConnectionConfig:
     
     # Connection pool settings for each DatabaseManager instance
     MIN_POOL_SIZE = 1
-    MAX_POOL_SIZE = min(3, CONNECTIONS_PER_PROCESS)  # Conservative: 3 connections max per process
+    MAX_POOL_SIZE = 1  # Single connection per process - most conservative
+    
+    # Alternative configurations based on workload
+    SEQUENTIAL_POOL_SIZE = 1    # For sequential processing
+    BATCH_POOL_SIZE = 2         # For small batch processing  
+    CONCURRENT_POOL_SIZE = 3    # Only for non-connection intensive tasks
     
     # Connection timeout and retry settings  
     CONNECTION_TIMEOUT = 30  # seconds
