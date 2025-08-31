@@ -4,12 +4,13 @@ Handles portfolio analytics, trading statistics, and performance calculations.
 """
 
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from .base_service import BaseDashboardService
 
 
 class AnalyticsService(BaseDashboardService):
     """Service to handle analytics and statistics operations."""
+
 
     def get_summary_statistics(self) -> Dict[str, Any]:
         """Get summary statistics for the dashboard."""
@@ -34,6 +35,7 @@ class AnalyticsService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting summary statistics: {e}")
             return self.get_fallback_data('statistics')
+
 
     def get_market_overview(self, days: int = 30) -> Dict[str, Any]:
         """Get market overview data for the specified period."""
@@ -72,6 +74,7 @@ class AnalyticsService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting market overview: {e}")
             return {'dates': [], 'values': []}
+
 
     def get_top_performers(self, days: int = 1, limit: int = 10) -> List[Dict[str, Any]]:
         """Get top performing stocks over the specified period."""
@@ -140,6 +143,7 @@ class AnalyticsService(BaseDashboardService):
             self.logger.error(f"Error getting top performers: {e}")
             return []
 
+
     def get_recent_activity(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent trading activity."""
         try:
@@ -174,6 +178,7 @@ class AnalyticsService(BaseDashboardService):
             self.logger.error(f"Error getting recent activity: {e}")
             return []
 
+
     def get_portfolio_performance(self, days: int = 30) -> Dict[str, Any]:
         """Get portfolio performance metrics."""
         try:
@@ -197,6 +202,7 @@ class AnalyticsService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting portfolio performance: {e}")
             return {}
+
 
     def get_symbol_correlation(self, symbols: List[str], days: int = 90) -> Dict[str, Any]:
         """Calculate correlation matrix for given symbols."""
@@ -261,6 +267,7 @@ class AnalyticsService(BaseDashboardService):
             self.logger.error(f"Error calculating symbol correlation: {e}")
             return {}
 
+
     def get_volatility_metrics(self, symbol: str, days: int = 30) -> Dict[str, Any]:
         """Calculate volatility metrics for a symbol."""
         try:
@@ -323,3 +330,4 @@ class AnalyticsService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error calculating volatility metrics for {symbol}: {e}")
             return {}
+

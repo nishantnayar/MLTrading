@@ -11,6 +11,8 @@ class AlertFactory:
     """Factory class for creating standardized alerts."""
 
     @staticmethod
+
+
     def create_trading_error_alert(
         error_message: str,
         component: str,
@@ -29,6 +31,8 @@ class AlertFactory:
         )
 
     @staticmethod
+
+
     def create_order_failure_alert(
         symbol: str,
         order_type: str,
@@ -54,6 +58,8 @@ class AlertFactory:
         )
 
     @staticmethod
+
+
     def create_data_pipeline_error_alert(
         pipeline_name: str,
         error_message: str,
@@ -72,6 +78,8 @@ class AlertFactory:
         )
 
     @staticmethod
+
+
     def create_database_connection_alert(
         error_message: str,
         component: str = "Database",
@@ -89,6 +97,8 @@ class AlertFactory:
         )
 
     @staticmethod
+
+
     def create_api_error_alert(
         api_name: str,
         error_message: str,
@@ -107,6 +117,8 @@ class AlertFactory:
         )
 
     @staticmethod
+
+
     def create_circuit_breaker_alert(
         service_name: str,
         component: str,
@@ -124,6 +136,8 @@ class AlertFactory:
         )
 
     @staticmethod
+
+
     def create_system_startup_alert(
         component: str,
         version: Optional[str] = None,
@@ -142,6 +156,8 @@ class AlertFactory:
         )
 
     @staticmethod
+
+
     def create_system_shutdown_alert(
         component: str,
         reason: str = "Normal shutdown",
@@ -159,6 +175,8 @@ class AlertFactory:
         )
 
     @staticmethod
+
+
     def create_performance_alert(
         metric_name: str,
         current_value: float,
@@ -185,6 +203,8 @@ class AlertFactory:
         )
 
     @staticmethod
+
+
     def create_security_alert(
         title: str,
         message: str,
@@ -203,6 +223,8 @@ class AlertFactory:
         )
 
     @staticmethod
+
+
     def create_feature_engineering_alert(
         pipeline_name: str,
         message: str,
@@ -222,6 +244,8 @@ class AlertFactory:
         )
 
     @staticmethod
+
+
     def create_data_freshness_alert(
         data_source: str,
         last_update: datetime,
@@ -249,3 +273,4 @@ class AlertFactory:
             component=component,
             metadata=metadata
         )
+

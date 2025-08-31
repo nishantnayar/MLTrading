@@ -23,6 +23,8 @@ logger = get_ui_logger("deployment_config")
 
 
 @dataclass
+
+
 class DeploymentConfig:
     """Configuration for a single deployment"""
     name: str
@@ -35,6 +37,7 @@ class DeploymentConfig:
     expected_runtime_minutes: int
     alert_threshold_hours: int
 
+
     def __post_init__(self):
         """Validate configuration after initialization"""
         if self.priority < 1:
@@ -46,6 +49,8 @@ class DeploymentConfig:
 
 
 @dataclass
+
+
 class ScheduleType:
     """Schedule type definition"""
     cron: str
@@ -55,6 +60,7 @@ class ScheduleType:
 
 class DeploymentConfigManager:
     """Manages deployment configurations for the dashboard"""
+
 
     def __init__(self, config_path: Optional[str] = None):
         """Initialize with config file path"""
@@ -70,6 +76,7 @@ class DeploymentConfigManager:
         self._dashboard_settings = {}
 
         self._load_config()
+
 
     def _load_config(self) -> None:
         """Load configuration from YAML file"""
@@ -120,13 +127,16 @@ class DeploymentConfigManager:
             self._schedule_types = {}
             self._dashboard_settings = {}
 
+
     def get_deployment(self, name: str) -> Optional[DeploymentConfig]:
         """Get deployment configuration by name"""
         return self._deployments.get(name)
 
+
     def get_all_deployments(self) -> Dict[str, DeploymentConfig]:
         """Get all deployment configurations"""
         return self._deployments.copy()
+
 
     def get_deployments_by_category(self, category: str) -> Dict[str, DeploymentConfig]:
         """Get deployments filtered by category"""
@@ -134,6 +144,7 @@ class DeploymentConfigManager:
             name: config for name, config in self._deployments.items()
             if config.category == category
         }
+
 
     def get_deployments_by_priority(self, limit: Optional[int] = None) -> List[DeploymentConfig]:
         """Get deployments sorted by priority (highest first)"""
@@ -147,6 +158,7 @@ class DeploymentConfigManager:
 
         return sorted_deployments
 
+
     def get_primary_deployments(self) -> List[str]:
         """Get list of primary deployment names for dashboard"""
         primary = self._dashboard_settings.get('primary_deployments', [])
@@ -158,13 +170,16 @@ class DeploymentConfigManager:
 
         return primary
 
+
     def get_schedule_type(self, name: str) -> Optional[ScheduleType]:
         """Get schedule type by name"""
         return self._schedule_types.get(name)
 
+
     def get_dashboard_setting(self, key: str, default: Any = None) -> Any:
         """Get dashboard setting by key"""
         return self._dashboard_settings.get(key, default)
+
 
     def calculate_next_run(self, deployment_name: str, current_time: Optional[datetime] = None) -> Optional[datetime]:
         """Calculate next scheduled run for a deployment"""
@@ -190,6 +205,7 @@ class DeploymentConfigManager:
 
         return self._calculate_next_run_from_cron(schedule_type.cron, current_time, tz)
 
+
     def _calculate_next_run_from_cron(self, cron: str, current_time: datetime, tz: pytz.BaseTzInfo) -> Optional[datetime]:
         """Calculate next run from cron expression (simplified implementation)"""
         try:
@@ -213,6 +229,7 @@ class DeploymentConfigManager:
         except Exception as e:
             logger.error(f"Error calculating next run from cron '{cron}': {e}")
             return None
+
 
     def _calculate_market_hours_next_run(self, current_time: datetime, tz: pytz.BaseTzInfo) -> datetime:
         """Calculate next run for market hours schedule (9 AM - 4 PM EST, weekdays)"""
@@ -241,6 +258,7 @@ class DeploymentConfigManager:
 
         return next_run
 
+
     def _calculate_daily_next_run(self, current_time: datetime, tz: pytz.BaseTzInfo, hour: int) -> datetime:
         """Calculate next run for daily schedule at specific hour"""
         now = current_time.astimezone(tz)
@@ -255,6 +273,7 @@ class DeploymentConfigManager:
 
         return next_run
 
+
     def _calculate_interval_next_run(self, current_time: datetime, interval_minutes: int) -> datetime:
         """Calculate next run for interval-based schedule"""
         # Round up to next interval boundary
@@ -267,6 +286,7 @@ class DeploymentConfigManager:
             next_run = current_time.replace(minute=next_boundary, second=0, microsecond=0)
 
         return next_run
+
 
     def _calculate_every_two_hours_next_run(self, current_time: datetime, tz: pytz.BaseTzInfo) -> datetime:
         """Calculate next run for every 2 hours during market hours (9, 11, 1, 3 PM)"""
@@ -299,6 +319,7 @@ class DeploymentConfigManager:
         next_run = next_day.replace(hour=9, minute=minute, second=0, microsecond=0)
         return next_run.astimezone(pytz.UTC)
 
+
     def should_alert(self, deployment_name: str, last_failure_time: datetime) -> bool:
         """Check if an alert should be raised for a failed deployment"""
         deployment = self.get_deployment(deployment_name)
@@ -307,6 +328,7 @@ class DeploymentConfigManager:
 
         time_since_failure = datetime.now() - last_failure_time
         return time_since_failure.total_seconds() > (deployment.alert_threshold_hours * 3600)
+
 
     def reload_config(self) -> None:
         """Reload configuration from file"""
@@ -317,9 +339,11 @@ class DeploymentConfigManager:
 # Global instance
 _deployment_config = None
 
+
 def get_deployment_config() -> DeploymentConfigManager:
     """Get global deployment configuration manager instance"""
     global _deployment_config
     if _deployment_config is None:
         _deployment_config = DeploymentConfigManager()
     return _deployment_config
+

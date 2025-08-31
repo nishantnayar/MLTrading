@@ -11,3 +11,4 @@ __all__ = [
     'register_comparison_callbacks',
     'register_pipeline_callbacks'
 ]
+

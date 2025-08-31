@@ -4,12 +4,11 @@ Contains the logs page UI components and log viewing functionality.
 """
 
 import dash
-from dash import html, dcc, Input, Output, State, callback_context
+from dash import html, dcc, Input, Output, State
 import dash_bootstrap_components as dbc
 import sys
 from pathlib import Path
 import pandas as pd
-import json
 import logging
 
 # Add the project root to Python path
@@ -24,6 +23,7 @@ from src.dashboard.utils.log_viewer import (
 
 # Initialize logger
 logger = get_ui_logger("dashboard")
+
 
 def create_logs_layout():
     """Create the logs page layout"""
@@ -52,6 +52,7 @@ def create_logs_layout():
         ])
     ], fluid=True)
 
+
 def register_logs_callbacks(app):
     """Register callbacks for the logs page"""
 
@@ -65,6 +66,8 @@ def register_logs_callbacks(app):
          Input("log-symbol-filter", "value"),
          Input("refresh-logs-btn", "n_clicks")]
     )
+
+
     def update_logs(component_filter, level_filter, time_filter,
                    event_type_filter, symbol_filter, refresh_clicks):
         """Update log display based on filters"""
@@ -100,6 +103,8 @@ def register_logs_callbacks(app):
          State("log-event-type-filter", "value"),
          State("log-symbol-filter", "value")]
     )
+
+
     def toggle_analytics(n_clicks, component_filter, level_filter, time_filter,
                         event_type_filter, symbol_filter):
         """Toggle analytics section"""
@@ -131,6 +136,8 @@ def register_logs_callbacks(app):
         Output("analytics-section", "style"),
         [Input("analytics-btn", "n_clicks")]
     )
+
+
     def toggle_analytics_visibility(n_clicks):
         """Toggle analytics section visibility"""
         if not n_clicks:
@@ -151,6 +158,8 @@ def register_logs_callbacks(app):
          State("log-event-type-filter", "value"),
          State("log-symbol-filter", "value")]
     )
+
+
     def download_logs(n_clicks, component_filter, level_filter, time_filter,
                      event_type_filter, symbol_filter):
         """Download filtered logs as CSV"""
@@ -200,6 +209,8 @@ def register_logs_callbacks(app):
         [Input("clear-logs-btn", "n_clicks")],
         prevent_initial_call=True
     )
+
+
     def clear_logs(n_clicks):
         """Clear the combined log file"""
         if not n_clicks:
@@ -222,6 +233,8 @@ def register_logs_callbacks(app):
         Output("log-symbol-filter", "options"),
         [Input("log-event-type-filter", "value")]
     )
+
+
     def update_symbol_options(event_type):
         """Update symbol dropdown options based on available trading logs"""
         try:
@@ -247,3 +260,4 @@ def register_logs_callbacks(app):
         except Exception as e:
             logging.error(f"Error updating symbol options: {e}")
             return [{"label": "All Symbols", "value": "all"}]
+

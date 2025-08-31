@@ -25,6 +25,8 @@ def register_symbol_sync_callbacks(app):
         [State("selected-symbol-store", "data"),
          State("main-tabs", "active_tab")]
     )
+
+
     def sync_selected_symbol(overview_symbol, detailed_symbol, comparison_symbol, analyze_clicks, compare_clicks, stored_symbol, current_tab):
         """
         Synchronize symbol selection across all tabs and handle overview button clicks.
@@ -88,6 +90,8 @@ def register_symbol_sync_callbacks(app):
         [Input("selected-symbol-store", "data")],
         prevent_initial_call=True
     )
+
+
     def sync_comparison_symbol_2(selected_symbol):
         """Set comparison symbol 2 to a different default when main symbol changes."""
         if selected_symbol == "AAPL":
@@ -102,6 +106,8 @@ def register_symbol_sync_callbacks(app):
         [Input("selected-symbol-store", "data")],
         prevent_initial_call=True
     )
+
+
     def sync_comparison_symbol_3(selected_symbol):
         """Set comparison symbol 3 to a different default when main symbol changes."""
         if selected_symbol == "AAPL":
@@ -110,3 +116,4 @@ def register_symbol_sync_callbacks(app):
             return "NVDA"
         else:
             return "MSFT"
+

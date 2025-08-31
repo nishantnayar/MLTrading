@@ -18,10 +18,12 @@ from contextlib import contextmanager
 from ..data.storage.database import DatabaseManager
 from .logging_config import get_correlation_id, sanitize_log_message
 
+
 class DatabaseLogHandler(logging.Handler):
     """
     Custom logging handler that writes logs to PostgreSQL database
     """
+
 
     def __init__(self, db_manager: DatabaseManager = None,
                  table_name: str = "system_logs",
@@ -62,6 +64,7 @@ class DatabaseLogHandler(logging.Handler):
             'last_write': None
         }
 
+
     def emit(self, record):
         """
         Emit a log record to the database queue
@@ -85,7 +88,7 @@ class DatabaseLogHandler(logging.Handler):
             if not correlation_id:
                 try:
                     correlation_id = get_correlation_id()
-                except:
+                except Exception:
                     correlation_id = None
 
             # Prepare log entry
@@ -106,13 +109,14 @@ class DatabaseLogHandler(logging.Handler):
             # Add to queue (non-blocking)
             try:
                 self.log_queue.put_nowait(log_entry)
-            except:
+            except Exception:
                 # Queue is full, drop the log entry
                 self.stats['logs_dropped'] += 1
 
         except Exception as e:
             # Don't raise exceptions from logging handlers
             self.handleError(record)
+
 
     def _extract_metadata(self, record) -> Dict[str, Any]:
         """
@@ -144,10 +148,11 @@ class DatabaseLogHandler(logging.Handler):
             process = psutil.Process()
             metadata['memory_usage_mb'] = process.memory_info().rss / 1024 / 1024
             metadata['cpu_percent'] = process.cpu_percent()
-        except:
+        except Exception:
             pass
 
         return metadata
+
 
     def _log_writer(self):
         """
@@ -180,6 +185,7 @@ class DatabaseLogHandler(logging.Handler):
                 batch.clear()
                 time.sleep(1)  # Brief pause before retrying
 
+
     def _write_batch(self, batch: List[Dict[str, Any]]):
         """
         Write a batch of log entries to database
@@ -195,7 +201,7 @@ class DatabaseLogHandler(logging.Handler):
             conn = self.db_manager.get_connection()
             with conn.cursor() as cursor:
                 # Prepare SQL
-                sql = f"""
+                sql = """
                 INSERT INTO {self.table_name}
                 (timestamp, level, logger_name, correlation_id, message,
                  module, function_name, line_number, thread_name, process_id, metadata)
@@ -216,23 +222,25 @@ class DatabaseLogHandler(logging.Handler):
             try:
                 fallback_logger = logging.getLogger('database_log_fallback')
                 fallback_logger.error(f"Failed to write {len(batch)} logs to database: {e}")
-            except:
+            except Exception:
                 pass  # Give up if fallback also fails
         finally:
             if conn:
                 try:
                     self.db_manager.return_connection(conn)
-                except:
+                except Exception:
                     pass
+
 
     def flush(self):
         """
         Flush any pending log records
         """
         # Signal the writer thread to flush
-        start_time = time.time()
+        # start_time = time.time()  # Currently unused
         while not self.log_queue.empty() and time.time() - start_time < 5:
             time.sleep(0.1)
+
 
     def close(self):
         """
@@ -249,6 +257,7 @@ class DatabaseLogHandler(logging.Handler):
 
         super().close()
 
+
     def get_stats(self) -> Dict[str, Any]:
         """
         Get handler statistics
@@ -262,10 +271,12 @@ class DatabaseLogHandler(logging.Handler):
             'thread_alive': self.writer_thread.is_alive()
         }
 
+
 class BatchedLogger:
     """
     Base class for batched database logging with connection pooling optimization
     """
+
 
     def __init__(self, db_manager: DatabaseManager = None, table_name: str = None,
                  batch_size: int = 50, flush_interval: float = 5.0):
@@ -276,6 +287,7 @@ class BatchedLogger:
         self.batch = []
         self.last_flush = time.time()
         self._lock = threading.Lock()
+
 
     def _add_to_batch(self, data: Dict[str, Any]):
         """Add data to batch and flush if necessary"""
@@ -289,6 +301,7 @@ class BatchedLogger:
             if should_flush:
                 self._flush_batch()
 
+
     def _flush_batch(self):
         """Flush the current batch to database"""
         if not self.batch:
@@ -301,17 +314,21 @@ class BatchedLogger:
         # Write batch in background thread to avoid blocking
         threading.Thread(target=self._write_batch, args=(current_batch,), daemon=True).start()
 
+
     def _write_batch(self, batch: List[Dict[str, Any]]):
         """Override in subclasses"""
         pass
+
 
 class DataCollectionLogger(BatchedLogger):
     """
     Specialized logger for data collection events
     """
 
+
     def __init__(self, db_manager: DatabaseManager = None):
         super().__init__(db_manager, 'data_collection_logs', batch_size=25, flush_interval=3.0)
+
 
     def log_data_collection(self, operation_type: str, data_source: str,
                            symbol: str = None, records_processed: int = None,
@@ -351,6 +368,7 @@ class DataCollectionLogger(BatchedLogger):
             fallback_logger = logging.getLogger('data_collection_fallback')
             fallback_logger.error(f"Failed to log data collection event: {e}")
 
+
     def _write_batch(self, batch: List[Dict[str, Any]]):
         """Write batch of data collection logs to database"""
         if not batch:
@@ -377,16 +395,19 @@ class DataCollectionLogger(BatchedLogger):
             if conn:
                 try:
                     self.db_manager.return_connection(conn)
-                except:
+                except Exception:
                     pass
+
 
 class UIInteractionLogger:
     """
     Specialized logger for UI interaction events
     """
 
+
     def __init__(self, db_manager: DatabaseManager = None):
         self.db_manager = db_manager or DatabaseManager()
+
 
     def log_ui_interaction(self, component: str, action: str = None,
                           user_id: str = None, session_id: str = None,
@@ -432,13 +453,16 @@ class UIInteractionLogger:
             fallback_logger = logging.getLogger('ui_interaction_fallback')
             fallback_logger.error(f"Failed to log UI interaction: {e}")
 
+
 class APIRequestLogger:
     """
     Specialized logger for API request events
     """
 
+
     def __init__(self, db_manager: DatabaseManager = None):
         self.db_manager = db_manager or DatabaseManager()
+
 
     def log_api_request(self, endpoint: str, method: str = 'GET',
                        status_code: int = None, duration_ms: float = None,
@@ -491,13 +515,16 @@ class APIRequestLogger:
             fallback_logger = logging.getLogger('api_request_fallback')
             fallback_logger.error(f"Failed to log API request: {e}")
 
+
 class ErrorLogger:
     """
     Specialized logger for error events
     """
 
+
     def __init__(self, db_manager: DatabaseManager = None):
         self.db_manager = db_manager or DatabaseManager()
+
 
     def log_error(self, error_type: str, error_message: str, component: str = None,
                   severity: str = 'MEDIUM', stack_trace: str = None,
@@ -558,13 +585,16 @@ class ErrorLogger:
             fallback_logger = logging.getLogger('error_fallback')
             fallback_logger.error(f"Failed to log error to database: {e}")
 
+
 class TradingEventLogger:
     """
     Specialized logger for trading events
     """
 
+
     def __init__(self, db_manager: DatabaseManager = None):
         self.db_manager = db_manager or DatabaseManager()
+
 
     def log_trading_event(self, event_type: str, symbol: str = None,
                          side: str = None, quantity: float = None,
@@ -616,13 +646,16 @@ class TradingEventLogger:
             fallback_logger = logging.getLogger('trading_events_fallback')
             fallback_logger.error(f"Failed to log trading event: {e}")
 
+
 class PerformanceLogger:
     """
     Specialized logger for performance metrics
     """
 
+
     def __init__(self, db_manager: DatabaseManager = None):
         self.db_manager = db_manager or DatabaseManager()
+
 
     def log_performance(self, operation_name: str, duration_ms: float,
                        status: str = 'success', component: str = None, **metadata):
@@ -644,7 +677,7 @@ class PerformanceLogger:
                 process = psutil.Process()
                 memory_usage_mb = process.memory_info().rss / 1024 / 1024
                 cpu_usage_percent = process.cpu_percent()
-            except:
+            except Exception:
                 memory_usage_mb = None
                 cpu_usage_percent = None
 
@@ -678,6 +711,8 @@ class PerformanceLogger:
             fallback_logger.error(f"Failed to log performance data: {e}")
 
 @contextmanager
+
+
 def log_performance_to_db(operation_name: str, component: str = None, **metadata):
     """
     Context manager for logging performance to database
@@ -688,7 +723,7 @@ def log_performance_to_db(operation_name: str, component: str = None, **metadata
         **metadata: Additional metadata
     """
     perf_logger = PerformanceLogger()
-    start_time = time.time()
+    # start_time = time.time()  # Currently unused
 
     try:
         yield
@@ -708,12 +743,14 @@ _ui_interaction_logger = None
 _api_request_logger = None
 _error_logger = None
 
+
 def get_trading_logger() -> TradingEventLogger:
     """Get global trading event logger"""
     global _trading_logger
     if _trading_logger is None:
         _trading_logger = TradingEventLogger()
     return _trading_logger
+
 
 def get_performance_logger() -> PerformanceLogger:
     """Get global performance logger"""
@@ -722,12 +759,14 @@ def get_performance_logger() -> PerformanceLogger:
         _performance_logger = PerformanceLogger()
     return _performance_logger
 
+
 def get_data_collection_logger() -> DataCollectionLogger:
     """Get global data collection logger"""
     global _data_collection_logger
     if _data_collection_logger is None:
         _data_collection_logger = DataCollectionLogger()
     return _data_collection_logger
+
 
 def get_ui_interaction_logger() -> UIInteractionLogger:
     """Get global UI interaction logger"""
@@ -736,6 +775,7 @@ def get_ui_interaction_logger() -> UIInteractionLogger:
         _ui_interaction_logger = UIInteractionLogger()
     return _ui_interaction_logger
 
+
 def get_api_request_logger() -> APIRequestLogger:
     """Get global API request logger"""
     global _api_request_logger
@@ -743,9 +783,11 @@ def get_api_request_logger() -> APIRequestLogger:
         _api_request_logger = APIRequestLogger()
     return _api_request_logger
 
+
 def get_error_logger() -> ErrorLogger:
     """Get global error logger"""
     global _error_logger
     if _error_logger is None:
         _error_logger = ErrorLogger()
     return _error_logger
+

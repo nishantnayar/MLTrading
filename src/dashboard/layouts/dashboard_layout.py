@@ -30,8 +30,6 @@ from ..components.pipeline_status import (
 from .interactive_chart import create_chart_controls
 
 
-
-
 def create_overview_tab():
     """Create the overview tab content"""
     return dbc.Tab(
@@ -601,6 +599,7 @@ def create_comparison_tab():
         tab_id="comparison-tab"
     )
 
+
 def create_analysis_tab():
     """Create the comprehensive detailed analysis tab content"""
     return dbc.Tab(
@@ -865,8 +864,6 @@ def create_analysis_tab():
     )
 
 
-
-
 def create_dashboard_content():
     """Create the main dashboard content with tabs"""
     return html.Div([
@@ -883,3 +880,4 @@ def create_dashboard_content():
             create_analysis_tab()
         ], id="main-tabs", active_tab="overview-tab")
     ])
+

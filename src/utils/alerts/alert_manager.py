@@ -13,6 +13,7 @@ from .email_service import EmailService
 class RateLimiter:
     """Rate limiter for alerts to prevent spam."""
 
+
     def __init__(self, max_per_hour: int = 10, max_per_day: int = 50):
         """Initialize rate limiter."""
         self.max_per_hour = max_per_hour
@@ -20,6 +21,7 @@ class RateLimiter:
         self.hourly_counts = defaultdict(lambda: deque())
         self.daily_counts = defaultdict(lambda: deque())
         self.lock = threading.Lock()
+
 
     def can_send_alert(self, category: AlertCategory) -> bool:
         """
@@ -53,12 +55,14 @@ class RateLimiter:
 
             return True
 
+
     def record_alert_sent(self, category: AlertCategory) -> None:
         """Record that an alert was sent."""
         with self.lock:
             now = datetime.now(timezone.utc)
             self.hourly_counts[category].append(now)
             self.daily_counts[category].append(now)
+
 
     def get_stats(self) -> Dict[str, Dict[str, int]]:
         """Get current rate limiting statistics."""
@@ -76,6 +80,7 @@ class RateLimiter:
 
 class AlertManager:
     """Central alert management system."""
+
 
     def __init__(self, config: Dict[str, Any]):
         """Initialize alert manager with configuration."""
@@ -119,6 +124,7 @@ class AlertManager:
 
         self.logger.info(f"Alert manager initialized. Enabled: {self.enabled}")
 
+
     def send_alert(
         self,
         title: str,
@@ -154,6 +160,7 @@ class AlertManager:
         )
 
         return self.process_alert(alert)
+
 
     def process_alert(self, alert: Alert) -> AlertStatus:
         """
@@ -217,20 +224,24 @@ class AlertManager:
                 self.stats['failed_alerts'] += 1
             return AlertStatus.FAILED
 
+
     def _should_send_by_severity(self, alert: Alert) -> bool:
         """Check if alert meets minimum severity threshold."""
         return alert.severity >= self.min_severity
+
 
     def _should_send_by_category(self, alert: Alert) -> bool:
         """Check if alert category is enabled."""
         category_config = self.category_configs.get(alert.category.value, {})
         return category_config.get('enabled', True)
 
+
     def _should_send_by_rate_limit(self, alert: Alert) -> bool:
         """Check if alert passes rate limiting."""
         if not self.rate_limiter:
             return True
         return self.rate_limiter.can_send_alert(alert.category)
+
 
     def send_critical_alert(
         self,
@@ -250,6 +261,7 @@ class AlertManager:
             metadata=metadata
         )
 
+
     def send_trading_error_alert(
         self,
         error_message: str,
@@ -265,6 +277,7 @@ class AlertManager:
             component=component,
             metadata=metadata
         )
+
 
     def send_system_health_alert(
         self,
@@ -284,6 +297,7 @@ class AlertManager:
             metadata=metadata
         )
 
+
     def send_data_pipeline_alert(
         self,
         title: str,
@@ -302,6 +316,7 @@ class AlertManager:
             metadata=metadata
         )
 
+
     def send_security_alert(
         self,
         title: str,
@@ -318,6 +333,7 @@ class AlertManager:
             component=component,
             metadata=metadata
         )
+
 
     def test_alert_system(self) -> bool:
         """Test the alert system by sending a test alert."""
@@ -336,6 +352,7 @@ class AlertManager:
         self.logger.info(f"Alert system test {'passed' if success else 'failed'}: {status.value}")
         return success
 
+
     def get_stats(self) -> Dict[str, Any]:
         """Get alert system statistics."""
         with self.stats_lock:
@@ -352,6 +369,7 @@ class AlertManager:
 
         return stats
 
+
     def get_status(self) -> Dict[str, Any]:
         """Get current status of the alert system."""
         return {
@@ -364,3 +382,4 @@ class AlertManager:
                 for cat in [c.value for c in AlertCategory]
             }
         }
+

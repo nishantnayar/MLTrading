@@ -19,9 +19,11 @@ class ConcurrentSafeRotatingFileHandler(logging.handlers.RotatingFileHandler):
     Prevents PermissionError during log rotation in multi-process environments.
     """
 
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._rotation_lock = threading.Lock()
+
 
     def doRollover(self):
         """
@@ -38,7 +40,7 @@ class ConcurrentSafeRotatingFileHandler(logging.handlers.RotatingFileHandler):
                     self.stream.write(f"\n{datetime.now()} - LOG ROTATION WARNING: {e}\n")
                     self.stream.write(f"Continuing with current log file: {self.baseFilename}\n")
                     self.stream.flush()
-                except:
+                except Exception:
                     # If we can't write to the log, there's nothing more we can do
                     pass
 
@@ -47,6 +49,7 @@ class ProcessSafeFileHandler(logging.FileHandler):
     """
     File handler that creates process-specific log files to avoid conflicts.
     """
+
 
     def __init__(self, filename, mode='a', encoding=None, delay=False):
         # Add process ID to filename to avoid conflicts
@@ -178,6 +181,8 @@ def cleanup_old_process_logs(max_age_hours: int = 24):
 
 
 # Patch the existing logging configuration for production safety
+
+
 def patch_existing_logging():
     """
     Patch existing loggers to use safer handlers.
@@ -212,3 +217,4 @@ def patch_existing_logging():
 
             # Close old handler
             old_handler.close()
+

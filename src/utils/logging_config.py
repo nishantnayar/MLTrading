@@ -22,8 +22,10 @@ except ImportError:
     DATABASE_LOGGING_AVAILABLE = False
     DatabaseLogHandler = None
 
+
 class SanitizingFormatter(logging.Formatter):
     """Custom formatter that sanitizes sensitive information"""
+
 
     def format(self, record):
         # Sanitize the message
@@ -35,10 +37,11 @@ class SanitizingFormatter(logging.Formatter):
             correlation_id = get_correlation_id()
             if not hasattr(record, 'correlation_id'):
                 record.correlation_id = correlation_id
-        except:
+        except Exception:
             record.correlation_id = 'N/A'
 
         return super().format(record)
+
 
 def setup_logger(name: str, log_file: str = None, level: str = "INFO",
                  enable_database_logging: bool = True,
@@ -145,6 +148,7 @@ def setup_logger(name: str, log_file: str = None, level: str = "INFO",
 
     return logger
 
+
 def get_ui_logger(component: str, enable_database_logging: bool = True) -> logging.Logger:
     """
     Get a logger for UI components - now consolidated into single log file
@@ -164,6 +168,7 @@ def get_ui_logger(component: str, enable_database_logging: bool = True) -> loggi
         db_log_level="INFO"
     )
 
+
 def get_combined_logger(name: str, enable_database_logging: bool = True) -> logging.Logger:
     """
     Get a logger that writes to combined log file and optionally to database
@@ -176,6 +181,7 @@ def get_combined_logger(name: str, enable_database_logging: bool = True) -> logg
         Configured logger that writes to combined log and database
     """
     return setup_logger(name=name, enable_database_logging=enable_database_logging)
+
 
 def log_structured_event(component: str, level: str, message: str,
                         metadata: Dict[str, Any] = None, logger: logging.Logger = None):
@@ -205,6 +211,7 @@ def log_structured_event(component: str, level: str, message: str,
     log_message = f"STRUCTURED_LOG: {json.dumps(log_entry)}"
     getattr(logger, level.lower())(log_message)
 
+
 def log_trading_event(event_type: str, symbol: str, details: str,
                      metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
@@ -225,6 +232,7 @@ def log_trading_event(event_type: str, symbol: str, details: str,
 
     log_structured_event('trading', 'INFO', details, trading_metadata, logger)
 
+
 def log_system_event(event_type: str, details: str,
                     metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
@@ -242,6 +250,7 @@ def log_system_event(event_type: str, details: str,
     }
 
     log_structured_event('system', 'INFO', details, system_metadata, logger)
+
 
 def log_performance_event(operation: str, duration_ms: float,
                          metadata: Dict[str, Any] = None, logger: logging.Logger = None):
@@ -287,6 +296,7 @@ def log_performance_event(operation: str, duration_ms: float,
     except Exception:
         # Fail silently - primary logging to file already succeeded
         pass
+
 
 def log_request(request_info: dict, logger: logging.Logger = None):
     """
@@ -338,6 +348,7 @@ def log_request(request_info: dict, logger: logging.Logger = None):
     except Exception as e:
         if logger:
             logger.warning(f"Failed to log API request to database: {e}")
+
 
 def log_data_collection_event(operation_type: str, data_source: str,
                              symbol: str = None, records_processed: int = None,
@@ -401,6 +412,7 @@ def log_data_collection_event(operation_type: str, data_source: str,
         # Fail silently - primary logging to file already succeeded
         pass
 
+
 def log_ui_interaction_event(component: str, action: str = None,
                            duration_ms: float = None, user_id: str = None,
                            session_id: str = None, logger: logging.Logger = None, **metadata: Any):
@@ -453,6 +465,7 @@ def log_ui_interaction_event(component: str, action: str = None,
     except Exception as e:
         if logger:
             logger.warning(f"Failed to log UI interaction to database: {e}")
+
 
 def log_error_event(error_type: str, error_message: str, component: str = None,
                    severity: str = 'MEDIUM', stack_trace: str = None,
@@ -519,6 +532,7 @@ def log_error_event(error_type: str, error_message: str, component: str = None,
         # Fail silently - primary logging to file already succeeded
         pass
 
+
 def log_dashboard_event(event_type: str, details: str,
                        metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
@@ -553,6 +567,7 @@ SENSITIVE_PATTERNS = {
     'bearer': re.compile(r'(?i)(bearer[\s]+)([^\s]+)', re.IGNORECASE)
 }
 
+
 def sanitize_log_message(message: str) -> str:
     """
     Sanitize log messages by masking sensitive information
@@ -568,6 +583,7 @@ def sanitize_log_message(message: str) -> str:
         sanitized = pattern.sub(r'\1***MASKED***', sanitized)
     return sanitized
 
+
 def get_correlation_id() -> str:
     """
     Get or create a correlation ID for the current thread
@@ -579,6 +595,7 @@ def get_correlation_id() -> str:
         _correlation_context.correlation_id = str(uuid.uuid4())[:8]
     return _correlation_context.correlation_id
 
+
 def set_correlation_id(correlation_id: str):
     """
     Set the correlation ID for the current thread
@@ -589,6 +606,8 @@ def set_correlation_id(correlation_id: str):
     _correlation_context.correlation_id = correlation_id
 
 @contextmanager
+
+
 def log_operation(operation_name: str, logger: logging.Logger = None,
                  log_args: bool = False, **metadata: Any):
     """
@@ -604,7 +623,7 @@ def log_operation(operation_name: str, logger: logging.Logger = None,
         logger = get_combined_logger("mltrading.operation")
 
     correlation_id = get_correlation_id()
-    start_time = time.time()
+    # start_time = time.time()  # Currently unused
 
     # Sanitize metadata
     clean_metadata = {k: sanitize_log_message(str(v)) for k, v in metadata.items()}
@@ -655,6 +674,7 @@ def log_operation(operation_name: str, logger: logging.Logger = None,
 
         raise
 
+
 def get_combined_log_path() -> Path:
     """
     Get the path to the combined log file
@@ -666,6 +686,7 @@ def get_combined_log_path() -> Path:
     logs_dir.mkdir(exist_ok=True)
     return logs_dir / "mltrading_combined.log"
 
+
 def get_structured_logs_path() -> Path:
     """
     Get the path to the structured logs file
@@ -676,6 +697,7 @@ def get_structured_logs_path() -> Path:
     logs_dir = Path("logs")
     logs_dir.mkdir(exist_ok=True)
     return logs_dir / "mltrading_structured.log"
+
 
 def parse_structured_log_line(line: str) -> Optional[Dict[str, Any]]:
     """
@@ -697,6 +719,7 @@ def parse_structured_log_line(line: str) -> Optional[Dict[str, Any]]:
         return log_entry
     except (json.JSONDecodeError, IndexError):
         return None
+
 
 def compress_log_file(file_path: Path) -> bool:
     """
@@ -721,6 +744,7 @@ def compress_log_file(file_path: Path) -> bool:
     except Exception as e:
         print(f"Error compressing log file {file_path}: {e}")
         return False
+
 
 def consolidate_logs(logs_dir: Path = None, max_age_days: int = 7) -> Dict[str, Any]:
     """
@@ -773,6 +797,7 @@ def consolidate_logs(logs_dir: Path = None, max_age_days: int = 7) -> Dict[str, 
         results['errors'].append(str(e))
 
     return results
+
 
 def cleanup_old_logs(logs_dir: Path = None, max_age_days: int = 30,
                     max_compressed_age_days: int = 90) -> Dict[str, Any]:
@@ -836,6 +861,7 @@ def cleanup_old_logs(logs_dir: Path = None, max_age_days: int = 30,
 
     return results
 
+
 def start_log_cleanup_scheduler(cleanup_interval_hours: int = 24,
                               consolidate_after_days: int = 7,
                               delete_after_days: int = 30,
@@ -853,6 +879,7 @@ def start_log_cleanup_scheduler(cleanup_interval_hours: int = 24,
 
     if _cleanup_running:
         return
+
 
     def cleanup_worker():
         global _cleanup_running
@@ -888,12 +915,14 @@ def start_log_cleanup_scheduler(cleanup_interval_hours: int = 24,
     _log_cleanup_thread = threading.Thread(target=cleanup_worker, daemon=True)
     _log_cleanup_thread.start()
 
+
 def stop_log_cleanup_scheduler():
     """
     Stop the log cleanup scheduler
     """
     global _cleanup_running
     _cleanup_running = False
+
 
 def get_log_statistics(logs_dir: Path = None) -> Dict[str, Any]:
     """
@@ -960,3 +989,4 @@ def get_log_statistics(logs_dir: Path = None) -> Dict[str, Any]:
         stats['message'] = f"Error getting log statistics: {e}"
 
     return stats
+

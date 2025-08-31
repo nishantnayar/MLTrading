@@ -3,8 +3,7 @@ Help page layout for the dashboard.
 Contains comprehensive documentation for the updated ML Trading Dashboard.
 """
 
-import dash
-from dash import html, dcc
+from dash import html
 import dash_bootstrap_components as dbc
 import sys
 from pathlib import Path
@@ -18,6 +17,7 @@ from src.utils.logging_config import get_ui_logger
 # Initialize logger
 logger = get_ui_logger("dashboard")
 
+
 def create_help_section(title, content, icon_class="fas fa-info-circle", card_color="light"):
     """Create a standardized help section with enhanced styling."""
     return dbc.Card([
@@ -27,6 +27,7 @@ def create_help_section(title, content, icon_class="fas fa-info-circle", card_co
         ], className=f"bg-{card_color}" + (" text-white" if card_color in ["primary", "success", "danger", "warning", "info"] else "")),
         dbc.CardBody(content)
     ], className="mb-4 shadow-sm")
+
 
 def create_feature_card(title, description, icon, color="primary"):
     """Create a feature highlight card."""
@@ -39,6 +40,7 @@ def create_feature_card(title, description, icon, color="primary"):
             ], className="text-center")
         ])
     ], className="h-100 shadow-sm border-0")
+
 
 def create_step_card(step_num, title, description, icon):
     """Create a numbered step card for workflows."""
@@ -56,6 +58,7 @@ def create_step_card(step_num, title, description, icon):
             ])
         ])
     ], className="mb-3 border-start border-primary border-3")
+
 
 def create_help_layout():
     """Create the enhanced help page layout with latest features."""
@@ -685,3 +688,4 @@ def create_help_layout():
         ], className="mt-4 mb-5")
 
     ], fluid=True, className="py-4")
+

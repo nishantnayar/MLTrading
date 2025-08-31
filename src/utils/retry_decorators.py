@@ -71,8 +71,12 @@ def retry(max_attempts: int = 3,
         ...     # Retries with 0.5s, 0.75s, 1.125s, 1.69s delays
         ...     return db.execute_query("SELECT * FROM table")
     """
+
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
+
+
         def wrapper(*args, **kwargs):
             last_exception = None
 
@@ -145,6 +149,8 @@ def retry_with_circuit_breaker(circuit_breaker_name: str,
         ...     # Protected by both retry logic and circuit breaker
         ...     return yf.download(symbol)
     """
+
+
     def decorator(func: Callable) -> Callable:
         # Import here to avoid circular imports
         from .circuit_breaker import CircuitBreaker, CircuitBreakerConfig
@@ -155,6 +161,8 @@ def retry_with_circuit_breaker(circuit_breaker_name: str,
 
         @retry(max_attempts=max_attempts, delay=delay, exceptions=exceptions)
         @functools.wraps(func)
+
+
         def wrapper(*args, **kwargs):
             return circuit_breaker.call(func, *args, **kwargs)
 
@@ -179,6 +187,7 @@ class RetryableOperation:
         ...         print(f"Attempt {attempt} failed, retrying...")
     """
 
+
     def __init__(self, max_attempts: int = 3, delay: float = 1.0,
                  max_delay: float = 60.0, jitter: bool = True):
         self.max_attempts = max_attempts
@@ -190,8 +199,10 @@ class RetryableOperation:
         self.result = None
         self.succeeded = False
 
+
     def __iter__(self):
         return self
+
 
     def __next__(self):
         if self.current_attempt >= self.max_attempts or self.succeeded:
@@ -208,11 +219,13 @@ class RetryableOperation:
 
         return attempt
 
+
     def success(self, result: Any = None):
         """Mark operation as successful"""
         self.succeeded = True
         self.result = result
         logger.info(f"Operation succeeded on attempt {self.current_attempt}")
+
 
     def should_retry(self, exception: Exception) -> bool:
         """Check if operation should be retried"""
@@ -227,6 +240,8 @@ class RetryableOperation:
 
 
 # Convenience retry decorators for common scenarios
+
+
 def retry_on_connection_error(max_attempts: int = 3, delay: float = 2.0):
     """Retry decorator specifically for connection errors"""
     return retry(
@@ -254,3 +269,4 @@ def retry_on_database_error(max_attempts: int = 3, delay: float = 0.5):
         delay=delay,
         exceptions=(psycopg2.OperationalError, psycopg2.InterfaceError)
     )
+

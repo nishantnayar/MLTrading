@@ -27,7 +27,7 @@ def create_chart_card(chart_id, height=DEFAULT_CHART_HEIGHT, config=None):
     Returns:
         dbc.Card: Chart card component
     """
-    chart_config = config or {'displayModeBar': True, 'displaylogo': False}
+    # chart_config = config or {'displayModeBar': True, 'displaylogo': False}  # Currently unused
 
     return dbc.Card([
         dbc.CardBody([
@@ -242,3 +242,4 @@ def create_empty_state_card(title, message, icon_class="fas fa-chart-line", heig
             ], className="text-center py-5")
         ])
     ], style={**CARD_STYLE_NONE, "height": height})
+

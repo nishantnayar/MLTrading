@@ -26,16 +26,20 @@ class CircuitState(Enum):
 
 
 @dataclass
+
+
 class CircuitBreakerConfig:
     """Circuit breaker configuration"""
     failure_threshold: int = 5           # Failures before opening
     recovery_timeout: float = 60.0      # Seconds before attempting recovery
-    expected_exception: type = Exception # Exception type to monitor
+    expected_exception: type = Exception  # Exception type to monitor
     success_threshold: int = 3           # Successes needed to close from half-open
     timeout: float = 30.0               # Call timeout in seconds
 
 
 @dataclass
+
+
 class CircuitBreakerStats:
     """Circuit breaker statistics"""
     failure_count: int = 0
@@ -59,13 +63,13 @@ class CircuitBreaker:
     calls to failing services. Attempts recovery after timeout period.
 
     Example:
-        >>> # Decorator usage
+        >>>  # Decorator usage
         >>> @CircuitBreaker(failure_threshold=3, recovery_timeout=30)
         ... def fetch_external_data():
         ...     # API call that might fail
         ...     pass
         >>>
-        >>> # Manual usage
+        >>>  # Manual usage
         >>> cb = CircuitBreaker("yahoo_api", failure_threshold=5)
         >>> with cb:
         ...     result = external_api_call()
@@ -73,6 +77,7 @@ class CircuitBreaker:
 
     _instances: Dict[str, 'CircuitBreaker'] = {}
     _lock = Lock()
+
 
     def __init__(self, name: str, config: Optional[CircuitBreakerConfig] = None):
         self.name = name
@@ -86,12 +91,16 @@ class CircuitBreaker:
             CircuitBreaker._instances[name] = self
 
     @classmethod
+
+
     def get_instance(cls, name: str) -> 'CircuitBreaker':
         """Get existing circuit breaker instance by name"""
         with cls._lock:
             return cls._instances.get(name)
 
     @classmethod
+
+
     def get_all_stats(cls) -> Dict[str, Dict[str, Any]]:
         """Get statistics for all circuit breakers"""
         with cls._lock:
@@ -106,6 +115,7 @@ class CircuitBreaker:
                 for name, cb in cls._instances.items()
             }
 
+
     def _should_attempt_reset(self) -> bool:
         """Check if we should attempt to reset from open state"""
         if self.state != CircuitState.OPEN:
@@ -116,6 +126,7 @@ class CircuitBreaker:
 
         time_since_failure = time.time() - self.stats.last_failure_time
         return time_since_failure >= self.config.recovery_timeout
+
 
     def _record_success(self):
         """Record successful operation"""
@@ -129,6 +140,7 @@ class CircuitBreaker:
             elif self.state == CircuitState.OPEN:
                 # Shouldn't happen, but handle gracefully
                 self._transition_to_half_open()
+
 
     def _record_failure(self, exception: Exception):
         """Record failed operation"""
@@ -145,12 +157,14 @@ class CircuitBreaker:
             elif self.state == CircuitState.HALF_OPEN:
                 self._transition_to_open()
 
+
     def _transition_to_open(self):
         """Transition circuit breaker to open state"""
         self.state = CircuitState.OPEN
         self.stats.state_changes += 1
         self.stats.success_count = 0  # Reset success counter
         logger.error(f"Circuit breaker {self.name} opened after {self.stats.failure_count} failures")
+
 
     def _transition_to_half_open(self):
         """Transition circuit breaker to half-open state"""
@@ -159,6 +173,7 @@ class CircuitBreaker:
         self.stats.success_count = 0  # Reset success counter for testing
         logger.info(f"Circuit breaker {self.name} half-opened for recovery testing")
 
+
     def _transition_to_closed(self):
         """Transition circuit breaker to closed state"""
         self.state = CircuitState.CLOSED
@@ -166,9 +181,11 @@ class CircuitBreaker:
         self.stats.failure_count = 0  # Reset failure counter
         logger.info(f"Circuit breaker {self.name} closed after {self.stats.success_count} successful calls")
 
+
     def __enter__(self):
         """Context manager entry"""
         return self.call
+
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit"""
@@ -178,6 +195,7 @@ class CircuitBreaker:
         elif exc_type is None:
             self._record_success()
         return False
+
 
     def call(self, func: Callable, *args, **kwargs) -> Any:
         """
@@ -215,17 +233,20 @@ class CircuitBreaker:
             self._record_failure(e)
             raise
 
+
     def force_open(self):
         """Manually open the circuit breaker"""
         with self._lock:
             self._transition_to_open()
             logger.warning(f"Circuit breaker {self.name} manually opened")
 
+
     def force_close(self):
         """Manually close the circuit breaker"""
         with self._lock:
             self._transition_to_closed()
             logger.info(f"Circuit breaker {self.name} manually closed")
+
 
     def get_stats(self) -> Dict[str, Any]:
         """Get current statistics"""
@@ -258,9 +279,11 @@ def circuit_breaker(name: str = None, failure_threshold: int = 5,
         ...     # This function is now protected by circuit breaker
         ...     return yf.download(symbol)
         >>>
-        >>> # Circuit opens after 3 failures, blocks calls for 30 seconds
+        >>>  # Circuit opens after 3 failures, blocks calls for 30 seconds
         >>> data = fetch_yahoo_data("AAPL")  # May raise CircuitBreakerError
     """
+
+
     def decorator(func: Callable) -> Callable:
         breaker_name = name or f"{func.__module__}.{func.__name__}"
         config = CircuitBreakerConfig(
@@ -271,6 +294,8 @@ def circuit_breaker(name: str = None, failure_threshold: int = 5,
         breaker = CircuitBreaker(breaker_name, config)
 
         @functools.wraps(func)
+
+
         def wrapper(*args, **kwargs):
             return breaker.call(func, *args, **kwargs)
 
@@ -296,3 +321,4 @@ def get_circuit_breaker_stats() -> Dict[str, Any]:
         database: closed (3891 calls)
     """
     return CircuitBreaker.get_all_stats()
+

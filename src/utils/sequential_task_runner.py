@@ -20,6 +20,7 @@ class SequentialTaskRunner:
     Alternative to ConcurrentTaskRunner for connection-intensive workflows.
     """
 
+
     def __init__(self, max_workers: int = 1, batch_size: int = 10):
         """
         Initialize sequential runner.
@@ -31,6 +32,7 @@ class SequentialTaskRunner:
         self.max_workers = 1  # Force sequential
         self.batch_size = batch_size
         self.completed_tasks = 0
+
 
     async def map(self, func: Callable, items: List[Any]) -> List[Any]:
         """
@@ -50,7 +52,7 @@ class SequentialTaskRunner:
 
         for i, item in enumerate(items):
             try:
-                start_time = time.time()
+                # start_time = time.time()  # Currently unused
 
                 # Process item
                 result = await self._run_task(func, item)
@@ -75,6 +77,7 @@ class SequentialTaskRunner:
         logger.info(f"Sequential processing completed: {len([r for r in results if r is not None])}/{total_items} successful")
         return results
 
+
     async def _run_task(self, func: Callable, item: Any) -> Any:
         """Run a single task"""
         if asyncio.iscoroutinefunction(func):
@@ -84,6 +87,7 @@ class SequentialTaskRunner:
             loop = asyncio.get_event_loop()
             with ThreadPoolExecutor(max_workers=1) as executor:
                 return await loop.run_in_executor(executor, func, item)
+
 
     async def _cleanup_connections(self):
         """Periodic cleanup to prevent connection leaks"""
@@ -98,6 +102,7 @@ class BatchSequentialRunner:
     while still avoiding connection pool exhaustion.
     """
 
+
     def __init__(self, batch_size: int = 5, delay_between_batches: float = 1.0):
         """
         Initialize batch sequential runner.
@@ -108,6 +113,7 @@ class BatchSequentialRunner:
         """
         self.batch_size = batch_size
         self.delay_between_batches = delay_between_batches
+
 
     async def process_batches(self, func: Callable, items: List[Any]) -> List[Any]:
         """
@@ -160,6 +166,8 @@ class BatchSequentialRunner:
 
 
 # Factory function to choose appropriate runner
+
+
 def get_safe_task_runner(total_tasks: int, connection_sensitive: bool = True) -> Any:
     """
     Get appropriate task runner based on task characteristics.
@@ -180,3 +188,4 @@ def get_safe_task_runner(total_tasks: int, connection_sensitive: bool = True) ->
         # For non-connection intensive tasks, can use higher concurrency
         from prefect.task_runners import ConcurrentTaskRunner
         return ConcurrentTaskRunner(max_workers=min(4, max(1, total_tasks // 10)))
+

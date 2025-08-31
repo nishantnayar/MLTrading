@@ -1,12 +1,8 @@
-import dash
 from dash import html, dcc, Input, Output, State
 import dash_bootstrap_components as dbc
-import pandas as pd
 from pathlib import Path
 import re
-import json
 from datetime import datetime, timedelta
-import logging
 import sys
 
 # Add the project root to Python path if not already added
@@ -15,6 +11,7 @@ if 'src' not in sys.modules:
     sys.path.insert(0, str(project_root))
 
 from src.utils.helpers.date_utils import format_datetime_display
+
 
 def create_log_viewer():
     """
@@ -154,6 +151,7 @@ def create_log_viewer():
         ], className="mt-3")
     ], fluid=True)
 
+
 def parse_log_line(line):
     """
     Parse a log line to extract structured information
@@ -214,6 +212,7 @@ def parse_log_line(line):
             'message': f"Failed to parse log line: {e}",
             'raw': line.strip()
         }
+
 
 def load_and_filter_logs(component_filter="all", level_filter="all", time_filter="24h",
                         event_type_filter="all", symbol_filter="all"):
@@ -324,6 +323,7 @@ def load_and_filter_logs(component_filter="all", level_filter="all", time_filter
         print(f"Error loading logs: {e}")
         return []
 
+
 def format_log_display(logs):
     """
     Format logs for display in the UI
@@ -360,6 +360,7 @@ def format_log_display(logs):
         ], className="log-entry mb-1 p-2 border-bottom"))
 
     return html.Div(log_entries, className="log-container")
+
 
 def get_log_stats(logs):
     """
@@ -399,6 +400,7 @@ def get_log_stats(logs):
     ]
 
     return html.Div(stats_html, className="log-stats p-2 bg-light rounded")
+
 
 def generate_log_analytics(logs):
     """
@@ -444,3 +446,4 @@ def generate_log_analytics(logs):
         analytics_html.append(html.P(f"Performance-related logs: {len(performance_logs)}"))
 
     return html.Div(analytics_html, className="log-analytics p-2 bg-light rounded mt-2")
+

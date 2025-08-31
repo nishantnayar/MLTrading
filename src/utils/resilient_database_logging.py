@@ -26,6 +26,8 @@ class CircuitState(Enum):
 
 
 @dataclass
+
+
 class CircuitBreakerStats:
     failure_count: int = 0
     success_count: int = 0
@@ -37,11 +39,13 @@ class CircuitBreakerStats:
 class DatabaseCircuitBreaker:
     """Circuit breaker for database operations to prevent pool exhaustion"""
 
+
     def __init__(self, failure_threshold: int = 5, recovery_timeout: float = 60.0):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.stats = CircuitBreakerStats()
         self._lock = threading.Lock()
+
 
     def can_execute(self) -> bool:
         """Check if database operation can proceed"""
@@ -57,6 +61,7 @@ class DatabaseCircuitBreaker:
             else:  # HALF_OPEN
                 return True
 
+
     def record_success(self):
         """Record successful database operation"""
         with self._lock:
@@ -68,6 +73,7 @@ class DatabaseCircuitBreaker:
                 self.stats.state = CircuitState.CLOSED
                 self.stats.failure_count = 0
 
+
     def record_failure(self):
         """Record failed database operation"""
         with self._lock:
@@ -76,6 +82,7 @@ class DatabaseCircuitBreaker:
 
             if self.stats.failure_count >= self.failure_threshold:
                 self.stats.state = CircuitState.OPEN
+
 
     def get_stats(self) -> Dict[str, Any]:
         """Get circuit breaker statistics"""
@@ -93,6 +100,7 @@ class ResilientDatabaseLogger:
     """
     Database logger with connection pool protection and graceful degradation
     """
+
 
     def __init__(self, table_name: str, batch_size: int = 100,
                  flush_interval: float = 10.0, max_queue_size: int = 5000):
@@ -125,6 +133,7 @@ class ResilientDatabaseLogger:
         self._db_connection = None
         self._connection_lock = threading.Lock()
 
+
     def _get_dedicated_connection(self):
         """Get or create dedicated database connection for logging"""
         with self._connection_lock:
@@ -139,6 +148,7 @@ class ResilientDatabaseLogger:
                     raise e
             return self._db_connection
 
+
     def log_async(self, data: Dict[str, Any]):
         """Add log entry to queue for asynchronous processing"""
         try:
@@ -150,9 +160,10 @@ class ResilientDatabaseLogger:
             self.log_queue.put_nowait(data)
             self.stats['logs_queued'] += 1
 
-        except:
+        except Exception:
             # Queue is full, drop the log
             self.stats['logs_dropped'] += 1
+
 
     def _database_writer(self):
         """Background thread that writes logs to database in batches"""
@@ -190,6 +201,7 @@ class ResilientDatabaseLogger:
                 self.stats['database_errors'] += 1
                 time.sleep(1)  # Brief pause before retrying
 
+
     def _write_batch_to_database(self, batch: List[Dict[str, Any]]):
         """Write batch to database with circuit breaker protection"""
         if not batch:
@@ -218,9 +230,10 @@ class ResilientDatabaseLogger:
             if self._db_connection:
                 try:
                     self._db_connection.close()
-                except:
+                except Exception:
                     pass
                 self._db_connection = None
+
 
     def _write_batch_to_fallback(self, batch: List[Dict[str, Any]]):
         """Write batch to fallback file when database is unavailable"""
@@ -239,6 +252,7 @@ class ResilientDatabaseLogger:
         except Exception as e:
             # Last resort: drop the logs silently
             self.stats['logs_dropped'] += len(batch)
+
 
     def _get_insert_sql(self) -> str:
         """Get SQL insert statement based on table name"""
@@ -278,11 +292,13 @@ class ResilientDatabaseLogger:
                         %(module)s, %(function_name)s, %(line_number)s, %(thread_name)s, %(process_id)s, %(metadata)s)
             """
 
+
     def flush(self):
         """Force flush pending logs"""
-        start_time = time.time()
+        # start_time = time.time()  # Currently unused
         while not self.log_queue.empty() and time.time() - start_time < 5:
             time.sleep(0.1)
+
 
     def close(self):
         """Shutdown the logger"""
@@ -295,8 +311,9 @@ class ResilientDatabaseLogger:
         if self._db_connection:
             try:
                 self._db_connection.close()
-            except:
+            except Exception:
                 pass
+
 
     def get_stats(self) -> Dict[str, Any]:
         """Get logger statistics"""
@@ -311,8 +328,10 @@ class ResilientDatabaseLogger:
 class ResilientDataCollectionLogger:
     """Resilient data collection logger with circuit breaker protection"""
 
+
     def __init__(self):
         self.logger = ResilientDatabaseLogger('data_collection_logs', batch_size=50, flush_interval=5.0)
+
 
     def log_data_collection(self, operation_type: str, data_source: str,
                            symbol: str = None, records_processed: int = None,
@@ -345,8 +364,10 @@ class ResilientDataCollectionLogger:
 class ResilientErrorLogger:
     """Resilient error logger with circuit breaker protection"""
 
+
     def __init__(self):
         self.logger = ResilientDatabaseLogger('error_logs', batch_size=25, flush_interval=3.0)
+
 
     def log_error(self, error_type: str, error_message: str, component: str = None,
                   severity: str = 'MEDIUM', stack_trace: str = None,
@@ -385,8 +406,10 @@ class ResilientErrorLogger:
 class ResilientPerformanceLogger:
     """Resilient performance logger with circuit breaker protection"""
 
+
     def __init__(self):
         self.logger = ResilientDatabaseLogger('performance_logs', batch_size=75, flush_interval=8.0)
+
 
     def log_performance(self, operation_name: str, duration_ms: float,
                        status: str = 'success', component: str = None, **metadata):
@@ -419,12 +442,14 @@ _resilient_data_logger = None
 _resilient_error_logger = None
 _resilient_performance_logger = None
 
+
 def get_resilient_data_collection_logger() -> ResilientDataCollectionLogger:
     """Get global resilient data collection logger"""
     global _resilient_data_logger
     if _resilient_data_logger is None:
         _resilient_data_logger = ResilientDataCollectionLogger()
     return _resilient_data_logger
+
 
 def get_resilient_error_logger() -> ResilientErrorLogger:
     """Get global resilient error logger"""
@@ -433,12 +458,14 @@ def get_resilient_error_logger() -> ResilientErrorLogger:
         _resilient_error_logger = ResilientErrorLogger()
     return _resilient_error_logger
 
+
 def get_resilient_performance_logger() -> ResilientPerformanceLogger:
     """Get global resilient performance logger"""
     global _resilient_performance_logger
     if _resilient_performance_logger is None:
         _resilient_performance_logger = ResilientPerformanceLogger()
     return _resilient_performance_logger
+
 
 def get_all_logger_stats() -> Dict[str, Any]:
     """Get statistics from all resilient loggers"""
@@ -454,6 +481,7 @@ def get_all_logger_stats() -> Dict[str, Any]:
         stats['performance'] = _resilient_performance_logger.logger.get_stats()
 
     return stats
+
 
 def cleanup_resilient_loggers():
     """Cleanup all resilient loggers"""
@@ -473,10 +501,12 @@ def cleanup_resilient_loggers():
 
 
 @contextmanager
+
+
 def resilient_log_performance(operation_name: str, component: str = None, **metadata):
     """Context manager for resilient performance logging"""
     perf_logger = get_resilient_performance_logger()
-    start_time = time.time()
+    # start_time = time.time()  # Currently unused
 
     try:
         yield
@@ -487,3 +517,4 @@ def resilient_log_performance(operation_name: str, component: str = None, **meta
         perf_logger.log_performance(operation_name, duration_ms, 'error', component,
                                    error=str(e), **metadata)
         raise
+

@@ -4,12 +4,9 @@ Handles side-by-side symbol analysis and comparison charts.
 """
 
 import plotly.graph_objs as go
-from plotly.subplots import make_subplots
 import dash
 from dash import Input, Output, html, State, callback_context, dcc
 import dash_bootstrap_components as dbc
-import pandas as pd
-from datetime import datetime, timedelta
 
 from ..config import CHART_COLORS
 from ..layouts.chart_components import create_empty_chart
@@ -31,6 +28,8 @@ def register_comparison_callbacks(app):
         [Input("filtered-symbols-store", "data")],
         prevent_initial_call=False
     )
+
+
     def update_comparison_symbol_options(filtered_symbols):
         """Update comparison symbol dropdown options"""
         try:
@@ -76,6 +75,8 @@ def register_comparison_callbacks(app):
          State("comparison-symbol-3", "value")],
         prevent_initial_call=True
     )
+
+
     def update_comparison_results(compare_clicks, clear_clicks, symbol1, symbol2, symbol3):
         """Update comparison results based on selected symbols"""
         try:
@@ -360,3 +361,4 @@ def create_metrics_comparison_table(symbols):
     except Exception as e:
         logger.error(f"Error creating metrics table: {e}")
         return html.P("Error loading metrics comparison", className="text-danger")
+

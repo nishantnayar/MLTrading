@@ -7,3 +7,4 @@ from .base_strategy import BaseStrategy, StrategySignal, StrategyState
 from .strategy_manager import StrategyManager
 
 __all__ = ['BaseStrategy', 'StrategySignal', 'StrategyState', 'StrategyManager']
+

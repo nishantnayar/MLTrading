@@ -25,6 +25,7 @@ from src.utils.logging_config import setup_logger, log_operation
 # Configure logging
 logger = setup_logger('mltrading.feature_engineering', 'feature_engineering.log', enable_database_logging=False)
 
+
 class TradingFeatureEngine:
     """
     ML Trading Feature Engineering System
@@ -51,18 +52,19 @@ class TradingFeatureEngine:
     - Statistical features: Rolling means, standard deviations, skewness, kurtosis
 
     Example:
-        >>> # Process all features for a symbol
+        >>>  # Process all features for a symbol
         >>> engine = TradingFeatureEngine()
         >>> success = engine.process_symbol("AAPL")
         >>> print(f"Feature engineering completed: {success}")
         Feature engineering completed: True
         >>>
-        >>> # Verify feature count in database
+        >>>  # Verify feature count in database
         >>> with engine.db_manager.get_connection_context() as conn:
         ...     df = pd.read_sql("SELECT COUNT(*) as count FROM feature_engineered_data WHERE symbol='AAPL'", conn)
         ...     print(f"Records processed: {df['count'].iloc[0]}")
         Records processed: 2847
     """
+
 
     def __init__(self):
         self.db_manager = get_db_manager()
@@ -85,6 +87,7 @@ class TradingFeatureEngine:
 
         # Lookback requirement for calculations
         self.MIN_LOOKBACK_HOURS = 600  # 25 days buffer for stable calculations
+
 
     def clean_sequence_data(self, sequence_data: pd.DataFrame) -> tuple[pd.DataFrame, bool]:
         """Clean sequence data by handling NaN values with multiple strategies"""
@@ -128,6 +131,7 @@ class TradingFeatureEngine:
             logger.info(f"NaN cleaning complete: {initial_nans} -> {remaining_nans} remaining")
 
         return sequence_clean, remaining_nans == 0
+
 
     def get_market_data_for_features(self, symbol: str, initial_run: bool = False) -> pd.DataFrame:
         """
@@ -184,6 +188,7 @@ class TradingFeatureEngine:
                 logger.error(f"Failed to retrieve market data for {symbol}: {e}")
                 return pd.DataFrame()
 
+
     def calculate_basic_price_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate fundamental price-based features for ML models.
@@ -237,6 +242,7 @@ class TradingFeatureEngine:
         logger.info("Completed basic price features calculation")
         return df
 
+
     def calculate_time_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate Phase 1 time features (7 features) - exact match to notebook
@@ -275,6 +281,7 @@ class TradingFeatureEngine:
         logger.info("Completed time features calculation")
         return df
 
+
     def calculate_moving_average_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate Phase 2 moving average features (8 features) - exact match to notebook
@@ -311,6 +318,7 @@ class TradingFeatureEngine:
 
         logger.info("Completed moving average features calculation")
         return df
+
 
     def calculate_volatility_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -351,6 +359,7 @@ class TradingFeatureEngine:
 
         logger.info("Completed volatility features calculation")
         return df
+
 
     def calculate_technical_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -407,6 +416,7 @@ class TradingFeatureEngine:
         logger.info("Completed technical indicators calculation")
         return df
 
+
     def calculate_volume_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate volume-based features - exact match to notebook
@@ -446,6 +456,7 @@ class TradingFeatureEngine:
         logger.info("Completed volume features calculation")
         return df
 
+
     def calculate_rsi_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate multiple RSI timeframes - exact match to notebook
@@ -483,6 +494,7 @@ class TradingFeatureEngine:
 
         logger.info("Completed RSI features calculation")
         return df
+
 
     def calculate_intraday_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -541,6 +553,7 @@ class TradingFeatureEngine:
         logger.info("Completed intraday features calculation")
         return df
 
+
     def calculate_lagged_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate lagged features for sequence modeling - exact match to notebook
@@ -568,6 +581,7 @@ class TradingFeatureEngine:
 
         logger.info("Completed lagged features calculation")
         return df
+
 
     def calculate_rolling_statistics(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -597,6 +611,7 @@ class TradingFeatureEngine:
 
         logger.info("Completed rolling statistics calculation")
         return df
+
 
     def calculate_advanced_technical_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -630,6 +645,7 @@ class TradingFeatureEngine:
 
         logger.info("Completed advanced technical indicators calculation")
         return df
+
 
     def calculate_phase1_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -676,6 +692,7 @@ class TradingFeatureEngine:
 
             logger.info(f"Phase 1 features calculated successfully: {len(df_features)} records")
             return df_features
+
 
     def calculate_phase1_and_phase2_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -739,6 +756,7 @@ class TradingFeatureEngine:
 
             logger.info(f"Phase 1+2 features calculated successfully: {len(df_features)} records, 36 features, clean: {is_clean}")
             return df_features
+
 
     def calculate_phase3_comprehensive_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -810,6 +828,7 @@ class TradingFeatureEngine:
             feature_count = len([col for col in df_features.columns if col not in ['symbol', 'timestamp', 'source', 'created_at', 'updated_at']])
             logger.info(f"Phase 1+2+3 comprehensive features calculated successfully: {len(df_features)} records, {feature_count} features, clean: {is_clean}")
             return df_features
+
 
     def prepare_features_for_storage(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
         """
@@ -901,6 +920,7 @@ class TradingFeatureEngine:
 
         return records
 
+
     def store_phase1_features(self, df: pd.DataFrame, symbol: str) -> bool:
         """
         Store Phase 1 features in database
@@ -939,7 +959,7 @@ class TradingFeatureEngine:
                                         if col not in ['symbol', 'timestamp', 'source']]
                         update_str = ', '.join([f"{col} = EXCLUDED.{col}" for col in update_columns])
 
-                        insert_query = f"""
+                        insert_query = """
                             INSERT INTO feature_engineered_data ({columns_str})
                             VALUES ({placeholders})
                             ON CONFLICT (symbol, timestamp, source)
@@ -963,6 +983,7 @@ class TradingFeatureEngine:
             except Exception as e:
                 logger.error(f"Failed to store Phase 1 features for {symbol}: {e}")
                 return False
+
 
     def process_symbol_phase1(self, symbol: str) -> bool:
         """
@@ -1005,6 +1026,7 @@ class TradingFeatureEngine:
                 logger.error(f"Failed to store Phase 1 features for {symbol}")
 
             return success
+
 
     def process_symbol_phase1_and_phase2(self, symbol: str, initial_run: bool = False) -> bool:
         """
@@ -1050,6 +1072,7 @@ class TradingFeatureEngine:
 
             return success
 
+
     def process_multiple_symbols_phase1_and_phase2(self, symbols: List[str], initial_run: bool = False) -> Dict[str, bool]:
         """
         Process Phase 1+2 features for multiple symbols
@@ -1081,6 +1104,7 @@ class TradingFeatureEngine:
 
             logger.info(f"Phase 1+2 {run_type} processing completed: {successful}/{len(symbols)} successful")
             return results
+
 
     def process_symbol_phase3_comprehensive(self, symbol: str, initial_run: bool = False) -> bool:
         """
@@ -1126,6 +1150,7 @@ class TradingFeatureEngine:
 
             return success
 
+
     def process_multiple_symbols_phase3_comprehensive(self, symbols: List[str], initial_run: bool = False) -> Dict[str, bool]:
         """
         Process Phase 1+2+3 comprehensive features for multiple symbols
@@ -1158,6 +1183,7 @@ class TradingFeatureEngine:
             logger.info(f"Phase 1+2+3 comprehensive {run_type} processing completed: {successful}/{len(symbols)} successful")
             return results
 
+
     def process_multiple_symbols_phase1(self, symbols: List[str]) -> Dict[str, bool]:
         """
         Process Phase 1 features for multiple symbols
@@ -1189,6 +1215,8 @@ class TradingFeatureEngine:
             return results
 
     # Simplified method aliases for better API usability
+
+
     def process_symbol(self, symbol: str, initial_run: bool = False) -> bool:
         """
         Process all features for a symbol (simplified interface).
@@ -1210,6 +1238,7 @@ class TradingFeatureEngine:
             Features generated: True
         """
         return self.process_symbol_phase3_comprehensive(symbol, initial_run)
+
 
     def process_symbols(self, symbols: List[str], initial_run: bool = False) -> Dict[str, bool]:
         """
@@ -1258,6 +1287,7 @@ def test_phase1_features():
 
     return results
 
+
 def test_phase1_and_phase2_features():
     """Test Phase 1+2 feature engineering with sample symbols"""
 
@@ -1279,6 +1309,7 @@ def test_phase1_and_phase2_features():
     print(f"\nOverall results: {successful_count}/{len(test_symbols)} symbols processed successfully")
 
     return results
+
 
 def test_phase3_comprehensive_features():
     """Test Phase 1+2+3 comprehensive feature engineering with sample symbols"""
@@ -1314,3 +1345,4 @@ if __name__ == "__main__":
     print("\n" + "=" * 70)
     print("PHASE 1+2+3 COMPREHENSIVE FEATURE ENGINEERING TEST COMPLETE")
     print("=" * 70)
+

@@ -11,6 +11,7 @@ from src.utils.logging_config import get_ui_logger
 # Initialize logger
 logger = get_ui_logger("utils")
 
+
 def get_welcome_message(name="Nishant"):
     """
     Generate a personalized welcome message based on the current time.
@@ -33,6 +34,7 @@ def get_welcome_message(name="Nishant"):
         greeting = "Good Night"
 
     return f"Welcome {name}, {greeting}"
+
 
 def format_datetime_display(date_string, format_type="user_friendly"):
     """
@@ -98,6 +100,7 @@ def format_datetime_display(date_string, format_type="user_friendly"):
         logger.error(f"Error formatting date {date_string}: {e}")
         return "Invalid Date"
 
+
 def get_day_suffix(day):
     """Get the appropriate suffix for a day number."""
     if 10 <= day % 100 <= 20:
@@ -105,6 +108,7 @@ def get_day_suffix(day):
     else:
         suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(day % 10, 'th')
     return suffix
+
 
 def get_current_time_formatted(format_type="user_friendly"):
     """
@@ -119,6 +123,7 @@ def get_current_time_formatted(format_type="user_friendly"):
     current_time = datetime.now()
     return format_datetime_display(current_time, format_type)
 
+
 def format_timestamp_for_logs(timestamp):
     """
     Format timestamp for log display.
@@ -131,6 +136,7 @@ def format_timestamp_for_logs(timestamp):
     """
     return format_datetime_display(timestamp, "detailed")
 
+
 def format_time_for_charts(timestamp):
     """
     Format time for chart display (more compact).
@@ -142,6 +148,7 @@ def format_time_for_charts(timestamp):
         str: Formatted time for charts
     """
     return format_datetime_display(timestamp, "compact")
+
 
 def is_recent_time(timestamp, minutes=5):
     """
@@ -170,3 +177,4 @@ def is_recent_time(timestamp, minutes=5):
     except Exception as e:
         logger.error(f"Error checking if time is recent: {e}")
         return False
+

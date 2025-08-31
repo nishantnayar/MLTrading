@@ -6,11 +6,9 @@ Displays test results, coverage information, and test execution controls.
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, State, callback, ctx
 import subprocess
-import json
 from datetime import datetime
 import sys
 from pathlib import Path
-import os
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.parent
@@ -265,7 +263,7 @@ def create_test_suite_summary():
                     html.Small(f"{suite['passed']}/{suite['tests']} passed", className="text-muted d-block"),
                     html.Small(f"Coverage: {suite['coverage']}", className="text-muted")
                 ], className="py-2")
-            ], style={"border": "1px solid #dee2e6", "marginBottom": "8px"})
+            ], style={"border": "1px solid  #dee2e6", "marginBottom": "8px"})
         )
 
     return suite_cards
@@ -322,7 +320,7 @@ def format_test_output(output_text):
         elif 'SKIPPED' in line:
             formatted_lines.append(html.Div(line, style={"color": "#ffc107"}))
         elif line.startswith('===='):
-            formatted_lines.append(html.Div(line, style={"color": "#007bff", "fontWeight": "bold"}))
+            formatted_lines.append(html.Div(line, style={"color": "#007bf", "fontWeight": "bold"}))
         elif 'error' in line.lower() or 'exception' in line.lower():
             formatted_lines.append(html.Div(line, style={"color": "#dc3545"}))
         else:
@@ -332,7 +330,7 @@ def format_test_output(output_text):
         "fontSize": "12px",
         "backgroundColor": "#f8f9fa",
         "padding": "10px",
-        "border": "1px solid #dee2e6",
+        "border": "1px solid  #dee2e6",
         "borderRadius": "4px",
         "margin": "0"
     })
@@ -362,6 +360,8 @@ def format_test_output(output_text):
     [State("test-type-dropdown", "value"),
      State("test-options", "value")]
 )
+
+
 def handle_test_execution(run_clicks, stop_clicks, refresh_clicks, interval_n, test_type, options):
     """Handle test execution and display results."""
 
@@ -443,7 +443,7 @@ def get_default_test_display():
 def execute_tests(test_type, options):
     """Execute the specified test type and return results."""
     # Add immediate feedback for user
-    start_time = datetime.now()
+    # start_time = datetime.now()  # Currently unused
 
     # Quick validation check
     project_dir = Path(__file__).parent.parent.parent.parent
@@ -498,7 +498,7 @@ def execute_tests(test_type, options):
         project_dir = Path(__file__).parent.parent.parent.parent
 
         # Show immediate feedback to user
-        progress_output = format_test_output(f"Starting {test_type} tests...\nCommand: {' '.join(cmd)}\nThis may take a few minutes...")
+        # progress_output = format_test_output(f"Starting {test_type} tests...\nCommand: {' '.join(cmd)}\nThis may take a few minutes...")  # Currently unused
 
         # Create the process with better configuration
         process = subprocess.Popen(
@@ -514,7 +514,7 @@ def execute_tests(test_type, options):
         try:
             # Wait for completion with dynamic timeout
             output, _ = process.communicate(timeout=actual_timeout)
-            result_code = process.returncode
+            # result_code = process.returncode  # Currently unused
         except subprocess.TimeoutExpired:
             # Kill the process if it times out
             process.kill()
@@ -625,3 +625,4 @@ def parse_test_results(output):
 def refresh_test_results():
     """Refresh test results display with current values."""
     return get_default_test_display()
+

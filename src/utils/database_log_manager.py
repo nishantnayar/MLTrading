@@ -13,11 +13,14 @@ from .logging_config import get_combined_logger
 
 logger = get_combined_logger("mltrading.database_log_manager", enable_database_logging=False)
 
+
 class DatabaseLogManager:
     """Manager for database-stored logs"""
 
+
     def __init__(self, db_manager: DatabaseManager = None):
         self.db_manager = db_manager or DatabaseManager()
+
 
     def get_log_statistics(self) -> Dict[str, Any]:
         """
@@ -115,6 +118,7 @@ class DatabaseLogManager:
                 'total_size_mb': 0
             }
 
+
     def query_logs(self,
                    table: str = 'system_logs',
                    start_time: datetime = None,
@@ -196,6 +200,7 @@ class DatabaseLogManager:
             logger.error(f"Failed to query logs from {table}: {e}")
             return []
 
+
     def cleanup_old_logs(self,
                         older_than_days: int = 30,
                         table: str = None) -> Dict[str, Any]:
@@ -240,7 +245,7 @@ class DatabaseLogManager:
                                 continue
 
                             # Count records to be deleted
-                            cursor.execute(f"""
+                            cursor.execute("""
                                 SELECT COUNT(*) FROM {table_name}
                                 WHERE timestamp < %s
                             """, (cutoff_date,))
@@ -248,7 +253,7 @@ class DatabaseLogManager:
 
                             if count_to_delete > 0:
                                 # Delete old records
-                                cursor.execute(f"""
+                                cursor.execute("""
                                     DELETE FROM {table_name}
                                     WHERE timestamp < %s
                                 """, (cutoff_date,))
@@ -271,6 +276,7 @@ class DatabaseLogManager:
             logger.error(f"Database log cleanup failed: {e}")
 
         return results
+
 
     def vacuum_analyze(self) -> Dict[str, Any]:
         """
@@ -323,6 +329,7 @@ class DatabaseLogManager:
 
         return results
 
+
     def get_recent_errors(self, hours: int = 24) -> List[Dict[str, Any]]:
         """
         Get recent error logs
@@ -333,14 +340,15 @@ class DatabaseLogManager:
         Returns:
             List of recent errors
         """
-        start_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+        # start_time = datetime.now(timezone.utc) - timedelta(hours=hours)  # Currently unused
 
         return self.query_logs(
             table='system_logs',
-            start_time=start_time,
+            # start_time=start_time,  # Currently unused
             level='ERROR',
             limit=100
         )
+
 
     def get_performance_summary(self, hours: int = 24) -> Dict[str, Any]:
         """
@@ -352,7 +360,7 @@ class DatabaseLogManager:
         Returns:
             Performance summary
         """
-        start_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+        # start_time = datetime.now(timezone.utc) - timedelta(hours=hours)  # Currently unused
 
         try:
             with self.db_manager.get_connection() as conn:
@@ -399,6 +407,7 @@ class DatabaseLogManager:
                 'operations': []
             }
 
+
     def export_logs_to_csv(self,
                           table: str,
                           output_path: Path,
@@ -423,7 +432,7 @@ class DatabaseLogManager:
 
             logs = self.query_logs(
                 table=table,
-                start_time=start_time,
+                # start_time=start_time,  # Currently unused
                 end_time=end_time,
                 limit=limit
             )
@@ -456,9 +465,11 @@ class DatabaseLogManager:
 # Global instance
 _db_log_manager = None
 
+
 def get_database_log_manager() -> DatabaseLogManager:
     """Get global database log manager instance"""
     global _db_log_manager
     if _db_log_manager is None:
         _db_log_manager = DatabaseLogManager()
     return _db_log_manager
+

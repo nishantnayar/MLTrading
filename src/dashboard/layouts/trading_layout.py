@@ -5,10 +5,9 @@ Integrates Alpaca trading functionality with the existing Dash UI
 
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
-import plotly.graph_objs as go
 from datetime import datetime
 
-from ..config import CARD_STYLE, CHART_COLORS
+from ..config import CARD_STYLE
 from ...utils.logging_config import get_ui_logger
 
 logger = get_ui_logger("trading_layout")
@@ -253,7 +252,7 @@ def create_positions_table(positions: list) -> html.Div:
             }
         ],
         style_header={
-            'backgroundColor': '#e9ecef',
+            'backgroundColor': '#e9ece',
             'fontWeight': 'bold'
         }
     )
@@ -281,7 +280,7 @@ def create_orders_table(orders: list) -> html.Div:
             try:
                 dt = datetime.fromisoformat(order['submitted_at'].replace('Z', '+00:00'))
                 order['submitted_at'] = dt.strftime('%m/%d %H:%M')
-            except:
+            except Exception:
                 pass
 
     return dash_table.DataTable(
@@ -301,7 +300,7 @@ def create_orders_table(orders: list) -> html.Div:
             }
         ],
         style_header={
-            'backgroundColor': '#e9ecef',
+            'backgroundColor': '#e9ece',
             'fontWeight': 'bold'
         }
     )
@@ -323,3 +322,4 @@ def format_trading_log_message(message: str, level: str = "info") -> html.Div:
         html.Span(f"[{timestamp}] ", className="text-muted"),
         html.Span(message, className=color_map.get(level, "text-dark"))
     ], className="mb-1")
+

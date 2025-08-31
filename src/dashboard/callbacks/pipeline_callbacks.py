@@ -29,6 +29,8 @@ def register_pipeline_callbacks(app):
         Output("pipeline-status-card", "children"),
         [Input("pipeline-status-interval", "n_intervals")]
     )
+
+
     def update_pipeline_status_card(n_intervals):
         """Update the main pipeline status card"""
         try:
@@ -62,6 +64,8 @@ def register_pipeline_callbacks(app):
         Output("system-health-summary", "children"),
         [Input("pipeline-status-interval", "n_intervals")]
     )
+
+
     def update_system_health_summary(n_intervals):
         """Update the system health summary"""
         try:
@@ -82,6 +86,8 @@ def register_pipeline_callbacks(app):
         Output("data-freshness-indicator", "children"),
         [Input("pipeline-status-interval", "n_intervals")]
     )
+
+
     def update_data_freshness_indicator(n_intervals):
         """Update the data freshness indicator"""
         try:
@@ -103,6 +109,8 @@ def register_pipeline_callbacks(app):
         [State("pipeline-history-modal", "is_open")],
         prevent_initial_call=True
     )
+
+
     def toggle_pipeline_history_modal(close_clicks, is_open):
         """Toggle the pipeline history modal and load data"""
         ctx = callback_context
@@ -123,6 +131,8 @@ def register_pipeline_callbacks(app):
         [Input("trigger-pipeline-btn", "n_clicks")],
         prevent_initial_call=True
     )
+
+
     def trigger_pipeline_run(trigger_clicks):
         """Handle manual pipeline trigger"""
         if not trigger_clicks:
@@ -204,6 +214,8 @@ def register_pipeline_callbacks(app):
         Output("pipeline-status-alert", "children"),
         [Input("pipeline-status-interval", "n_intervals")]
     )
+
+
     def check_pipeline_health_alerts(n_intervals):
         """Check for critical pipeline issues and show alerts"""
         try:
@@ -271,6 +283,8 @@ def register_pipeline_callbacks(app):
         Output("multi-deployment-status", "children"),
         [Input("pipeline-status-interval", "n_intervals")]
     )
+
+
     def update_multi_deployment_status(n_intervals):
         """Update status for multiple deployments"""
         try:
@@ -299,3 +313,4 @@ def register_pipeline_callbacks(app):
                 html.I(className="fas fa-exclamation-triangle me-2"),
                 "Error loading deployment status"
             ], color="warning", className="mb-0")
+

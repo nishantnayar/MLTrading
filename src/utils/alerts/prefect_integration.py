@@ -25,11 +25,13 @@ from .alert_factory import AlertFactory
 class PrefectAlertManager:
     """Alert manager with Prefect context awareness."""
 
+
     def __init__(self, config: Dict[str, Any]):
         """Initialize Prefect-aware alert manager."""
         self.alert_manager = AlertManager(config)
         self.logger = logging.getLogger(__name__)
         self._prefect_available = PREFECT_AVAILABLE
+
 
     def _get_prefect_context(self) -> Dict[str, Any]:
         """Get current Prefect context information."""
@@ -62,6 +64,7 @@ class PrefectAlertManager:
             self.logger.debug(f"Could not get Prefect context: {e}")
             return {}
 
+
     def send_alert(
         self,
         title: str,
@@ -92,6 +95,7 @@ class PrefectAlertManager:
             metadata=combined_metadata
         )
 
+
     def send_flow_start_alert(self, flow_name: str, metadata: Optional[Dict[str, Any]] = None):
         """Send flow start notification."""
         return self.send_alert(
@@ -101,6 +105,7 @@ class PrefectAlertManager:
             category=AlertCategory.DATA_PIPELINE,
             metadata=metadata
         )
+
 
     def send_flow_success_alert(self, flow_name: str, duration: Optional[float] = None, metadata: Optional[Dict[str, Any]] = None):
         """Send flow success notification."""
@@ -112,6 +117,7 @@ class PrefectAlertManager:
             category=AlertCategory.DATA_PIPELINE,
             metadata=metadata
         )
+
 
     def send_flow_failure_alert(self, flow_name: str, error: Exception, metadata: Optional[Dict[str, Any]] = None):
         """Send flow failure notification."""
@@ -128,6 +134,7 @@ class PrefectAlertManager:
             category=AlertCategory.DATA_PIPELINE,
             metadata=error_metadata
         )
+
 
     def send_task_failure_alert(self, task_name: str, error: Exception, metadata: Optional[Dict[str, Any]] = None):
         """Send task failure notification."""
@@ -146,6 +153,8 @@ class PrefectAlertManager:
         )
 
     # Delegate other methods to the underlying alert manager
+
+
     def __getattr__(self, name):
         """Delegate unknown methods to the underlying AlertManager."""
         return getattr(self.alert_manager, name)
@@ -180,8 +189,12 @@ def alert_on_failure(
         category: Alert category
         send_success_alert: Whether to send success notifications
     """
+
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
+
+
         def wrapper(*args, **kwargs):
             alert_manager = get_alert_manager()
             if not alert_manager:
@@ -189,7 +202,7 @@ def alert_on_failure(
                 return func(*args, **kwargs)
 
             func_name = func.__name__
-            start_time = datetime.now(timezone.utc)
+            # start_time = datetime.now(timezone.utc)  # Currently unused
 
             try:
                 result = func(*args, **kwargs)
@@ -212,7 +225,7 @@ def alert_on_failure(
                                     severity=AlertSeverity.INFO,
                                     category=category
                                 )
-                        except:
+                        except Exception:
                             # Fallback to basic alert
                             alert_manager.send_alert(
                                 title=f"Function Completed: {func_name}",
@@ -237,7 +250,7 @@ def alert_on_failure(
                                 task_name=func_name,
                                 error=e
                             )
-                    except:
+                    except Exception:
                         # Fallback to basic alert
                         alert_manager.send_alert(
                             title=f"Function Failed: {func_name}",
@@ -276,12 +289,16 @@ def alert_on_long_runtime(
         severity: Alert severity
         category: Alert category
     """
+
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
+
+
         def wrapper(*args, **kwargs):
             alert_manager = get_alert_manager()
             func_name = func.__name__
-            start_time = datetime.now(timezone.utc)
+            # start_time = datetime.now(timezone.utc)  # Currently unused
 
             try:
                 result = func(*args, **kwargs)
@@ -327,6 +344,8 @@ def alert_on_long_runtime(
 
 
 # Convenience functions for common Prefect scenarios
+
+
 def create_data_pipeline_alerts(config: Dict[str, Any]) -> PrefectAlertManager:
     """Create alert manager optimized for data pipeline workflows."""
     alert_manager = PrefectAlertManager(config)
@@ -345,3 +364,4 @@ def create_trading_alerts(config: Dict[str, Any]) -> PrefectAlertManager:
     # For example, higher sensitivity for trading errors
 
     return alert_manager
+

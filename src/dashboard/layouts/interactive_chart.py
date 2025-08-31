@@ -10,7 +10,6 @@ from dash import html, dcc, Input, Output, State, callback_context
 import pandas as pd
 from typing import Dict, List, Any, Optional
 
-from ..config import CHART_COLORS
 from ..services.technical_indicators import TechnicalIndicatorService
 from ..services.market_data_service import MarketDataService
 
@@ -21,6 +20,7 @@ logger = get_ui_logger("interactive_chart")
 
 class InteractiveChartBuilder:
     """Builder for creating interactive charts with technical indicators."""
+
 
     def __init__(self):
         self.indicator_service = TechnicalIndicatorService()
@@ -34,10 +34,12 @@ class InteractiveChartBuilder:
         else:
             logger.warning("Bollinger Bands config not found!")
 
+
     def get_chart_colors(self):
         """Get chart colors from constants"""
         from ..config.constants import CHART_COLORS
         return CHART_COLORS
+
 
     def create_advanced_price_chart(self,
                                   df: pd.DataFrame,
@@ -134,6 +136,7 @@ class InteractiveChartBuilder:
             logger.error(f"Error creating advanced chart: {e}")
             return self._create_empty_chart(f"Error loading chart for {symbol}")
 
+
     def _add_price_chart(self, fig: go.Figure, df: pd.DataFrame, symbol: str, chart_type: str, row: int):
         """Add main price chart (candlestick, OHLC, or line)."""
         colors = self.get_chart_colors()
@@ -200,6 +203,7 @@ class InteractiveChartBuilder:
                 ),
                 row=row, col=1
             )
+
 
     def _add_overlay_indicators(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, indicators: List[str], row: int):
         """Add overlay indicators (SMA, EMA, Bollinger Bands, etc.)."""
@@ -312,6 +316,7 @@ class InteractiveChartBuilder:
                     row=row, col=1
                 )
 
+
     def _add_volume_chart(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, row: int, volume_display: str = 'bars_ma', color_by_price: bool = True):
         """Add volume chart with configurable display options."""
         colors = self.get_chart_colors()
@@ -358,6 +363,7 @@ class InteractiveChartBuilder:
                 ),
                 row=row, col=1
             )
+
 
     def _add_oscillator_chart(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, indicator: str, row: int):
         """Add oscillator charts (RSI, MACD, Stochastic)."""
@@ -458,6 +464,7 @@ class InteractiveChartBuilder:
             # Add overbought/oversold lines
             fig.add_hline(y=80, line_dash="dash", line_color="red", opacity=0.5, row=row, col=1)
             fig.add_hline(y=20, line_dash="dash", line_color="green", opacity=0.5, row=row, col=1)
+
 
     def _add_oscillator_charts(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, indicators: List[str], row: int):
         """Add multiple oscillator charts in one subplot with normalized scaling."""
@@ -576,6 +583,7 @@ class InteractiveChartBuilder:
             pass
         # If both, they'll share the space with different y-axes
 
+
     def _update_chart_layout(self, fig: go.Figure, symbol: str, total_rows: int):
         """Update chart layout with advanced features."""
         colors = self.get_chart_colors()
@@ -642,6 +650,7 @@ class InteractiveChartBuilder:
             )
         )
 
+
     def _create_empty_chart(self, message: str) -> go.Figure:
         """Create empty chart with message."""
         fig = go.Figure()
@@ -651,8 +660,8 @@ class InteractiveChartBuilder:
             yaxis={'visible': False},
             annotations=[{
                 'text': message,
-                'xref': 'paper',
-                'yref': 'paper',
+                'xre': 'paper',
+                'yre': 'paper',
                 'showarrow': False,
                 'font': {'size': 16, 'color': '#666666'},
                 'x': 0.5,
@@ -665,8 +674,8 @@ class InteractiveChartBuilder:
 
 def create_chart_controls() -> html.Div:
     """Create interactive chart control panel."""
-    indicator_service = TechnicalIndicatorService()
-    chart_config = indicator_service.get_indicator_config()
+    # indicator_service = TechnicalIndicatorService()  # Currently unused
+    # chart_config = indicator_service.get_indicator_config()  # Currently unused
 
     # Organize indicators by type
     overlay_indicators = []
@@ -842,8 +851,8 @@ def create_chart_controls() -> html.Div:
 
 def create_indicator_info_panel() -> html.Div:
     """Create indicator information panel."""
-    indicator_service = TechnicalIndicatorService()
-    chart_config = indicator_service.get_indicator_config()
+    # indicator_service = TechnicalIndicatorService()  # Currently unused
+    # chart_config = indicator_service.get_indicator_config()  # Currently unused
 
     indicator_cards = []
     for key, config in chart_config.items():
@@ -863,3 +872,4 @@ def create_indicator_info_panel() -> html.Div:
         html.H5("Technical Indicators Guide", className="mb-3"),
         html.Div(indicator_cards)
     ], id="indicator-info-collapse", is_open=False)
+

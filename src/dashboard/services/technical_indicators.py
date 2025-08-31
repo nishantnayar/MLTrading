@@ -20,6 +20,7 @@ class TechnicalIndicatorService(BaseDashboardService):
     instead of real-time calculations. Falls back to calculations when needed.
     """
 
+
     def __init__(self):
         super().__init__()
         # Initialize the new feature data service for database queries
@@ -27,6 +28,7 @@ class TechnicalIndicatorService(BaseDashboardService):
         self.logger.info("TechnicalIndicatorService initialized with database feature optimization")
         # Clear any existing cached calculations to ensure fresh data
         self._clear_cache()
+
 
     def _clear_cache(self):
         """Clear cached calculations to ensure fresh data."""
@@ -38,11 +40,13 @@ class TechnicalIndicatorService(BaseDashboardService):
             self.logger.warning(f"Could not clear cache: {e}")
 
     @cached(ttl=300, key_func=lambda self, df, period: f"sma_{df['close'].iloc[0]:.2f}_{df['close'].iloc[-1]:.2f}_{period}")
+
+
     def calculate_sma(self, df: pd.DataFrame, period: int = 20) -> pd.Series:
         """Calculate Simple Moving Average."""
         try:
             if 'close' not in df.columns or len(df) < period:
-                self.logger.warning(f"SMA calculation failed - missing 'close' column or insufficient data")
+                self.logger.warning("SMA calculation failed - missing 'close' column or insufficient data")
                 return pd.Series(index=df.index)
 
             # Debug: Check what data we're working with
@@ -72,6 +76,8 @@ class TechnicalIndicatorService(BaseDashboardService):
             return pd.Series(index=df.index)
 
     @cached(ttl=300)
+
+
     def calculate_ema(self, df: pd.DataFrame, period: int = 20) -> pd.Series:
         """Calculate Exponential Moving Average."""
         try:
@@ -85,6 +91,7 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error calculating EMA: {e}")
             return pd.Series(index=df.index)
+
 
     def calculate_bollinger_bands(self, df: pd.DataFrame, period: int = 20, std: float = 2) -> Dict[str, pd.Series]:
         """Calculate Bollinger Bands with improved logic."""
@@ -106,7 +113,7 @@ class TechnicalIndicatorService(BaseDashboardService):
 
             # Debug: Check for any data type issues
             if close_dtype == 'object':
-                self.logger.warning(f"Close prices are object type - checking for string conversion issues")
+                self.logger.warning("Close prices are object type - checking for string conversion issues")
                 sample_prices = df['close'].head(5).tolist()
                 self.logger.info(f"Sample close prices: {sample_prices}")
 
@@ -159,6 +166,7 @@ class TechnicalIndicatorService(BaseDashboardService):
                 'lower': pd.Series(index=df.index)
             }
 
+
     def calculate_rsi(self, df: pd.DataFrame, period: int = 14) -> pd.Series:
         """Calculate Relative Strength Index."""
         try:
@@ -186,6 +194,7 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error calculating RSI: {e}")
             return pd.Series(index=df.index)
+
 
     def calculate_macd(self, df: pd.DataFrame, fast: int = 12, slow: int = 26, signal: int = 9) -> Dict[str, pd.Series]:
         """Calculate MACD (Moving Average Convergence Divergence)."""
@@ -226,6 +235,7 @@ class TechnicalIndicatorService(BaseDashboardService):
                 'histogram': pd.Series(index=df.index)
             }
 
+
     def calculate_stochastic(self, df: pd.DataFrame, k_period: int = 14, d_period: int = 3) -> Dict[str, pd.Series]:
         """Calculate Stochastic Oscillator."""
         try:
@@ -259,6 +269,7 @@ class TechnicalIndicatorService(BaseDashboardService):
                 'd_percent': pd.Series(index=df.index)
             }
 
+
     def calculate_atr(self, df: pd.DataFrame, period: int = 14) -> pd.Series:
         """Calculate Average True Range."""
         try:
@@ -284,6 +295,7 @@ class TechnicalIndicatorService(BaseDashboardService):
             self.logger.error(f"Error calculating ATR: {e}")
             return pd.Series(index=df.index)
 
+
     def calculate_volume_sma(self, df: pd.DataFrame, period: int = 20) -> pd.Series:
         """Calculate Volume Simple Moving Average."""
         try:
@@ -297,6 +309,7 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error calculating Volume SMA: {e}")
             return pd.Series(index=df.index)
+
 
     def calculate_vwap(self, df: pd.DataFrame) -> pd.Series:
         """Calculate Volume Weighted Average Price."""
@@ -320,6 +333,7 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error calculating VWAP: {e}")
             return pd.Series(index=df.index)
+
 
     def calculate_support_resistance(self, df: pd.DataFrame, window: int = 20) -> Dict[str, List[float]]:
         """Calculate support and resistance levels."""
@@ -353,6 +367,7 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error calculating support/resistance: {e}")
             return {'support': [], 'resistance': []}
+
 
     def get_all_indicators_optimized(self, symbol: str, days: int = 30) -> Dict[str, Any]:
         """
@@ -396,6 +411,7 @@ class TechnicalIndicatorService(BaseDashboardService):
             market_df = self._get_market_data_for_calculations(symbol, days)
             return self.calculate_all_indicators(market_df)
 
+
     def _get_market_data_for_calculations(self, symbol: str, days: int) -> pd.DataFrame:
         """Get market data for fallback calculations."""
         try:
@@ -408,6 +424,7 @@ class TechnicalIndicatorService(BaseDashboardService):
             return pd.DataFrame()
 
     # OPTIMIZED METHODS - Use database features when available
+
 
     def get_bollinger_bands_optimized(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """Get Bollinger Bands - OPTIMIZED with database features."""
@@ -423,6 +440,7 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error in optimized Bollinger Bands for {symbol}: {e}")
             return {}
+
 
     def get_rsi_optimized(self, symbol: str, days: int = 30, period: str = '1d') -> pd.Series:
         """Get RSI - OPTIMIZED with database features supporting multiple timeframes."""
@@ -443,6 +461,7 @@ class TechnicalIndicatorService(BaseDashboardService):
             self.logger.error(f"Error in optimized RSI for {symbol}: {e}")
             return pd.Series()
 
+
     def get_macd_optimized(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """Get MACD - OPTIMIZED with database features."""
         try:
@@ -457,6 +476,7 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error in optimized MACD for {symbol}: {e}")
             return {}
+
 
     def get_moving_averages_optimized(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """Get Moving Averages - OPTIMIZED with database features."""
@@ -478,6 +498,7 @@ class TechnicalIndicatorService(BaseDashboardService):
             self.logger.error(f"Error in optimized moving averages for {symbol}: {e}")
             return {}
 
+
     def get_atr_optimized(self, symbol: str, days: int = 30) -> pd.Series:
         """Get ATR - OPTIMIZED with database features."""
         try:
@@ -492,6 +513,7 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error in optimized ATR for {symbol}: {e}")
             return pd.Series()
+
 
     def calculate_all_indicators(self, df: pd.DataFrame) -> Dict[str, Any]:
         """
@@ -536,6 +558,7 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error calculating all indicators: {e}")
             return {}
+
 
     def get_indicator_config(self) -> Dict[str, Dict[str, Any]]:
         """Get configuration for all available indicators."""
@@ -603,3 +626,4 @@ class TechnicalIndicatorService(BaseDashboardService):
                 'description': 'Volume Weighted Average Price'
             }
         }
+

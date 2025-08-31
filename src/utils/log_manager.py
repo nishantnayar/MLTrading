@@ -17,8 +17,10 @@ from .logging_config import (
     get_combined_logger
 )
 
+
 class LogManager:
     """Centralized log management for the ML Trading application"""
+
 
     def __init__(self,
                  logs_dir: Optional[Path] = None,
@@ -56,6 +58,7 @@ class LogManager:
             # Register cleanup on application exit
             atexit.register(self.stop_auto_cleanup)
 
+
     def start_auto_cleanup(self):
         """Start the automatic log cleanup scheduler"""
         try:
@@ -69,6 +72,7 @@ class LogManager:
         except Exception as e:
             self.logger.error(f"Failed to start auto cleanup scheduler: {e}")
 
+
     def stop_auto_cleanup(self):
         """Stop the automatic log cleanup scheduler"""
         try:
@@ -76,6 +80,7 @@ class LogManager:
             self.logger.info("Automatic log cleanup scheduler stopped")
         except Exception as e:
             self.logger.error(f"Failed to stop auto cleanup scheduler: {e}")
+
 
     def manual_consolidation(self) -> Dict[str, Any]:
         """
@@ -93,6 +98,7 @@ class LogManager:
             self.logger.error(f"Manual consolidation failed: {results['message']}")
 
         return results
+
 
     def manual_cleanup(self) -> Dict[str, Any]:
         """
@@ -115,6 +121,7 @@ class LogManager:
 
         return results
 
+
     def get_statistics(self) -> Dict[str, Any]:
         """
         Get current log statistics
@@ -123,6 +130,7 @@ class LogManager:
             Dictionary with log statistics
         """
         return get_log_statistics(self.logs_dir)
+
 
     def health_check(self) -> Dict[str, Any]:
         """
@@ -178,6 +186,7 @@ class LogManager:
 
         return health
 
+
     def emergency_cleanup(self) -> Dict[str, Any]:
         """
         Perform emergency cleanup when disk space is low
@@ -223,6 +232,7 @@ class LogManager:
 # Global log manager instance
 log_manager = None
 
+
 def get_log_manager() -> LogManager:
     """
     Get the global log manager instance
@@ -234,6 +244,7 @@ def get_log_manager() -> LogManager:
     if log_manager is None:
         log_manager = LogManager()
     return log_manager
+
 
 def initialize_log_management(auto_cleanup: bool = False, **kwargs) -> LogManager:
     """
@@ -249,3 +260,4 @@ def initialize_log_management(auto_cleanup: bool = False, **kwargs) -> LogManage
     global log_manager
     log_manager = LogManager(auto_cleanup=auto_cleanup, **kwargs)
     return log_manager
+

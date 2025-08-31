@@ -3,9 +3,9 @@ Date formatting utilities for consistent user-friendly date displays.
 Provides standardized formatting functions for the ML Trading Dashboard.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
-from typing import Optional, Union
+from typing import Union
 import pandas as pd
 
 
@@ -42,7 +42,7 @@ def format_timestamp(
                 dt = pd.to_datetime(timestamp)
             else:
                 dt = pd.to_datetime(timestamp)
-        except:
+        except Exception:
             return "Invalid Date"
     elif isinstance(timestamp, pd.Timestamp):
         dt = timestamp.to_pydatetime()
@@ -217,7 +217,7 @@ def format_market_time(dt: datetime, market_tz: str = "US/Eastern") -> str:
     try:
         market_time = dt.astimezone(pytz.timezone(market_tz))
         return f"{market_time.strftime('%I:%M %p')} ET"
-    except:
+    except Exception:
         return dt.strftime('%I:%M %p')
 
 
@@ -276,3 +276,4 @@ FORMAT_CONFIGS = {
     "market_hours": {"format_type": "time_only", "timezone": "US/Eastern"},
     "last_updated": {"format_type": "relative"},
 }
+

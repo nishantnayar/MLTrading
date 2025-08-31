@@ -23,6 +23,8 @@ except ImportError:
 
 
 @dataclass
+
+
 class QueryMetrics:
     """Query performance metrics"""
     query_hash: str
@@ -34,6 +36,8 @@ class QueryMetrics:
 
 
 @dataclass
+
+
 class IndexUsageStats:
     """Index usage statistics"""
     index_name: str
@@ -56,6 +60,7 @@ class DatabasePerformanceMonitor:
     - Automated optimization suggestions
     """
 
+
     def __init__(self):
         self.logger = get_ui_logger("db_performance_monitor")
         self.db_manager = DatabaseManager()
@@ -63,6 +68,8 @@ class DatabasePerformanceMonitor:
         self.slow_query_threshold = 1.0  # seconds
 
     @contextmanager
+
+
     def monitor_query(self, sql: str, parameters: Optional[tuple] = None):
         """
         Context manager to monitor query execution time and performance.
@@ -71,7 +78,7 @@ class DatabasePerformanceMonitor:
         with monitor.monitor_query("SELECT * FROM feature_engineered_data WHERE symbol = %s", ("AAPL",)):
             result = execute_query(...)
         """
-        start_time = time.time()
+        # start_time = time.time()  # Currently unused
         query_hash = str(hash(sql.strip()[:100]))
 
         try:
@@ -100,10 +107,12 @@ class DatabasePerformanceMonitor:
             if len(self.query_metrics) > 1000:
                 self.query_metrics = self.query_metrics[-1000:]
 
+
     def get_slow_queries(self, limit: int = 10) -> List[QueryMetrics]:
         """Get the slowest queries from recent history"""
         sorted_queries = sorted(self.query_metrics, key=lambda x: x.execution_time, reverse=True)
         return sorted_queries[:limit]
+
 
     def get_feature_table_stats(self) -> Dict[str, Any]:
         """
@@ -179,6 +188,7 @@ class DatabasePerformanceMonitor:
             self.logger.error(f"Error getting feature table stats: {e}")
             return {}
 
+
     def get_index_usage_stats(self) -> List[IndexUsageStats]:
         """
         Get index usage statistics for feature_engineered_data table.
@@ -221,6 +231,7 @@ class DatabasePerformanceMonitor:
             self.logger.error(f"Error getting index usage stats: {e}")
             return []
 
+
     def analyze_query_patterns(self) -> Dict[str, Any]:
         """
         Analyze common query patterns and performance.
@@ -256,6 +267,7 @@ class DatabasePerformanceMonitor:
             }
 
         return analysis
+
 
     def get_optimization_recommendations(self) -> List[Dict[str, str]]:
         """
@@ -315,6 +327,7 @@ class DatabasePerformanceMonitor:
             self.logger.error(f"Error generating recommendations: {e}")
             return []
 
+
     def generate_performance_report(self) -> Dict[str, Any]:
         """
         Generate comprehensive performance report.
@@ -341,6 +354,7 @@ class DatabasePerformanceMonitor:
             ],
             'recommendations': self.get_optimization_recommendations()
         }
+
 
     def benchmark_common_queries(self) -> Dict[str, float]:
         """
@@ -371,7 +385,7 @@ class DatabasePerformanceMonitor:
                     }
 
                     for test_name, sql in test_queries.items():
-                        start_time = time.time()
+                        # start_time = time.time()  # Currently unused
                         try:
                             cur.execute(sql)
                             cur.fetchall()  # Ensure all data is fetched
@@ -398,15 +412,21 @@ def get_performance_monitor() -> DatabasePerformanceMonitor:
 
 
 # Decorator for automatic query monitoring
+
+
 def monitor_db_performance(func):
     """
     Decorator to automatically monitor database query performance.
 
     Usage:
     @monitor_db_performance
+
+
     def some_db_query():
         return execute_query("SELECT ...")
     """
+
+
     def wrapper(*args, **kwargs):
         # Extract SQL from function or arguments if available
         sql = kwargs.get('sql', 'Unknown query')
@@ -415,3 +435,4 @@ def monitor_db_performance(func):
             return func(*args, **kwargs)
 
     return wrapper
+

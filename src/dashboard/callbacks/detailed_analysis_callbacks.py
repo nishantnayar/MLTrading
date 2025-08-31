@@ -4,9 +4,7 @@ Handles visualization of all 90+ features and advanced indicators.
 """
 
 import plotly.graph_objects as go
-import plotly.express as px
 from plotly.subplots import make_subplots
-import pandas as pd
 import numpy as np
 from dash import Input, Output, callback, html
 import dash_bootstrap_components as dbc
@@ -24,6 +22,8 @@ feature_service = FeatureDataService()
     Output("detailed-analysis-symbol", "options"),
     [Input("detailed-analysis-symbol", "search_value")]
 )
+
+
 def update_detailed_analysis_symbols(search_value):
     """Update symbol options for detailed analysis dropdown."""
     try:
@@ -32,7 +32,7 @@ def update_detailed_analysis_symbols(search_value):
                   for s in symbols[:100]]  # Limit to first 100
 
         return options
-    except:
+    except Exception:
         return [{"label": "AAPL - Apple Inc.", "value": "AAPL"}]
 
 
@@ -41,6 +41,8 @@ def update_detailed_analysis_symbols(search_value):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
+
+
 def update_macd_detailed_chart(symbol, days):
     """Create comprehensive MACD chart with all MACD indicators."""
     if not symbol:
@@ -132,6 +134,8 @@ def update_macd_detailed_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
+
+
 def update_ma_ratios_chart(symbol, days):
     """Create moving averages and ratios chart."""
     if not symbol:
@@ -216,6 +220,8 @@ def update_ma_ratios_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
+
+
 def update_vol_ratios_chart(symbol, days):
     """Create volatility ratios and regime chart."""
     if not symbol:
@@ -292,6 +298,8 @@ def update_vol_ratios_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
+
+
 def update_advanced_vol_chart(symbol, days):
     """Create advanced volatility estimators chart."""
     if not symbol:
@@ -399,6 +407,8 @@ def update_advanced_vol_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
+
+
 def update_money_flow_chart(symbol, days):
     """Create money flow analysis chart with MFI and volume indicators."""
     if not symbol:
@@ -493,6 +503,8 @@ def update_money_flow_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
+
+
 def update_vpt_chart(symbol, days):
     """Create Volume Price Trend (VPT) chart."""
     if not symbol:
@@ -577,6 +589,8 @@ def update_vpt_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
+
+
 def update_intraday_features_chart(symbol, days):
     """Create intraday reference points chart."""
     if not symbol:
@@ -667,6 +681,8 @@ def update_intraday_features_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
+
+
 def update_lagged_features_heatmap(symbol, days):
     """Create lagged features correlation heatmap."""
     if not symbol:
@@ -732,6 +748,8 @@ def update_lagged_features_heatmap(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
+
+
 def update_rolling_stats_chart(symbol, days):
     """Create rolling statistics chart (Mean, Std, Skew, Kurtosis)."""
     if not symbol:
@@ -815,8 +833,8 @@ def create_empty_chart(message):
                 'text': message,
                 'x': 0.5,
                 'y': 0.5,
-                'xref': 'paper',
-                'yref': 'paper',
+                'xre': 'paper',
+                'yre': 'paper',
                 'showarrow': False,
                 'font': {'size': 16, 'color': 'gray'}
             }]
@@ -829,6 +847,8 @@ def create_empty_chart(message):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
+
+
 def update_rsi_multi_chart(symbol, days):
     """Create RSI multiple timeframes chart."""
     if not symbol:
@@ -872,7 +892,7 @@ def update_rsi_multi_chart(symbol, days):
                 go.Scatter(
                     x=feature_data.index,
                     y=rsi_diff,
-                    name="RSI 1D - 1W Diff",
+                    name="RSI 1D - 1W Dif",
                     line=dict(color='purple', width=2),
                     fill='tonexty' if len(rsi_diff) > 1 else None,
                     hovertemplate="Difference: %{y:.1f}<extra></extra>"
@@ -903,6 +923,8 @@ def update_rsi_multi_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
+
+
 def update_bollinger_detailed_chart(symbol, days):
     """Create detailed Bollinger Bands chart with position and squeeze."""
     if not symbol:
@@ -998,6 +1020,8 @@ def update_bollinger_detailed_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
+
+
 def update_volatility_spectrum_chart(symbol, days):
     """Create comprehensive volatility spectrum chart."""
     if not symbol:
@@ -1073,6 +1097,8 @@ def update_volatility_spectrum_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
+
+
 def update_volume_indicators_chart(symbol, days):
     """Create volume indicators chart."""
     if not symbol:
@@ -1166,6 +1192,8 @@ def update_volume_indicators_chart(symbol, days):
     Output("data-availability-summary", "children"),
     [Input("detailed-analysis-symbol", "value")]
 )
+
+
 def update_data_availability_summary(symbol):
     """Update data availability summary."""
     if not symbol:
@@ -1213,6 +1241,8 @@ def update_data_availability_summary(symbol):
     Output("feature-categories-overview", "children"),
     [Input("detailed-analysis-symbol", "value")]
 )
+
+
 def update_feature_categories_overview(symbol):
     """Update feature categories overview."""
     try:
@@ -1280,3 +1310,4 @@ def register_detailed_analysis_callbacks(app):
     # The callbacks are already registered using the @callback decorator
     # This function exists for consistency with other callback modules
     pass
+

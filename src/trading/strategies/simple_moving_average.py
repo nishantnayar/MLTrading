@@ -19,6 +19,7 @@ class SimpleMovingAverageStrategy(BaseStrategy):
     Generates sell signals when short MA crosses below long MA
     """
 
+
     def __init__(self,
                  symbols: List[str],
                  short_window: int = 10,
@@ -54,6 +55,7 @@ class SimpleMovingAverageStrategy(BaseStrategy):
         # Strategy state tracking
         self.previous_signals: Dict[str, SignalType] = {}
 
+
     def _update_indicators(self, symbol: str, data: pd.DataFrame):
         """Update SMA-specific indicators"""
         super()._update_indicators(symbol, data)
@@ -79,6 +81,7 @@ class SimpleMovingAverageStrategy(BaseStrategy):
             # Signal strength based on MA separation
             ma_separation = np.abs(sma_short - sma_long) / sma_long
             self.indicators[symbol]['signal_strength'] = np.clip(ma_separation * 10, 0.1, 1.0)
+
 
     def generate_signals(self, market_data: Dict[str, pd.DataFrame]) -> List[StrategySignal]:
         """
@@ -155,6 +158,7 @@ class SimpleMovingAverageStrategy(BaseStrategy):
 
         return signals
 
+
     def calculate_position_size(self, signal: StrategySignal, available_capital: float) -> int:
         """
         Calculate position size based on available capital and risk management
@@ -220,6 +224,7 @@ class MomentumStrategy(BaseStrategy):
     Sells when price is below moving average or RSI is overbought
     """
 
+
     def __init__(self,
                  symbols: List[str],
                  lookback_period: int = 20,
@@ -255,6 +260,7 @@ class MomentumStrategy(BaseStrategy):
         self.rsi_period = rsi_period
         self.rsi_oversold = rsi_oversold
         self.rsi_overbought = rsi_overbought
+
 
     def generate_signals(self, market_data: Dict[str, pd.DataFrame]) -> List[StrategySignal]:
         """Generate momentum-based trading signals"""
@@ -334,6 +340,7 @@ class MomentumStrategy(BaseStrategy):
 
         return signals
 
+
     def calculate_position_size(self, signal: StrategySignal, available_capital: float) -> int:
         """Calculate position size for momentum strategy"""
         # Use similar logic to SMA strategy but with momentum-specific adjustments
@@ -363,3 +370,4 @@ class MomentumStrategy(BaseStrategy):
         except Exception as e:
             self.logger.error(f"Error calculating position size: {e}")
             return 0
+

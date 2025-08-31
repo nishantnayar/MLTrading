@@ -34,6 +34,7 @@ logger = get_ui_logger("alpaca_service")
 class AlpacaService:
     """Service for interacting with Alpaca Markets API"""
 
+
     def __init__(self, config_path: Optional[str] = None):
         """Initialize Alpaca service with configuration"""
         self.config = self._load_config(config_path)
@@ -43,6 +44,7 @@ class AlpacaService:
 
         # Initialize connection
         self.connect()
+
 
     def _load_config(self, config_path: Optional[str] = None) -> Dict:
         """Load Alpaca configuration from unified settings"""
@@ -92,6 +94,7 @@ class AlpacaService:
             except Exception as fallback_error:
                 logger.error(f"Both unified and legacy config loading failed: {fallback_error}")
                 raise
+
 
     def connect(self) -> bool:
         """Establish connection to Alpaca API"""
@@ -148,9 +151,11 @@ class AlpacaService:
             self._connected = False
             return False
 
+
     def is_connected(self) -> bool:
         """Check if connected to Alpaca"""
         return self._connected and self.client is not None
+
 
     def get_account_info(self) -> Optional[Dict]:
         """Get account information"""
@@ -172,6 +177,7 @@ class AlpacaService:
         except Exception as e:
             logger.error(f"Error getting account info: {e}")
             return None
+
 
     def get_positions(self) -> List[Dict]:
         """Get current positions"""
@@ -196,6 +202,7 @@ class AlpacaService:
         except Exception as e:
             logger.error(f"Error getting positions: {e}")
             return []
+
 
     def get_orders(self, status: str = 'all', limit: int = 50) -> List[Dict]:
         """Get recent orders"""
@@ -227,6 +234,7 @@ class AlpacaService:
         except Exception as e:
             logger.error(f"Error getting orders: {e}")
             return []
+
 
     def submit_order(self, symbol: str, qty: int, side: str,
                     order_type: str = 'market', time_in_force: str = 'day') -> Optional[Dict]:
@@ -269,6 +277,7 @@ class AlpacaService:
             logger.error(f"[ERROR] Error submitting order: {e}")
             return None
 
+
     def cancel_order(self, order_id: str) -> bool:
         """Cancel an order"""
         if not self.is_connected():
@@ -281,6 +290,7 @@ class AlpacaService:
         except Exception as e:
             logger.error(f"[ERROR] Error cancelling order: {e}")
             return False
+
 
     def get_market_data(self, symbol: str, timeframe: str = '1Day',
                        start: Optional[datetime] = None, end: Optional[datetime] = None) -> pd.DataFrame:
@@ -307,6 +317,7 @@ class AlpacaService:
         except Exception as e:
             logger.error(f"Error getting market data for {symbol}: {e}")
             return pd.DataFrame()
+
 
     def get_market_hours(self) -> Dict:
         """Get market hours and status from Alpaca"""
@@ -374,6 +385,7 @@ class AlpacaService:
             logger.error(f"Error getting market hours: {e}")
             return {}
 
+
     def get_connection_status(self) -> Dict:
         """Get detailed connection status"""
         return {
@@ -387,9 +399,11 @@ class AlpacaService:
 # Global instance for easy access
 alpaca_service = None
 
+
 def get_alpaca_service() -> AlpacaService:
     """Get global Alpaca service instance"""
     global alpaca_service
     if alpaca_service is None:
         alpaca_service = AlpacaService()
     return alpaca_service
+

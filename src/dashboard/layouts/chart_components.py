@@ -4,13 +4,13 @@ Contains reusable chart creation functions.
 """
 
 import plotly.graph_objs as go
-import plotly.express as px
-from dash import html, dcc
+from dash import html
 import dash_bootstrap_components as dbc
 import pandas as pd
 
 # Import colors from centralized configuration
 from ..config import CHART_COLORS
+
 
 def create_empty_chart(title="No Data Available"):
     """Create an empty chart with a message"""
@@ -27,8 +27,8 @@ def create_empty_chart(title="No Data Available"):
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             annotations=[{
                 'text': 'No data available',
-                'xref': 'paper',
-                'yref': 'paper',
+                'xre': 'paper',
+                'yre': 'paper',
                 'showarrow': False,
                 'font': {'size': 14}
             }],
@@ -55,8 +55,8 @@ def create_loading_chart(message="Loading market data..."):
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             annotations=[{
                 'text': f'<i class="fas fa-spinner fa-spin"></i> {message}',
-                'xref': 'paper',
-                'yref': 'paper',
+                'xre': 'paper',
+                'yre': 'paper',
                 'showarrow': False,
                 'font': {'size': 16, 'color': CHART_COLORS['primary']},
                 'x': 0.5,
@@ -113,8 +113,8 @@ def create_error_chart(error_type="unknown", details="", symbol=""):
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             annotations=[{
                 'text': annotation_text,
-                'xref': 'paper',
-                'yref': 'paper',
+                'xre': 'paper',
+                'yre': 'paper',
                 'showarrow': False,
                 'font': {'size': 14, 'color': style['color']},
                 'x': 0.5,
@@ -127,6 +127,7 @@ def create_error_chart(error_type="unknown", details="", symbol=""):
             height=400
         )
     )
+
 
 def create_horizontal_bar_chart(data, title, color=CHART_COLORS['primary']):
     """Create a horizontal bar chart"""
@@ -185,6 +186,7 @@ def create_horizontal_bar_chart(data, title, color=CHART_COLORS['primary']):
 
     return fig
 
+
 def create_price_chart(data):
     """Create a price chart from OHLC data"""
     if data.empty:
@@ -213,6 +215,7 @@ def create_price_chart(data):
     )
 
     return fig
+
 
 def create_volume_chart(data):
     """Create an enhanced volume chart with color coding and moving average"""
@@ -278,6 +281,7 @@ def create_volume_chart(data):
 
     return fig
 
+
 def create_candlestick_chart(data, symbol="", time_range=""):
     """Create a candlestick chart from OHLC data"""
     if data.empty:
@@ -326,6 +330,7 @@ def create_candlestick_chart(data, symbol="", time_range=""):
 
     return fig
 
+
 def create_stats_card(title, value, change=None, change_type="neutral", id=None):
     """Create a stats card"""
     card_content = [
@@ -348,6 +353,7 @@ def create_stats_card(title, value, change=None, change_type="neutral", id=None)
 
 # Note: create_chart_card function moved to shared_components.py
 
+
 def create_volume_summary_card(data):
     """Create a summary card for volume analysis"""
     if data.empty or 'volume' not in data.columns:
@@ -364,6 +370,8 @@ def create_volume_summary_card(data):
     volume_color = "success" if volume_ratio > 1.5 else "warning" if volume_ratio > 0.8 else "secondary"
 
     # Format volume function
+
+
     def format_volume(vol):
         if vol >= 1e9:
             return f"{vol/1e9:.2f}B"
@@ -524,6 +532,7 @@ def create_symbol_comparison_bar_chart(symbols_data, metric='volume', title="Sym
 
     return fig
 
+
 def create_signals_html(signals):
     """Create HTML for recent signals"""
     if not signals:
@@ -544,3 +553,4 @@ def create_signals_html(signals):
         ], className="list-group-item"))
 
     return html.Ul(signal_items, className="list-group list-group-flush")
+

@@ -22,6 +22,8 @@ class InputValidator:
     VALID_CHART_TYPES = ['line', 'candlestick', 'bar', 'area']
 
     @classmethod
+
+
     def validate_symbol(cls, symbol: str) -> Tuple[bool, str]:
         """
         Validate stock symbol format.
@@ -49,6 +51,8 @@ class InputValidator:
         return True, ""
 
     @classmethod
+
+
     def validate_date_range(cls, start_date: str, end_date: str) -> Tuple[bool, str]:
         """
         Validate date range inputs.
@@ -93,6 +97,8 @@ class InputValidator:
             return False, f"Invalid date format: {str(e)}"
 
     @classmethod
+
+
     def validate_time_range(cls, time_range: str) -> Tuple[bool, str]:
         """
         Validate time range selection.
@@ -115,6 +121,8 @@ class InputValidator:
         return True, ""
 
     @classmethod
+
+
     def validate_source(cls, source: str) -> Tuple[bool, str]:
         """
         Validate data source selection.
@@ -137,6 +145,8 @@ class InputValidator:
         return True, ""
 
     @classmethod
+
+
     def validate_positive_integer(cls, value: Any, field_name: str = "Value", max_value: int = None) -> Tuple[bool, str]:
         """
         Validate positive integer input.
@@ -164,6 +174,8 @@ class InputValidator:
             return False, f"{field_name} must be a valid integer"
 
     @classmethod
+
+
     def validate_portfolio_params(cls, params: Dict[str, Any]) -> Tuple[bool, str]:
         """
         Validate portfolio-related parameters.
@@ -210,6 +222,8 @@ class InputValidator:
         return True, ""
 
     @classmethod
+
+
     def sanitize_string(cls, input_string: str, max_length: int = 100) -> str:
         """
         Sanitize string input for safe database storage.
@@ -249,6 +263,8 @@ class InputValidator:
         return sanitized
 
     @classmethod
+
+
     def validate_api_request(cls, request_data: Dict[str, Any]) -> Tuple[bool, str, Dict[str, Any]]:
         """
         Validate and sanitize API request data.
@@ -294,6 +310,8 @@ class InputValidator:
         return True, "", sanitized
 
     @classmethod
+
+
     def validate_callback_inputs(cls, **kwargs) -> Dict[str, Any]:
         """
         Validate Dash callback inputs and provide safe defaults.
@@ -337,6 +355,8 @@ class InputValidator:
 
 
 # Validation decorator for callback functions
+
+
 def validate_inputs(**validation_rules):
     """
     Decorator to validate callback inputs automatically.
@@ -346,11 +366,17 @@ def validate_inputs(**validation_rules):
 
     Example:
         @validate_inputs(symbol=InputValidator.validate_symbol, days=lambda x: InputValidator.validate_positive_integer(x, "Days"))
+
+
         def my_callback(symbol, days):
             # Inputs are already validated
             pass
     """
+
+
     def decorator(func):
+
+
         def wrapper(*args, **kwargs):
             # Extract arguments based on function signature
             import inspect
@@ -373,3 +399,4 @@ def validate_inputs(**validation_rules):
 
         return wrapper
     return decorator
+

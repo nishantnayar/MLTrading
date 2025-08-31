@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Optional
 import pytz
 
+
 def generate_friendly_flow_name(
     flow_type: str,
     context: Optional[str] = None,
@@ -37,6 +38,7 @@ def generate_friendly_flow_name(
         name_parts.append(context)
 
     return "-".join(name_parts)
+
 
 def generate_market_context_name(
     flow_type: str = "yahoo-data",
@@ -78,6 +80,7 @@ def generate_market_context_name(
 
     return generate_friendly_flow_name(flow_type, context, timezone)
 
+
 def generate_manual_trigger_name(
     flow_type: str,
     user_context: Optional[str] = None,
@@ -106,13 +109,17 @@ def generate_manual_trigger_name(
     return generate_friendly_flow_name(flow_type, context, timezone)
 
 # Predefined naming functions for common flows
+
+
 def yahoo_market_hours_name() -> str:
     """Generate name for Yahoo market hours collection"""
     return generate_market_context_name("yahoo-data")
 
+
 def yahoo_ondemand_name() -> str:
     """Generate name for Yahoo on-demand collection"""
     return generate_friendly_flow_name("yahoo-ondemand", "manual")
+
 
 def portfolio_analysis_name() -> str:
     """Generate name for portfolio analysis"""
@@ -129,3 +136,4 @@ if __name__ == "__main__":
     print(f"Testing run: {generate_manual_trigger_name('yahoo-data', 'testing')}")
     print(f"Backfill run: {generate_manual_trigger_name('yahoo-data', 'backfill 2025-01')}")
     print(f"User research: {generate_manual_trigger_name('portfolio-analysis', 'user research')}")
+

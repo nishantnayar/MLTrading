@@ -3,18 +3,14 @@ Interactive chart callbacks for advanced chart features.
 Handles technical indicators, zoom controls, and chart interactions.
 """
 
-import plotly.graph_objs as go
 from dash import Input, Output, State, callback_context, html
 import dash_bootstrap_components as dbc
-import pandas as pd
-from typing import List, Dict, Any, Optional
-from datetime import datetime, timedelta
 
 from ..layouts.interactive_chart import InteractiveChartBuilder
 from ..services.market_data_service import MarketDataService
 from ..services.technical_indicators import TechnicalIndicatorService
 from ...utils.logging_config import get_ui_logger
-from ..utils.date_formatters import format_date_range, format_timestamp
+from ..utils.date_formatters import format_date_range
 
 logger = get_ui_logger("interactive_chart_callbacks")
 
@@ -24,7 +20,7 @@ def register_interactive_chart_callbacks(app):
 
     chart_builder = InteractiveChartBuilder()
     market_service = MarketDataService()
-    indicator_service = TechnicalIndicatorService()
+    # indicator_service = TechnicalIndicatorService()  # Currently unused
 
     # NEW: Toggle advanced controls
     @app.callback(
@@ -33,6 +29,8 @@ def register_interactive_chart_callbacks(app):
         [State("advanced-chart-controls", "is_open")],
         prevent_initial_call=True
     )
+
+
     def toggle_advanced_controls(n_clicks, is_open):
         """Toggle the advanced chart controls collapse."""
         if n_clicks:
@@ -52,6 +50,8 @@ def register_interactive_chart_callbacks(app):
          Input("chart-type-bar", "n_clicks")],
         prevent_initial_call=True
     )
+
+
     def update_chart_type(*clicks):
         """Handle chart type button clicks."""
         ctx = callback_context
@@ -80,6 +80,8 @@ def register_interactive_chart_callbacks(app):
         [State("overlay-indicators-store", "data")],
         prevent_initial_call=True
     )
+
+
     def toggle_overlay_indicators(sma_clicks, ema_clicks, bb_clicks, current_indicators):
         """Toggle overlay indicators on/off."""
         ctx = callback_context
@@ -87,7 +89,7 @@ def register_interactive_chart_callbacks(app):
             return current_indicators or ['sma', 'ema'], False, False, True
 
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-        indicators = set(current_indicators or ['sma', 'ema'])
+        # indicators = set(current_indicators or ['sma', 'ema'])  # Currently unused
 
         indicator_map = {
             'indicator-sma-btn': 'sma',
@@ -116,6 +118,8 @@ def register_interactive_chart_callbacks(app):
         [State("oscillator-indicators-store", "data")],
         prevent_initial_call=True
     )
+
+
     def toggle_rsi_indicator(rsi_clicks, current_oscillators):
         """Toggle RSI indicator on/off."""
         if not rsi_clicks:
@@ -144,6 +148,8 @@ def register_interactive_chart_callbacks(app):
         [State("volume-display-store", "data")],
         prevent_initial_call=True
     )
+
+
     def update_volume_display(*clicks):
         """Handle volume display button clicks."""
         ctx = callback_context
@@ -173,7 +179,7 @@ def register_interactive_chart_callbacks(app):
     # NEW: Dynamic advanced indicator callbacks
     # This creates callbacks for all available indicators dynamically
     indicator_service_temp = TechnicalIndicatorService()
-    chart_config = indicator_service_temp.get_indicator_config()
+    # chart_config = indicator_service_temp.get_indicator_config()  # Currently unused
 
     # Get overlay indicators
     overlay_indicators = [key for key, config in chart_config.items() if config.get('type') == 'overlay']
@@ -190,6 +196,8 @@ def register_interactive_chart_callbacks(app):
             [State("overlay-indicators-store", "data")],
             prevent_initial_call=True
         )
+
+
         def toggle_advanced_overlay_indicators(*args):
             """Handle advanced overlay indicator toggles."""
             ctx = callback_context
@@ -230,6 +238,8 @@ def register_interactive_chart_callbacks(app):
             [State("oscillator-indicators-store", "data")],
             prevent_initial_call=True
         )
+
+
         def toggle_advanced_oscillator_indicators(*args):
             """Handle advanced oscillator indicator toggles."""
             ctx = callback_context
@@ -266,6 +276,8 @@ def register_interactive_chart_callbacks(app):
          Input("filtered-symbols-store", "data")],
         prevent_initial_call=False
     )
+
+
     def update_symbol_options(search_value, filtered_symbols):
         """Update symbol dropdown options based on search query and filtered symbols."""
         try:
@@ -322,6 +334,8 @@ def register_interactive_chart_callbacks(app):
         ],
         prevent_initial_call=False
     )
+
+
     def update_interactive_chart(symbol, chart_type, overlay_indicators, oscillator_indicators, volume_display, refresh_clicks):
         """Update interactive chart with technical indicators."""
         try:
@@ -330,7 +344,7 @@ def register_interactive_chart_callbacks(app):
                 symbol = "ADBE"
 
             # Combine overlay and oscillator indicators
-            indicators = (overlay_indicators or []) + (oscillator_indicators or [])
+            # indicators = (overlay_indicators or []) + (oscillator_indicators or [])  # Currently unused
 
             # Get ALL available market data (no artificial date limit)
             # Let users see the complete data range they have
@@ -361,7 +375,7 @@ def register_interactive_chart_callbacks(app):
             fig = chart_builder.create_advanced_price_chart(
                 df=df,
                 symbol=symbol,
-                indicators=chart_indicators,
+                # indicators=chart_indicators,  # Currently unused
                 show_volume=show_volume,
                 chart_type=chart_type or 'candlestick',
                 volume_display=volume_display or 'bars_ma',
@@ -385,6 +399,8 @@ def register_interactive_chart_callbacks(app):
         ],
         prevent_initial_call=True
     )
+
+
     def update_technical_analysis_summary(symbol, overlay_indicators, oscillator_indicators):
         """Update technical analysis summary."""
         try:
@@ -392,7 +408,7 @@ def register_interactive_chart_callbacks(app):
                 symbol = "ADBE"
 
             # Combine indicators for analysis
-            indicators = (overlay_indicators or []) + (oscillator_indicators or [])
+            # indicators = (overlay_indicators or []) + (oscillator_indicators or [])  # Currently unused
 
             # Get recent market data for analysis
             df = market_service.get_market_data(symbol, days=30)
@@ -449,6 +465,8 @@ def register_interactive_chart_callbacks(app):
                 volume_ratio = (current_volume / avg_volume) if avg_volume > 0 else 0
 
                 # Format volume in millions/billions
+
+
                 def format_volume(vol):
                     if vol >= 1e9:
                         return f"{vol/1e9:.1f}B"
@@ -494,3 +512,4 @@ def register_interactive_chart_callbacks(app):
         except Exception as e:
             logger.error(f"Error updating technical analysis summary: {e}")
             return html.P(f"Error loading analysis: {str(e)}", className="text-danger text-center")
+

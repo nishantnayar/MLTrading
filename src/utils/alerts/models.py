@@ -15,6 +15,8 @@ class AlertSeverity(Enum):
     INFO = "INFO"
 
     @property
+
+
     def priority(self) -> int:
         """Return numeric priority for comparison."""
         return {
@@ -25,10 +27,12 @@ class AlertSeverity(Enum):
             AlertSeverity.INFO: 1
         }[self]
 
+
     def __ge__(self, other) -> bool:
         if not isinstance(other, AlertSeverity):
             return NotImplemented
         return self.priority >= other.priority
+
 
     def __gt__(self, other) -> bool:
         if not isinstance(other, AlertSeverity):
@@ -46,6 +50,8 @@ class AlertCategory(Enum):
 
 
 @dataclass
+
+
 class Alert:
     """Alert data structure."""
     title: str
@@ -56,6 +62,7 @@ class Alert:
     component: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
 
+
     def __post_init__(self):
         """Validate alert data after initialization."""
         if not self.title or not self.title.strip():
@@ -65,15 +72,17 @@ class Alert:
         if self.metadata is None:
             self.metadata = {}
 
+
     def to_email_subject(self) -> str:
         """Generate email subject line for this alert."""
         return f"[{self.severity.value}] MLTrading Alert: {self.title}"
 
+
     def to_email_body(self) -> str:
         """Generate email body for this alert."""
         body_lines = [
-            f"Alert Details:",
-            f"================",
+            "Alert Details:",
+            "================",
             f"Title: {self.title}",
             f"Severity: {self.severity.value}",
             f"Category: {self.category.value}",
@@ -85,24 +94,24 @@ class Alert:
 
         body_lines.extend([
             "",
-            f"Message:",
-            f"--------",
+            "Message:",
+            "--------",
             f"{self.message}",
         ])
 
         if self.metadata:
             body_lines.extend([
                 "",
-                f"Additional Information:",
-                f"----------------------"
+                "Additional Information:",
+                "----------------------"
             ])
             for key, value in self.metadata.items():
                 body_lines.append(f"{key}: {value}")
 
         body_lines.extend([
             "",
-            f"--",
-            f"MLTrading Alert System",
+            "--",
+            "MLTrading Alert System",
             f"Generated at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}"
         ])
 
@@ -116,3 +125,4 @@ class AlertStatus(Enum):
     FAILED = "failed"
     RATE_LIMITED = "rate_limited"
     FILTERED = "filtered"
+

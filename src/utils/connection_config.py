@@ -36,6 +36,8 @@ class ConnectionConfig:
     POOL_RETRY_DELAY = 0.5  # seconds
 
     @classmethod
+
+
     def get_pool_config(cls) -> Dict[str, Any]:
         """Get connection pool configuration"""
         return {
@@ -45,6 +47,8 @@ class ConnectionConfig:
         }
 
     @classmethod
+
+
     def get_connection_params(cls) -> Dict[str, Any]:
         """Get database connection parameters from unified settings"""
         try:
@@ -65,6 +69,8 @@ class ConnectionConfig:
             return cls._get_legacy_connection_params()
 
     @classmethod
+
+
     def _get_legacy_connection_params(cls) -> Dict[str, Any]:
         """Legacy connection parameters from environment variables"""
         return {
@@ -79,12 +85,14 @@ class ConnectionConfig:
         }
 
     @classmethod
+
+
     def log_configuration(cls):
         """Log current connection configuration"""
         import logging
         logger = logging.getLogger('mltrading.connection_config')
 
-        logger.info(f"Database Connection Configuration:")
+        logger.info("Database Connection Configuration:")
         logger.info(f"  PostgreSQL max_connections: {cls.POSTGRES_MAX_CONNECTIONS}")
         logger.info(f"  System reserved: {cls.SYSTEM_RESERVED_CONNECTIONS}")
         logger.info(f"  Available for MLTrading: {cls.AVAILABLE_CONNECTIONS}")
@@ -107,3 +115,4 @@ def get_safe_db_config():
         **ConnectionConfig.get_connection_params(),
         **ConnectionConfig.get_pool_config()
     }
+

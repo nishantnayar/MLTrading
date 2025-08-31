@@ -4,9 +4,7 @@ Replaces real-time calculations with efficient database queries for comprehensiv
 """
 
 import pandas as pd
-import numpy as np
 from typing import Dict, List, Any, Optional, Tuple
-from datetime import datetime, timedelta
 from .base_service import BaseDashboardService
 from .cache_service import cached
 
@@ -25,11 +23,14 @@ class FeatureDataService(BaseDashboardService):
     - Access to advanced features not available in UI calculations
     """
 
+
     def __init__(self):
         super().__init__()
         self.logger.info("FeatureDataService initialized - using pre-calculated features from database")
 
     @cached(ttl=120, key_func=lambda self, symbol, days: f"features_{symbol}_{days}")
+
+
     def get_feature_data(self, symbol: str, days: int = 30, feature_version: str = '3.0') -> pd.DataFrame:
         """
         Get comprehensive feature data for a symbol from the database.
@@ -93,6 +94,7 @@ class FeatureDataService(BaseDashboardService):
             self.logger.error(f"Error retrieving feature data for {symbol}: {e}")
             return pd.DataFrame()
 
+
     def get_moving_averages(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """
         Get pre-calculated moving averages from database.
@@ -121,6 +123,7 @@ class FeatureDataService(BaseDashboardService):
             self.logger.error(f"Error getting moving averages for {symbol}: {e}")
             return {}
 
+
     def get_bollinger_bands(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """
         Get pre-calculated Bollinger Bands from database.
@@ -145,6 +148,7 @@ class FeatureDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting Bollinger Bands for {symbol}: {e}")
             return {}
+
 
     def get_rsi_data(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """
@@ -173,6 +177,7 @@ class FeatureDataService(BaseDashboardService):
             self.logger.error(f"Error getting RSI data for {symbol}: {e}")
             return {}
 
+
     def get_macd_data(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """
         Get pre-calculated MACD data from database.
@@ -196,6 +201,7 @@ class FeatureDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting MACD data for {symbol}: {e}")
             return {}
+
 
     def get_volatility_data(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """
@@ -227,6 +233,7 @@ class FeatureDataService(BaseDashboardService):
             self.logger.error(f"Error getting volatility data for {symbol}: {e}")
             return {}
 
+
     def get_volume_data(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """
         Get comprehensive volume data from database.
@@ -253,6 +260,7 @@ class FeatureDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting volume data for {symbol}: {e}")
             return {}
+
 
     def get_advanced_features(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """
@@ -301,6 +309,7 @@ class FeatureDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting advanced features for {symbol}: {e}")
             return {}
+
 
     def get_all_indicators_from_db(self, symbol: str, days: int = 30) -> Dict[str, Any]:
         """
@@ -387,6 +396,7 @@ class FeatureDataService(BaseDashboardService):
             self.logger.error(f"Error getting all indicators for {symbol}: {e}")
             return {}
 
+
     def get_feature_metadata(self) -> Dict[str, Dict[str, Any]]:
         """
         Get metadata about available features and their descriptions.
@@ -462,6 +472,7 @@ class FeatureDataService(BaseDashboardService):
             }
         }
 
+
     def get_data_availability(self, symbol: str) -> Dict[str, Any]:
         """
         Check data availability and coverage for a symbol.
@@ -512,3 +523,4 @@ class FeatureDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error checking data availability for {symbol}: {e}")
             return {'available': False, 'error': str(e)}
+

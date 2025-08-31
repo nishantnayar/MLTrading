@@ -4,7 +4,6 @@ Handles market overview, statistics, and time-related information.
 """
 
 import plotly.graph_objs as go
-import dash
 from dash import Input, Output, html, dcc, State, callback_context
 import dash_bootstrap_components as dbc
 from datetime import datetime, timedelta
@@ -32,6 +31,8 @@ def register_overview_callbacks(app):
          Input("refresh-overview-btn", "n_clicks")],
         prevent_initial_call=False
     )
+
+
     def update_market_overview_chart(refresh_clicks, overview_refresh_clicks):
         """Update market overview chart with real data"""
         try:
@@ -87,6 +88,8 @@ def register_overview_callbacks(app):
          Input("refresh-overview-btn", "n_clicks")],
         prevent_initial_call=False
     )
+
+
     def update_top_performers(refresh_clicks, overview_refresh_clicks):
         """Update top performers list with real data"""
         try:
@@ -117,6 +120,8 @@ def register_overview_callbacks(app):
          Input("refresh-overview-btn", "n_clicks")],
         prevent_initial_call=False
     )
+
+
     def update_recent_activity(refresh_clicks, overview_refresh_clicks):
         """Update recent activity list with real data"""
         try:
@@ -151,6 +156,8 @@ def register_overview_callbacks(app):
          Input("refresh-overview-btn", "n_clicks")],
         prevent_initial_call=False
     )
+
+
     def update_summary_stats(refresh_clicks, overview_refresh_clicks):
         """Update summary statistics with real data"""
         try:
@@ -178,6 +185,8 @@ def register_overview_callbacks(app):
         [Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
+
+
     def update_time_and_market_info(refresh_clicks):
         """Update current time and market hours information"""
         try:
@@ -303,6 +312,8 @@ def register_overview_callbacks(app):
         [Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
+
+
     def update_database_stats(refresh_clicks):
         """Update database statistics"""
         try:
@@ -326,6 +337,8 @@ def register_overview_callbacks(app):
          Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
+
+
     def update_sector_distribution_chart(overview_refresh, stats_refresh):
         """Update sector distribution bar chart"""
         try:
@@ -363,6 +376,8 @@ def register_overview_callbacks(app):
          Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
+
+
     def update_industry_distribution_chart(sector_click, default_sector, overview_refresh, stats_refresh):
         """Update industry distribution chart based on selected sector"""
         try:
@@ -410,6 +425,8 @@ def register_overview_callbacks(app):
          Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
+
+
     def update_top_volume_chart(overview_refresh, stats_refresh):
         """Update top symbols by volume bar chart"""
         try:
@@ -462,6 +479,8 @@ def register_overview_callbacks(app):
          Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
+
+
     def update_price_performance_chart(overview_refresh, stats_refresh):
         """Update 7-day price performance bar chart"""
         try:
@@ -513,6 +532,8 @@ def register_overview_callbacks(app):
          Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
+
+
     def update_market_activity_chart(overview_refresh, stats_refresh):
         """Update market activity summary bar chart"""
         try:
@@ -569,6 +590,8 @@ def register_overview_callbacks(app):
          Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
+
+
     def update_last_updated_timestamp(overview_refresh, stats_refresh):
         """Update the last updated timestamp"""
         from datetime import datetime
@@ -586,6 +609,8 @@ def register_overview_callbacks(app):
          Input("market-activity-chart", "clickData")],
         prevent_initial_call=True
     )
+
+
     def update_filtered_symbols(sector_click, industry_click, volume_click, performance_click, activity_click):
         """Update filtered symbols based on bar chart clicks"""
         try:

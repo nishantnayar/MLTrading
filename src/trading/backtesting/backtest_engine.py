@@ -18,6 +18,8 @@ logger = get_combined_logger("mltrading.backtesting")
 
 
 @dataclass
+
+
 class Trade:
     """Represents a completed trade"""
     symbol: str
@@ -33,6 +35,8 @@ class Trade:
 
 
 @dataclass
+
+
 class BacktestResult:
     """Results from a backtest run"""
     strategy_name: str
@@ -66,6 +70,7 @@ class BacktestResult:
     trades: List[Trade]
     equity_curve: pd.Series
     drawdown_curve: pd.Series
+
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
@@ -101,6 +106,7 @@ class BacktestEngine:
     comprehensive performance metrics
     """
 
+
     def __init__(self,
                  initial_capital: float = 100000.0,
                  commission: float = 1.0,
@@ -121,6 +127,7 @@ class BacktestEngine:
         self.db_manager = DatabaseManager()
 
         logger.info(f"BacktestEngine initialized with ${initial_capital:,.2f} capital")
+
 
     def load_historical_data(self,
                            symbols: List[str],
@@ -170,6 +177,7 @@ class BacktestEngine:
         except Exception as e:
             logger.error(f"Error loading historical data: {e}")
             return {}
+
 
     def run_backtest(self,
                     strategy: BaseStrategy,
@@ -275,6 +283,7 @@ class BacktestEngine:
             logger.error(f"Error running backtest: {e}")
             raise
 
+
     def _execute_signal(self,
                        signal: StrategySignal,
                        capital: float,
@@ -375,6 +384,7 @@ class BacktestEngine:
             logger.error(f"Error executing signal: {e}")
             return None
 
+
     def _calculate_portfolio_value(self,
                                  capital: float,
                                  positions: Dict[str, Any],
@@ -390,6 +400,7 @@ class BacktestEngine:
                 total_value += position_value
 
         return total_value
+
 
     def _calculate_results(self,
                           strategy: BaseStrategy,
@@ -470,3 +481,4 @@ class BacktestEngine:
             equity_curve=equity_series,
             drawdown_curve=drawdown
         )
+

@@ -20,6 +20,8 @@ trading_logger = get_trading_logger()
 
 
 @dataclass
+
+
 class TradingPair:
     """Represents a trading pair with its statistical properties"""
     symbol_a: str
@@ -33,8 +35,11 @@ class TradingPair:
     last_updated: datetime
 
     @property
+
+
     def pair_name(self) -> str:
         return f"{self.symbol_a}_{self.symbol_b}"
+
 
     def is_valid(self, min_correlation: float = 0.7, max_pvalue: float = 0.05) -> bool:
         """Check if pair meets statistical criteria"""
@@ -44,6 +49,8 @@ class TradingPair:
 
 
 @dataclass
+
+
 class PairPosition:
     """Represents an active pairs trade position"""
     pair: TradingPair
@@ -71,6 +78,7 @@ class PairsTradingStrategy(BaseStrategy):
     - Dynamic hedge ratio calculation
     - Risk management with stop losses and position limits
     """
+
 
     def __init__(self,
                  symbols: List[str],
@@ -136,12 +144,14 @@ class PairsTradingStrategy(BaseStrategy):
 
         logger.info(f"Pairs trading strategy initialized with {len(symbols)} symbols")
 
+
     def initialize(self, **kwargs):
         """Initialize the pairs trading strategy"""
         super().initialize(**kwargs)
 
         # Initial pair selection will happen on first signal generation
         self.logger.info("Pairs trading strategy ready for pair selection")
+
 
     def _calculate_correlation_matrix(self, price_data: Dict[str, pd.Series]) -> pd.DataFrame:
         """Calculate correlation matrix for all symbols"""
@@ -166,6 +176,7 @@ class PairsTradingStrategy(BaseStrategy):
             self.logger.error(f"Error calculating correlation matrix: {e}")
             return pd.DataFrame()
 
+
     def _test_cointegration(self, series_a: pd.Series, series_b: pd.Series) -> Tuple[float, float, float]:
         """
         Test for cointegration between two price series using Engle-Granger test
@@ -178,7 +189,7 @@ class PairsTradingStrategy(BaseStrategy):
             aligned_data = pd.DataFrame({'a': series_a, 'b': series_b}).dropna()
 
             if len(aligned_data) < 30:
-                return 1.0, 1.0, float('inf')
+                return 1.0, 1.0, float('in')
 
             prices_a = aligned_data['a'].values.reshape(-1, 1)
             prices_b = aligned_data['b'].values
@@ -205,6 +216,7 @@ class PairsTradingStrategy(BaseStrategy):
             self.logger.error(f"Error in cointegration test: {e}")
             return 1.0, 1.0, float('inf')
 
+
     def _calculate_half_life(self, spread: pd.Series) -> float:
         """Calculate the half-life of mean reversion for a spread"""
         try:
@@ -215,15 +227,15 @@ class PairsTradingStrategy(BaseStrategy):
             data = pd.DataFrame({
                 'spread': spread,
                 'spread_lag': spread_lag,
-                'spread_diff': spread_diff
+                'spread_dif': spread_diff
             }).dropna()
 
             if len(data) < 10:
-                return float('inf')
+                return float('in')
 
             # Fit regression: spread_diff = a + b * spread_lag
             X = data['spread_lag'].values.reshape(-1, 1)
-            y = data['spread_diff'].values
+            y = data['spread_dif'].values
 
             model = LinearRegression()
             model.fit(X, y)
@@ -241,6 +253,7 @@ class PairsTradingStrategy(BaseStrategy):
         except Exception as e:
             self.logger.error(f"Error calculating half-life: {e}")
             return float('inf')
+
 
     def _select_trading_pairs(self, market_data: Dict[str, pd.DataFrame]) -> List[TradingPair]:
         """
@@ -339,6 +352,7 @@ class PairsTradingStrategy(BaseStrategy):
             self.logger.error(f"Error selecting trading pairs: {e}")
             return []
 
+
     def _calculate_spread_zscore(self, pair: TradingPair, current_price_a: float, current_price_b: float) -> float:
         """Calculate the current Z-score of the spread"""
         try:
@@ -348,6 +362,7 @@ class PairsTradingStrategy(BaseStrategy):
         except Exception as e:
             self.logger.error(f"Error calculating spread Z-score for {pair.pair_name}: {e}")
             return 0.0
+
 
     def generate_signals(self, market_data: Dict[str, pd.DataFrame]) -> List[StrategySignal]:
         """
@@ -408,6 +423,7 @@ class PairsTradingStrategy(BaseStrategy):
             self.logger.error(f"Error generating pairs trading signals: {e}")
 
         return signals
+
 
     def _check_entry_signals(self, pair: TradingPair, z_score: float,
                            price_a: float, price_b: float) -> List[StrategySignal]:
@@ -490,6 +506,7 @@ class PairsTradingStrategy(BaseStrategy):
             self.logger.error(f"Error checking entry signals for {pair.pair_name}: {e}")
 
         return signals
+
 
     def _check_exit_signals(self, position: PairPosition, z_score: float,
                           price_a: float, price_b: float) -> List[StrategySignal]:
@@ -598,6 +615,7 @@ class PairsTradingStrategy(BaseStrategy):
 
         return signals
 
+
     def calculate_position_size(self, signal: StrategySignal, available_capital: float) -> int:
         """
         Calculate position size for pairs trading
@@ -610,7 +628,7 @@ class PairsTradingStrategy(BaseStrategy):
                 self.logger.error("Signal missing pair metadata")
                 return 0
 
-            pair_name = signal.metadata['pair_name']
+            # pair_name = signal.metadata['pair_name']  # Currently unused
             hedge_ratio = signal.metadata.get('hedge_ratio', 1.0)
 
             # Risk per pair trade (both legs combined)
@@ -643,6 +661,7 @@ class PairsTradingStrategy(BaseStrategy):
             self.logger.error(f"Error calculating position size for pairs trade: {e}")
             return 0
 
+
     def update_position(self, symbol: str, fill_data: Dict[str, Any]):
         """Update pairs position after order fill"""
         try:
@@ -650,7 +669,7 @@ class PairsTradingStrategy(BaseStrategy):
 
             # Check if this fill completes a pairs trade entry
             pair_trade = fill_data.get('pair_trade')
-            pair_name = fill_data.get('pair_name')
+            # pair_name = fill_data.get('pair_name')  # Currently unused
 
             if pair_trade and pair_name:
                 # Find the corresponding pair
@@ -664,6 +683,7 @@ class PairsTradingStrategy(BaseStrategy):
 
         except Exception as e:
             self.logger.error(f"Error updating pairs position: {e}")
+
 
     def get_pairs_status(self) -> Dict[str, Any]:
         """Get detailed status of pairs trading strategy"""
@@ -693,3 +713,4 @@ class PairsTradingStrategy(BaseStrategy):
                 for pos in self.active_pairs.values()
             ]
         }
+

@@ -6,21 +6,21 @@ Contains theme colors, time ranges, and other configurable values.
 # Theme Colors - Enhanced Cerulean Bootstrap Theme
 CHART_COLORS = {
     'primary': '#2fa4e7',      # Cerulean Primary Blue
-    'primary_dark': '#1d82c7', # Darker primary for hover states
-    'primary_light': '#64b5ea', # Lighter primary for highlights
+    'primary_dark': '#1d82c7',  # Darker primary for hover states
+    'primary_light': '#64b5ea',  # Lighter primary for highlights
     'success': '#73a839',      # Cerulean Success Green
-    'success_light': '#95c95f', # Light success
+    'success_light': '#95c95f',  # Light success
     'danger': '#c71c22',       # Cerulean Danger Red
-    'danger_light': '#e74c52', # Light danger
+    'danger_light': '#e74c52',  # Light danger
     'secondary': '#e9ecef',    # Cerulean Secondary Gray
     'warning': '#dd5600',      # Cerulean Warning Orange
-    'warning_light': '#ff8c42', # Light warning
+    'warning_light': '#ff8c42',  # Light warning
     'info': '#033c73',         # Cerulean Info Dark Blue
     'info_light': '#4a90e2',   # Light info
     'light': '#f8f9fa',        # Light gray background
     'dark': '#212529',         # Dark text
     'muted': '#6c757d',        # Muted text
-    'border': 'rgba(0,0,0,0.1)' # Subtle borders
+    'border': 'rgba(0,0,0,0.1)'  # Subtle borders
 }
 
 # Time Range Configurations
@@ -115,3 +115,4 @@ CARD_STYLE_ELEVATED = {
 TRANSITION_FAST = "0.15s ease"
 TRANSITION_NORMAL = "0.3s ease"
 TRANSITION_SLOW = "0.5s ease"
+

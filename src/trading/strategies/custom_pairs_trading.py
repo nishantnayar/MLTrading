@@ -18,6 +18,8 @@ trading_logger = get_trading_logger()
 
 
 @dataclass
+
+
 class CustomPair:
     """Simple pair definition with basic parameters"""
     symbol_a: str
@@ -29,11 +31,15 @@ class CustomPair:
     lookback_period: int = 20  # Days for spread calculation
 
     @property
+
+
     def pair_name(self) -> str:
         return f"{self.symbol_a}_{self.symbol_b}"
 
 
 @dataclass
+
+
 class PairTrade:
     """Active pair trade position"""
     pair: CustomPair
@@ -56,6 +62,7 @@ class CustomPairsTradingStrategy(BaseStrategy):
     Allows you to define your own pairs and implement custom selection logic
     while handling the trading mechanics automatically
     """
+
 
     def __init__(self,
                  pairs_config: List[Dict[str, Any]],
@@ -129,6 +136,7 @@ class CustomPairsTradingStrategy(BaseStrategy):
         for pair in self.trading_pairs:
             logger.info(f"  {pair.pair_name}: hedge_ratio={pair.hedge_ratio}")
 
+
     def implement_custom_pair_selection(self, market_data: Dict[str, pd.DataFrame]) -> List[CustomPair]:
         """
         IMPLEMENT YOUR CUSTOM PAIR SELECTION LOGIC HERE
@@ -152,6 +160,7 @@ class CustomPairsTradingStrategy(BaseStrategy):
                 active_pairs.append(pair)
 
         return active_pairs
+
 
     def _is_pair_tradeable(self, pair: CustomPair, market_data: Dict[str, pd.DataFrame]) -> bool:
         """
@@ -205,6 +214,7 @@ class CustomPairsTradingStrategy(BaseStrategy):
 
         return True
 
+
     def _calculate_spread_zscore(self, pair: CustomPair, market_data: Dict[str, pd.DataFrame]) -> float:
         """Calculate the current Z-score of the spread"""
         try:
@@ -238,6 +248,7 @@ class CustomPairsTradingStrategy(BaseStrategy):
         except Exception as e:
             self.logger.error(f"Error calculating spread Z-score for {pair.pair_name}: {e}")
             return 0.0
+
 
     def generate_signals(self, market_data: Dict[str, pd.DataFrame]) -> List[StrategySignal]:
         """Generate trading signals for pairs"""
@@ -277,6 +288,7 @@ class CustomPairsTradingStrategy(BaseStrategy):
             self.logger.error(f"Error generating custom pairs signals: {e}")
 
         return signals
+
 
     def _check_entry_signals(self, pair: CustomPair, z_score: float,
                            price_a: float, price_b: float) -> List[StrategySignal]:
@@ -361,6 +373,7 @@ class CustomPairsTradingStrategy(BaseStrategy):
             self.logger.error(f"Error checking entry signals for {pair.pair_name}: {e}")
 
         return signals
+
 
     def _check_exit_signals(self, pair: CustomPair, z_score: float,
                           price_a: float, price_b: float) -> List[StrategySignal]:
@@ -467,13 +480,14 @@ class CustomPairsTradingStrategy(BaseStrategy):
 
         return signals
 
+
     def calculate_position_size(self, signal: StrategySignal, available_capital: float) -> int:
         """Calculate position size for pairs trading"""
         try:
             if not signal.metadata or 'pair_name' not in signal.metadata:
                 return 0
 
-            pair_name = signal.metadata['pair_name']
+            # pair_name = signal.metadata['pair_name']  # Currently unused
             hedge_ratio = signal.metadata.get('hedge_ratio', 1.0)
 
             # Find the pair configuration
@@ -500,13 +514,14 @@ class CustomPairsTradingStrategy(BaseStrategy):
             self.logger.error(f"Error calculating position size: {e}")
             return 0
 
+
     def update_position(self, symbol: str, fill_data: Dict[str, Any]):
         """Update position after fill and track pair trades"""
         try:
             super().update_position(symbol, fill_data)
 
             # Check if this is part of a pair trade
-            pair_name = fill_data.get('pair_name')
+            # pair_name = fill_data.get('pair_name')  # Currently unused
             if pair_name and pair_name not in self.active_trades:
                 # This could be the first leg of a pair trade
                 # In practice, you'd want more sophisticated order management
@@ -515,6 +530,7 @@ class CustomPairsTradingStrategy(BaseStrategy):
 
         except Exception as e:
             self.logger.error(f"Error updating pairs position: {e}")
+
 
     def get_custom_pairs_status(self) -> Dict[str, Any]:
         """Get status of custom pairs trading"""
@@ -549,6 +565,7 @@ class CustomPairsTradingStrategy(BaseStrategy):
 
 
 # EXAMPLE USAGE AND CONFIGURATION
+
 
 def create_sample_pairs_strategy():
     """
@@ -587,3 +604,4 @@ def create_sample_pairs_strategy():
     )
 
     return strategy
+

@@ -63,6 +63,8 @@ def get_deployment_logger(deployment_name: str) -> logging.Logger:
 
 
 # Quick patch function to fix existing loggers
+
+
 def patch_for_production():
     """
     Patch existing loggers to avoid rotation issues in production.
@@ -94,5 +96,6 @@ def patch_for_production():
             # Close old handler
             try:
                 old_handler.close()
-            except:
+            except Exception:
                 pass
+

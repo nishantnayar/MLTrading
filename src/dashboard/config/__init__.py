@@ -41,3 +41,4 @@ __all__ = [
     'TRANSITION_SLOW',
     'CUSTOM_CSS'
 ]
+

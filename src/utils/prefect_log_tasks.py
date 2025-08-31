@@ -17,6 +17,7 @@ from .logging_config import (
 # Initialize logger
 logger = get_combined_logger("mltrading.prefect.log_tasks")
 
+
 def log_consolidation_task(
     logs_dir: Optional[str] = None,
     max_age_days: int = 7
@@ -55,6 +56,7 @@ def log_consolidation_task(
             'total_space_saved': 0,
             'errors': [str(e)]
         }
+
 
 def log_cleanup_task(
     logs_dir: Optional[str] = None,
@@ -97,6 +99,7 @@ def log_cleanup_task(
             'errors': [str(e)]
         }
 
+
 def log_statistics_task(
     logs_dir: Optional[str] = None
 ) -> Dict[str, Any]:
@@ -135,6 +138,7 @@ def log_statistics_task(
             'newest_file': None,
             'files_by_age': {'1d': 0, '7d': 0, '30d': 0, 'older': 0}
         }
+
 
 def log_health_check_task(
     logs_dir: Optional[str] = None
@@ -176,6 +180,7 @@ def log_health_check_task(
             'recommendations': ['Fix log health check task errors']
         }
 
+
 def emergency_log_cleanup_task(
     logs_dir: Optional[str] = None
 ) -> Dict[str, Any]:
@@ -211,6 +216,7 @@ def emergency_log_cleanup_task(
             'emergency_cleanup': {'status': 'error'},
             'total_space_freed': 0
         }
+
 
 def full_log_maintenance_task(
     logs_dir: Optional[str] = None,
@@ -277,18 +283,26 @@ from prefect.schedules import IntervalSchedule
 from datetime import timedelta
 
 @task
+
+
 def consolidate_logs_prefect_task():
     return log_consolidation_task()
 
 @task
+
+
 def cleanup_logs_prefect_task():
     return log_cleanup_task()
 
 @task
+
+
 def health_check_prefect_task():
     return log_health_check_task()
 
 @flow(name="daily-log-maintenance")
+
+
 def daily_log_maintenance_flow():
     # Run health check first
     health_results = health_check_prefect_task()
@@ -320,3 +334,4 @@ if __name__ == "__main__":
 
     deployment.apply()
 """
+

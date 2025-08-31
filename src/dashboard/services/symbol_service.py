@@ -12,6 +12,8 @@ class SymbolService(BaseDashboardService):
     """Service to handle symbol and company information operations."""
 
     @cached(ttl=300, key_func=lambda self, source='yahoo': f"symbols_{source}")
+
+
     def get_available_symbols(self, source: str = 'yahoo') -> List[Dict[str, str]]:
         """Get list of available symbols with market data and company names using batch query."""
         try:
@@ -45,6 +47,7 @@ class SymbolService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting available symbols: {e}")
             return self.get_fallback_data('symbols')
+
 
     def get_symbols_by_sector(self, sector: str, source: str = 'yahoo') -> List[Dict[str, str]]:
         """Get symbols filtered by sector."""
@@ -80,6 +83,7 @@ class SymbolService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting symbols by sector {sector}: {e}")
             return self.get_fallback_data('symbols')
+
 
     def get_symbols_by_industry(self, industry: str, source: str = 'yahoo') -> List[Dict[str, str]]:
         """Get symbols filtered by industry."""
@@ -117,6 +121,8 @@ class SymbolService(BaseDashboardService):
             return self.get_fallback_data('symbols')
 
     @cached(ttl=600, key_func=lambda self, source='yahoo': f"sectors_{source}")
+
+
     def get_sector_distribution(self, source: str = 'yahoo') -> Dict[str, Any]:
         """Get distribution of symbols by sector."""
         try:
@@ -150,6 +156,8 @@ class SymbolService(BaseDashboardService):
             return self.get_fallback_data('sectors')
 
     @cached(ttl=600, key_func=lambda self, sector, source='yahoo': f"industries_{sector}_{source}")
+
+
     def get_industry_distribution(self, sector: str, source: str = 'yahoo') -> Dict[str, Any]:
         """Get distribution of symbols by industry within a sector."""
         try:
@@ -187,6 +195,7 @@ class SymbolService(BaseDashboardService):
             self.logger.error(f"Error getting industry distribution for sector {sector}: {e}")
             return self.get_fallback_data('industries')
 
+
     def get_symbol_info(self, symbol: str) -> Optional[Dict[str, Any]]:
         """Get detailed information for a specific symbol."""
         try:
@@ -206,6 +215,7 @@ class SymbolService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting symbol info for {symbol}: {e}")
             return None
+
 
     def search_symbols(self, query: str, limit: int = 10) -> List[Dict[str, str]]:
         """Search symbols by symbol or company name."""
@@ -252,3 +262,4 @@ class SymbolService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error searching symbols with query '{query}': {e}")
             return []
+

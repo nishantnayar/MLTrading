@@ -23,6 +23,7 @@ class OptimizedFeatureDataService(BaseDashboardService):
     5. Lazy loading for expensive features
     """
 
+
     def __init__(self):
         super().__init__()
         self.logger.info("OptimizedFeatureDataService initialized with performance enhancements")
@@ -45,6 +46,8 @@ class OptimizedFeatureDataService(BaseDashboardService):
         ]
 
     @cached(ttl=300, key_func=lambda self, symbol, days: f"core_features_{symbol}_{days}")
+
+
     def get_core_features(self, symbol: str, days: int = 30, feature_version: str = '3.0') -> pd.DataFrame:
         """
         Get core OHLCV + basic features with optimized query.
@@ -52,7 +55,7 @@ class OptimizedFeatureDataService(BaseDashboardService):
         """
         try:
             columns = ', '.join(self.CORE_COLUMNS)
-            query = f"""
+            query = """
                 SELECT {columns}
                 FROM feature_engineered_data
                 WHERE symbol = %s
@@ -77,6 +80,8 @@ class OptimizedFeatureDataService(BaseDashboardService):
             return pd.DataFrame()
 
     @cached(ttl=600, key_func=lambda self, symbol, days: f"technical_features_{symbol}_{days}")
+
+
     def get_technical_features(self, symbol: str, days: int = 30, feature_version: str = '3.0') -> pd.DataFrame:
         """
         Get technical indicators with optimized query.
@@ -86,7 +91,7 @@ class OptimizedFeatureDataService(BaseDashboardService):
             columns = ['symbol', 'timestamp'] + self.TECHNICAL_COLUMNS
             columns_str = ', '.join(columns)
 
-            query = f"""
+            query = """
                 SELECT {columns_str}
                 FROM feature_engineered_data
                 WHERE symbol = %s
@@ -112,6 +117,8 @@ class OptimizedFeatureDataService(BaseDashboardService):
             return pd.DataFrame()
 
     @cached(ttl=900, key_func=lambda self, symbol, days: f"advanced_features_{symbol}_{days}")
+
+
     def get_advanced_features(self, symbol: str, days: int = 30, feature_version: str = '3.0') -> pd.DataFrame:
         """
         Get advanced ML features (lagged, rolling stats) with longer cache TTL.
@@ -127,7 +134,7 @@ class OptimizedFeatureDataService(BaseDashboardService):
             columns = ['symbol', 'timestamp'] + self.ADVANCED_COLUMNS + lagged_cols + rolling_cols
             columns_str = ', '.join(columns)
 
-            query = f"""
+            query = """
                 SELECT {columns_str}
                 FROM feature_engineered_data
                 WHERE symbol = %s
@@ -150,6 +157,7 @@ class OptimizedFeatureDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error retrieving advanced features for {symbol}: {e}")
             return pd.DataFrame()
+
 
     def get_feature_data_optimized(self, symbol: str, days: int = 30,
                                  include_advanced: bool = False) -> pd.DataFrame:
@@ -186,6 +194,8 @@ class OptimizedFeatureDataService(BaseDashboardService):
             return pd.DataFrame()
 
     @cached(ttl=1800, key_func=lambda self, symbols: f"batch_latest_{hash(tuple(sorted(symbols)))}")
+
+
     def get_latest_features_batch(self, symbols: List[str], feature_version: str = '3.0') -> pd.DataFrame:
         """
         Efficiently get latest features for multiple symbols.
@@ -200,7 +210,7 @@ class OptimizedFeatureDataService(BaseDashboardService):
 
             core_columns = ', '.join(self.CORE_COLUMNS + self.TECHNICAL_COLUMNS)
 
-            query = f"""
+            query = """
                 WITH latest_features AS (
                     SELECT {core_columns},
                            ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) as rn
@@ -234,6 +244,8 @@ class OptimizedFeatureDataService(BaseDashboardService):
             return pd.DataFrame()
 
     @cached(ttl=3600, key_func=lambda self: "feature_summary")
+
+
     def get_feature_summary_stats(self) -> Dict[str, Any]:
         """
         Get comprehensive feature table statistics using materialized view.
@@ -281,6 +293,7 @@ class OptimizedFeatureDataService(BaseDashboardService):
             self.logger.error(f"Error getting feature summary stats: {e}")
             return self._get_feature_summary_fallback()
 
+
     def _get_feature_summary_fallback(self) -> Dict[str, Any]:
         """Fallback summary stats when materialized view unavailable"""
         try:
@@ -311,6 +324,8 @@ class OptimizedFeatureDataService(BaseDashboardService):
             return {}
 
     # Optimized versions of existing methods
+
+
     def get_moving_averages_optimized(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """Optimized moving averages using selective column query"""
         df = self.get_technical_features(symbol, days)
@@ -323,6 +338,7 @@ class OptimizedFeatureDataService(BaseDashboardService):
             'sma_long': df['price_ma_long']
         }
 
+
     def get_rsi_data_optimized(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """Optimized RSI data using technical features cache"""
         df = self.get_technical_features(symbol, days)
@@ -334,9 +350,10 @@ class OptimizedFeatureDataService(BaseDashboardService):
             'timestamp': df['timestamp']
         }
 
+
     def invalidate_symbol_cache(self, symbol: str):
         """Invalidate all cached data for a symbol (useful after data updates)"""
-        cache_keys = [
+        # cache_keys = [  # Currently unused
             f"core_features_{symbol}_30",
             f"technical_features_{symbol}_30",
             f"advanced_features_{symbol}_30"
@@ -344,3 +361,4 @@ class OptimizedFeatureDataService(BaseDashboardService):
 
         # Note: Actual cache invalidation would depend on cache implementation
         self.logger.info(f"Cache invalidation requested for {symbol}")
+

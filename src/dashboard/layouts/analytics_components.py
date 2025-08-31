@@ -6,14 +6,12 @@ Contains computationally intensive analysis components.
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 import plotly.graph_objs as go
-import plotly.express as px
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Any
 
 from ..config import CHART_COLORS
 from ..services.analytics_service import AnalyticsService
-from ..services.batch_data_service import BatchDataService
 from ...utils.logging_config import get_ui_logger
 
 logger = get_ui_logger("analytics_components")
@@ -23,7 +21,7 @@ def create_performance_analysis_layout() -> html.Div:
     """Create performance analysis layout with heavy computations."""
     try:
         analytics_service = AnalyticsService()
-        batch_service = BatchDataService()
+        # batch_service = BatchDataService()  # Currently unused
 
         # Heavy computation: Get top performers for different periods
         daily_performers = analytics_service.get_top_performers(days=1, limit=10)
@@ -70,7 +68,7 @@ def create_correlation_matrix_layout() -> html.Div:
     """Create correlation matrix layout with heavy computations."""
     try:
         analytics_service = AnalyticsService()
-        batch_service = BatchDataService()
+        # batch_service = BatchDataService()  # Currently unused
 
         # Heavy computation: Get correlation data for top symbols
         symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'NFLX']
@@ -219,6 +217,7 @@ def create_risk_metrics_layout() -> html.Div:
 
 
 # Helper functions for chart creation
+
 
 def create_performance_comparison_chart(daily: List, weekly: List, monthly: List) -> go.Figure:
     """Create performance comparison chart."""
@@ -464,3 +463,4 @@ def create_empty_volatility_chart() -> go.Figure:
         }]
     )
     return fig
+

@@ -14,6 +14,8 @@ class BatchDataService(BaseDashboardService):
     """Service for efficient batch data operations."""
 
     @cached(ttl=180, key_func=lambda self, symbols, days=30, source='yahoo': f"batch_market_{len(symbols)}_{days}_{source}")
+
+
     def get_batch_market_data(self, symbols: List[str], days: int = 30, source: str = 'yahoo') -> Dict[str, pd.DataFrame]:
         """
         Get market data for multiple symbols in a single query.
@@ -36,7 +38,7 @@ class BatchDataService(BaseDashboardService):
 
             # Create parameterized query for batch retrieval
             symbol_placeholders = ','.join(['%s'] * len(symbols))
-            query = f"""
+            query = """
                 SELECT symbol, timestamp, open, high, low, close, volume, source
                 FROM market_data
                 WHERE symbol IN ({symbol_placeholders})
@@ -77,7 +79,7 @@ class BatchDataService(BaseDashboardService):
                     df = pd.DataFrame(data)
                     # Ensure proper data types
                     numeric_columns = ['open', 'high', 'low', 'close', 'volume']
-                    original_count = len(df)
+                    # original_count = len(df)  # Currently unused
                     for col in numeric_columns:
                         if col in df.columns:
                             df[col] = pd.to_numeric(df[col], errors='coerce')
@@ -101,6 +103,8 @@ class BatchDataService(BaseDashboardService):
             return {}
 
     @cached(ttl=300, key_func=lambda self, symbols, source='yahoo': f"batch_info_{len(symbols)}_{source}")
+
+
     def get_batch_stock_info(self, symbols: List[str], source: str = 'yahoo') -> Dict[str, Dict[str, Any]]:
         """
         Get stock info for multiple symbols in a single query.
@@ -118,7 +122,7 @@ class BatchDataService(BaseDashboardService):
 
             # Create parameterized query for batch retrieval
             symbol_placeholders = ','.join(['%s'] * len(symbols))
-            query = f"""
+            query = """
                 SELECT symbol, company_name, sector, industry, market_cap,
                        country, currency, exchange, source, created_at, updated_at
                 FROM stock_info
@@ -155,6 +159,7 @@ class BatchDataService(BaseDashboardService):
             self.logger.error(f"Error getting batch stock info: {e}")
             return {}
 
+
     def get_batch_latest_prices(self, symbols: List[str], source: str = 'yahoo') -> Dict[str, Dict[str, Any]]:
         """
         Get latest prices for multiple symbols in a single query.
@@ -172,7 +177,7 @@ class BatchDataService(BaseDashboardService):
 
             # Use window function to get latest price for each symbol efficiently
             symbol_placeholders = ','.join(['%s'] * len(symbols))
-            query = f"""
+            query = """
                 WITH latest_data AS (
                     SELECT symbol, timestamp, open, high, low, close, volume,
                            ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) as rn
@@ -211,6 +216,7 @@ class BatchDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting batch latest prices: {e}")
             return {}
+
 
     def preload_dashboard_data(self, source: str = 'yahoo') -> Dict[str, Any]:
         """
@@ -265,3 +271,4 @@ class BatchDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error preloading dashboard data: {e}")
             return {}
+

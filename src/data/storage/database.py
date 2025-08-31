@@ -39,10 +39,10 @@ class DatabaseManager:
         - Batch operations for performance
 
     Example:
-        >>> # Initialize with default configuration
+        >>>  # Initialize with default configuration
         >>> db = DatabaseManager()
         >>>
-        >>> # Get connection and execute query
+        >>>  # Get connection and execute query
         >>> conn = db.get_connection()
         >>> try:
         ...     df = pd.read_sql("SELECT * FROM market_data LIMIT 5", conn)
@@ -51,12 +51,13 @@ class DatabaseManager:
         ...     db.return_connection(conn)
         Retrieved 5 records
         >>>
-        >>> # Using context manager (recommended)
+        >>>  # Using context manager (recommended)
         >>> with db.get_connection_context() as conn:
         ...     df = pd.read_sql("SELECT COUNT(*) as total FROM market_data", conn)
         ...     print(f"Total records: {df['total'].iloc[0]}")
         Total records: 15847
     """
+
 
     def __init__(self, host: str = None, port: int = None,
                  database: str = None, user: str = None,
@@ -76,6 +77,7 @@ class DatabaseManager:
         self.timeout = safe_config['timeout']
         self.pool = None
         self._init_pool()
+
 
     def _init_pool(self):
         """Initialize connection pool with safe limits."""
@@ -99,6 +101,8 @@ class DatabaseManager:
             logger.warning("Database pool initialization failed, using fallback mode")
 
     @retry_on_database_error(max_attempts=3, delay=0.5)
+
+
     def get_connection(self, timeout=60):
         """Get a connection from the pool with timeout and retry logic."""
         import time
@@ -137,10 +141,11 @@ class DatabaseManager:
             except Exception as e:
                 error_msg = str(e)
                 if "too many clients already" in error_msg:
-                    logger.error(f"Connection limit exceeded - consider reducing concurrency or max_workers")
+                    logger.error("Connection limit exceeded - consider reducing concurrency or max_workers")
                     logger.error(f"Current pool: {self.min_conn}-{self.max_conn} connections")
                 logger.error(f"Unexpected error getting connection: {e}")
                 raise
+
 
     def return_connection(self, conn):
         """Return a connection to the pool."""
@@ -158,10 +163,12 @@ class DatabaseManager:
             # If we can't return to pool, close the connection
             try:
                 conn.close()
-            except:
+            except Exception:
                 pass
 
     @contextmanager
+
+
     def get_connection_context(self):
         """Context manager for safe connection handling."""
         conn = None
@@ -174,6 +181,7 @@ class DatabaseManager:
         finally:
             if conn is not None:
                 self.return_connection(conn)
+
 
     def check_tables_exist(self) -> bool:
         """Check if all required tables exist in the database."""
@@ -258,6 +266,7 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
+
     def insert_market_data(self, data: List[Dict[str, Any]]):
         """Insert market data in batch."""
         conn = self.get_connection()
@@ -283,6 +292,7 @@ class DatabaseManager:
             raise
         finally:
             self.return_connection(conn)
+
 
     def get_market_data(self, symbol: str, start_date: datetime,
                        end_date: datetime, source: str = 'yahoo') -> pd.DataFrame:
@@ -326,6 +336,7 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
+
     def get_latest_market_data(self, symbol: str, source: str = 'yahoo') -> Optional[Dict]:
         """Get latest market data for a symbol."""
         conn = self.get_connection()
@@ -344,6 +355,7 @@ class DatabaseManager:
             raise
         finally:
             self.return_connection(conn)
+
 
     def insert_order(self, order_data: Dict[str, Any]) -> int:
         """Insert a new order and return the order ID."""
@@ -369,6 +381,7 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
+
     def update_order_status(self, order_id: int, status: str, filled_at: datetime = None):
         """Update order status."""
         conn = self.get_connection()
@@ -392,6 +405,7 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
+
     def insert_prediction(self, prediction_data: Dict[str, Any]):
         """Insert a model prediction."""
         conn = self.get_connection()
@@ -411,6 +425,7 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
+
     def get_symbols_with_data(self, source: str = 'yahoo') -> List[str]:
         """Get list of symbols that have market data."""
         conn = self.get_connection()
@@ -426,6 +441,7 @@ class DatabaseManager:
             raise
         finally:
             self.return_connection(conn)
+
 
     def get_data_date_range(self, symbol: str, source: str = 'yahoo') -> tuple:
         """Get the date range of available data for a symbol."""
@@ -445,6 +461,7 @@ class DatabaseManager:
             raise
         finally:
             self.return_connection(conn)
+
 
     def insert_stock_info(self, stock_data: Dict[str, Any]):
         """Insert or update stock information."""
@@ -476,6 +493,7 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
+
     def get_stock_info(self, symbol: str) -> Optional[Dict]:
         """Get stock information for a symbol."""
         conn = self.get_connection()
@@ -493,6 +511,7 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
+
     def get_stocks_by_sector(self, sector: str) -> List[str]:
         """Get all symbols in a specific sector."""
         conn = self.get_connection()
@@ -508,6 +527,7 @@ class DatabaseManager:
             raise
         finally:
             self.return_connection(conn)
+
 
     def get_stocks_by_industry(self, industry: str) -> List[str]:
         """Get all symbols in a specific industry."""
@@ -525,6 +545,7 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
+
     def get_all_sectors(self) -> List[str]:
         """Get all unique sectors."""
         conn = self.get_connection()
@@ -541,6 +562,7 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
+
     def get_all_industries(self) -> List[str]:
         """Get all unique industries."""
         conn = self.get_connection()
@@ -556,6 +578,7 @@ class DatabaseManager:
             raise
         finally:
             self.return_connection(conn)
+
 
     def get_industries_by_sector(self, sector: str) -> List[str]:
         """Get all unique industries within a specific sector."""
@@ -574,6 +597,7 @@ class DatabaseManager:
             raise
         finally:
             self.return_connection(conn)
+
 
     def get_stocks_by_industry(self, industry: str, sector: str = None) -> List[str]:
         """Get all symbols in a specific industry, optionally filtered by sector."""
@@ -600,6 +624,7 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
+
     def get_earliest_data_date(self, source: str = 'yahoo') -> Optional[datetime]:
         """Get the earliest date in the market_data table."""
         conn = self.get_connection()
@@ -616,6 +641,7 @@ class DatabaseManager:
             return None
         finally:
             self.return_connection(conn)
+
 
     def get_latest_data_date(self, source: str = 'yahoo') -> Optional[datetime]:
         """Get the latest date in the market_data table."""
@@ -634,6 +660,7 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
+
     def close(self):
         """Close the connection pool."""
         if self.pool:
@@ -643,6 +670,7 @@ class DatabaseManager:
 
 # Global database manager instance
 db_manager = None
+
 
 def get_db_manager() -> DatabaseManager:
     """Get the global database manager instance using environment variables."""
@@ -663,3 +691,4 @@ def get_db_manager() -> DatabaseManager:
             password=password
         )
     return db_manager
+

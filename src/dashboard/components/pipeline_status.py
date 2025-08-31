@@ -5,7 +5,7 @@ Dashboard components for displaying Prefect pipeline status and health
 
 import dash_bootstrap_components as dbc
 from dash import html, dcc
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, Optional, List, Any
 
 
@@ -281,7 +281,7 @@ def create_data_freshness_indicator(freshness_data: Dict) -> html.Div:
 
     status = freshness_data.get('status', 'unknown')
     color = freshness_data.get('color', 'secondary')
-    last_update = freshness_data.get('last_update')
+    # last_update = freshness_data.get('last_update')  # Currently unused
     time_since_update = freshness_data.get('time_since_update')
 
     # Status text and icon
@@ -354,7 +354,7 @@ def create_pipeline_run_table(runs: List[Dict]) -> html.Div:
         state_name = state.get('name', 'Unknown')
 
         # Format timestamps
-        start_time = run.get('start_time', '')
+        # start_time = run.get('start_time', '')  # Currently unused
         end_time = run.get('end_time', '')
         duration = 'N/A'
 
@@ -370,7 +370,7 @@ def create_pipeline_run_table(runs: List[Dict]) -> html.Div:
                 duration = f"{minutes}m {seconds}s"
 
                 # Format start time
-                start_time = start_dt.strftime('%Y-%m-%d %H:%M')
+                # start_time = start_dt.strftime('%Y-%m-%d %H:%M')  # Currently unused
         except Exception:
             pass
 
@@ -591,3 +591,4 @@ def create_deployment_summary_row(deployment_name: str, status_data: Dict) -> ht
             ], width=2)
         ], className="align-items-center")
     ], className="py-2 border-bottom border-light")
+
