@@ -1,0 +1,216 @@
+# MLTrading Unified Configuration
+# Single configuration file consolidating all system settings
+
+# Database Configuration
+database:
+  host: localhost
+  port: 5432
+  name: mltrading
+  user: postgres
+  # password loaded from DB_PASSWORD environment variable
+  min_connections: 1
+  max_connections: 20
+  timeout: 30
+
+# Alpaca Trading Configuration
+alpaca:
+  paper_trading:
+    base_url: "https://paper-api.alpaca.markets"
+    # Credentials loaded from environment:
+    # ALPACA_PAPER_API_KEY, ALPACA_PAPER_SECRET_KEY
+  live_trading:
+    base_url: "https://api.alpaca.markets"
+    # Credentials loaded from environment:
+    # ALPACA_LIVE_API_KEY, ALPACA_LIVE_SECRET_KEY
+
+# Trading Settings
+trading:
+  mode: "paper"              # "paper" or "live" - START WITH PAPER!
+  default_order_type: "market"
+  default_time_in_force: "day"
+  max_order_value: 10000     # Maximum $ per order (safety limit)
+
+# Risk Management
+risk:
+  max_daily_orders: 25       # Limit orders per day
+  max_position_size: 1000    # Max shares per position
+  max_total_positions: 10    # Maximum total positions
+  max_portfolio_risk: 0.15   # Maximum portfolio risk ratio (15%)
+  emergency_stop_loss: 0.10  # Emergency stop loss ratio (10%)
+  emergency_stop: false      # Emergency stop all trading
+
+# Trading Strategies
+strategies:
+  sma_conservative:
+    class_name: "SimpleMovingAverageStrategy"
+    enabled: true
+    symbols:
+      - "AAPL"
+      - "MSFT"
+      - "GOOGL"
+    parameters:
+      short_window: 20
+      long_window: 50
+      min_signal_strength: 0.7
+    risk_params:
+      max_position_size: 500
+      risk_per_trade: 0.02
+      stop_loss_pct: 0.03
+      take_profit_pct: 0.06
+    max_positions: 3
+
+  sma_aggressive:
+    class_name: "SimpleMovingAverageStrategy"
+    enabled: false  # Disabled by default
+    symbols:
+      - "TSLA"
+      - "NVDA"
+    parameters:
+      short_window: 10
+      long_window: 20
+      min_signal_strength: 0.6
+    risk_params:
+      max_position_size: 200
+      risk_per_trade: 0.03
+      stop_loss_pct: 0.02
+      take_profit_pct: 0.04
+    max_positions: 2
+
+  momentum_tech:
+    class_name: "MomentumStrategy"
+    enabled: true
+    symbols:
+      - "AAPL"
+      - "MSFT"
+      - "GOOGL"
+      - "AMZN"
+    parameters:
+      lookback_period: 20
+      rsi_period: 14
+      rsi_oversold: 25
+      rsi_overbought: 75
+    risk_params:
+      max_position_size: 300
+      risk_per_trade: 0.025
+      stop_loss_pct: 0.025
+      take_profit_pct: 0.05
+    max_positions: 2
+
+# Execution Settings
+execution:
+  signal_processing_interval: 30  # seconds
+  market_data_refresh: 60         # seconds
+  order_timeout: 300              # seconds
+  retry_failed_orders: true
+  max_order_retries: 3
+
+# Backtesting Settings
+backtesting:
+  default_initial_capital: 100000
+  default_commission: 1.0
+  default_slippage: 0.001
+  lookback_period_days: 252  # 1 year
+
+# Feature Engineering Configuration
+feature_engineering:
+  short_window: 24        # 1 day
+  med_window: 120         # 5 days  
+  long_window: 480        # 20 days
+  min_lookback_hours: 600 # 25 days buffer for stable calculations
+  rsi_windows:
+    rsi_1d: 7         # 1 day (~7 intraday records)
+    rsi_3d: 21        # 3 days
+    rsi_1w: 35        # 1 week (5 trading days)
+    rsi_2w: 70        # 2 weeks (10 trading days)
+  lag_periods: [1, 2, 4, 8, 24]  # 1h, 2h, 4h, 8h, 1day
+  rolling_windows: [6, 12, 24]   # 6h, 12h, 24h windows
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  file_log_level: "DEBUG"
+  db_log_level: "INFO"
+  enable_database_logging: true
+  max_log_file_size_mb: 50
+  backup_count: 5
+  cleanup_interval_hours: 24
+
+# Prefect Deployments Configuration
+deployments:
+  feature-engineering:
+    name: "feature-engineering"
+    display_name: "Feature Engineering (Comprehensive)"
+    description: "Comprehensive feature engineering (working processor) - refactored deployment"
+    category: "advanced-pipeline"
+    priority: 1  # High priority for features
+    schedule_type: "comprehensive_schedule"  # Every 2 hours during market hours
+    tags:
+      - features
+      - production
+      - working
+      - comprehensive
+      - refactored
+    expected_runtime_minutes: 20  # Processing time
+    alert_threshold_hours: 3  # Important - alert if fails
+
+  yahoo-data-collection:
+    name: "yahoo-data-collection"
+    display_name: "Yahoo Finance Data Collection"
+    description: "Yahoo Finance data collection (working collector) - refactored deployment"
+    category: "data-collection"
+    priority: 2  # Supporting production deployment
+    schedule_type: "market_hours"
+    tags:
+      - yahoo
+      - production
+      - working
+      - refactored
+    expected_runtime_minutes: 8  # 5-10 minutes for data collection
+    alert_threshold_hours: 2  # Critical - alert quickly if fails
+
+# Schedule Definitions
+schedule_types:
+  market_hours:
+    cron: "0 9-16 * * 1-5"
+    timezone: "America/New_York"
+    description: "Hourly during market hours (9 AM - 4 PM EST, weekdays)"
+  
+  comprehensive_schedule:
+    cron: "10 9-15/2 * * 1-5"
+    timezone: "America/New_York"
+    description: "Every 2 hours during market hours (9:10 AM, 11:10 AM, 1:10 PM, 3:10 PM EST, weekdays)"
+
+# Dashboard Settings
+dashboard:
+  primary_deployments:
+    - feature-engineering
+    - yahoo-data-collection
+  max_visible_deployments: 2
+  refresh_intervals:
+    pipeline_status: 30
+    system_health: 60
+    data_freshness: 45
+
+# Circuit Breaker Configuration
+circuit_breakers:
+  yahoo_api:
+    failure_threshold: 5
+    recovery_timeout: 120
+    timeout: 30
+  database:
+    failure_threshold: 3
+    recovery_timeout: 60
+    timeout: 10
+
+# Retry Configuration
+retry_settings:
+  api_calls:
+    max_attempts: 4
+    base_delay: 1.0
+    max_delay: 60.0
+    jitter: true
+  database_operations:
+    max_attempts: 3
+    base_delay: 0.5
+    max_delay: 10.0
+    jitter: true

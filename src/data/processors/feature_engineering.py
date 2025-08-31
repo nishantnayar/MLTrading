@@ -25,26 +25,43 @@ from src.utils.logging_config import setup_logger, log_operation
 # Configure logging
 logger = setup_logger('mltrading.feature_engineering', 'feature_engineering.log', enable_database_logging=False)
 
-class FeatureEngineerPhase1And2:
+class TradingFeatureEngine:
     """
-    Comprehensive Feature Engineering - Foundation + Core Technical + Advanced Features
+    ML Trading Feature Engineering System
     
-    Phase 1 - Foundation Features (13):
-    - Basic Price Features (6): returns, log_returns, high_low_pct, open_close_pct, price_acceleration, returns_sign
-    - Time Features (7): hour, day_of_week, hour_sin, hour_cos, dow_sin, dow_cos, is_market_open
+    Transforms raw OHLCV market data into 90+ machine learning-ready features
+    optimized for intraday trading strategies. Handles price analysis, technical
+    indicators, volume patterns, and time-series features automatically.
     
-    Phase 2 - Core Technical Features (23):
-    - Moving Averages (8): price_ma_short/med/long, ratios
-    - Technical Indicators (10): Bollinger Bands, MACD, ATR, Williams %R  
-    - Volatility Features (5): realized volatility, Garman-Klass, vol of vol
+    **Foundation Features (13)**:
+    - Price movements: returns, log_returns, price_acceleration
+    - Price ratios: high_low_pct, open_close_pct, returns_sign
+    - Time patterns: hour, day_of_week, cyclical encodings, market hours
     
-    Phase 3 - Advanced Features (~50+ additional features):
-    - Volume Features (7): volume_ma, volume_ratio, log_volume, VPT, MFI
-    - RSI Features (5): Multiple timeframes + EMA RSI  
-    - Intraday Features (6): daily open returns, range position, gaps
-    - Lagged Features (15): returns/volatility/volume lags
-    - Rolling Statistics (15): mean/std/skew/kurt over multiple windows
-    - Advanced Technical (variable): Additional ATR, Williams %R variants
+    **Technical Indicators (23)**:
+    - Moving averages: Short/medium/long-term trends and ratios
+    - Volatility: Bollinger Bands, ATR, realized volatility, Garman-Klass
+    - Momentum: MACD, Williams %R, volatility-of-volatility
+    
+    **Advanced ML Features (50+)**:
+    - Volume analysis: Volume trends, price-volume relationships, Money Flow Index
+    - Multi-timeframe RSI: 1-day, 3-day, 1-week, 2-week periods
+    - Intraday patterns: Daily gaps, range positions, reference points
+    - Temporal features: Lagged returns/volatility (1h to 24h windows)
+    - Statistical features: Rolling means, standard deviations, skewness, kurtosis
+    
+    Example:
+        >>> # Process all features for a symbol
+        >>> engine = TradingFeatureEngine()
+        >>> success = engine.process_symbol("AAPL")
+        >>> print(f"Feature engineering completed: {success}")
+        Feature engineering completed: True
+        >>>
+        >>> # Verify feature count in database
+        >>> with engine.db_manager.get_connection_context() as conn:
+        ...     df = pd.read_sql("SELECT COUNT(*) as count FROM feature_engineered_data WHERE symbol='AAPL'", conn)
+        ...     print(f"Records processed: {df['count'].iloc[0]}")
+        Records processed: 2847
     """
     
     def __init__(self):
@@ -169,13 +186,37 @@ class FeatureEngineerPhase1And2:
     
     def calculate_basic_price_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Calculate Phase 1 basic price features (6 features) - exact match to notebook
+        Calculate fundamental price-based features for ML models.
+        
+        Computes essential price movements, volatility measures, and momentum
+        indicators that serve as the foundation for trading algorithms.
         
         Args:
-            df: DataFrame with OHLCV data
+            df: DataFrame with OHLCV data containing columns: open, high, low, close, volume
             
         Returns:
-            DataFrame with basic price features added
+            DataFrame with 6 fundamental price features:
+            - returns: Percentage change in closing price
+            - log_returns: Natural log of price returns  
+            - high_low_pct: Daily range as percentage of close price
+            - open_close_pct: Open-to-close movement as percentage
+            - price_acceleration: Rate of change in momentum
+            - returns_sign: Price direction indicator (-1, 0, 1)
+            
+        Example:
+            >>> engine = TradingFeatureEngine()
+            >>> data = pd.DataFrame({
+            ...     'open': [100.0, 101.0, 99.5],
+            ...     'high': [102.0, 103.0, 101.0], 
+            ...     'low': [99.0, 100.5, 99.0],
+            ...     'close': [101.0, 102.5, 100.0],
+            ...     'volume': [1000, 1200, 800]
+            ... })
+            >>> result = engine.calculate_basic_price_features(data)
+            >>> 'returns' in result.columns
+            True
+            >>> 'log_returns' in result.columns  
+            True
         """
         if df.empty or len(df) < 2:
             logger.warning("Insufficient data for basic price features")
@@ -1146,6 +1187,53 @@ class FeatureEngineerPhase1And2:
             
             logger.info(f"Phase 1 processing completed: {successful}/{len(symbols)} successful")
             return results
+    
+    # Simplified method aliases for better API usability
+    def process_symbol(self, symbol: str, initial_run: bool = False) -> bool:
+        """
+        Process all features for a symbol (simplified interface).
+        
+        Generates 90+ ML-ready features including price movements, technical indicators,
+        volume analysis, and temporal patterns in a single operation.
+        
+        Args:
+            symbol: Stock ticker symbol (e.g., 'AAPL', 'MSFT')
+            initial_run: Process all historical data (True) or recent data only (False)
+            
+        Returns:
+            True if feature engineering completed successfully, False otherwise
+            
+        Example:
+            >>> engine = TradingFeatureEngine()
+            >>> success = engine.process_symbol("AAPL", initial_run=True)
+            >>> print(f"Features generated: {success}")
+            Features generated: True
+        """
+        return self.process_symbol_phase3_comprehensive(symbol, initial_run)
+    
+    def process_symbols(self, symbols: List[str], initial_run: bool = False) -> Dict[str, bool]:
+        """
+        Process features for multiple symbols (simplified interface).
+        
+        Args:
+            symbols: List of stock ticker symbols
+            initial_run: Process all historical data (True) or recent data only (False)
+            
+        Returns:
+            Dictionary mapping each symbol to its processing success status
+            
+        Example:
+            >>> engine = TradingFeatureEngine()
+            >>> results = engine.process_symbols(["AAPL", "MSFT", "GOOGL"])
+            >>> successful = sum(results.values())
+            >>> print(f"Successfully processed {successful}/{len(results)} symbols")
+            Successfully processed 3/3 symbols
+        """
+        return self.process_multiple_symbols_phase3_comprehensive(symbols, initial_run)
+
+
+# Backward compatibility alias
+FeatureEngineerPhase1And2 = TradingFeatureEngine
 
 
 def test_phase1_features():

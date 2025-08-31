@@ -45,7 +45,7 @@ def register_trading_callbacks(app):
                 )
             else:
                 return (
-                    "❌ Not connected to Alpaca - Check your API credentials in config/alpaca_config.yaml",
+                    "❌ Not connected to Alpaca - Check your API credentials in config/config.yaml",
                     "danger"
                 )
                 

@@ -30,9 +30,28 @@ nav:
     - API Documentation: api/index.md
   - About: about.md
 
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            docstring_options:
+              ignore_init_summary: true
+            merge_init_into_class: true
+            show_submodules: true
+            show_root_toc_entry: false
+
 markdown_extensions:
   - admonition
   - codehilite
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
   - toc:
       permalink: true
 
@@ -42,3 +61,6 @@ site_dir: site
 exclude_docs: |
   logs/
   __pycache__/
+
+watch:
+  - src/

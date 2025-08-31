@@ -18,7 +18,7 @@ from prefect.task_runners import ConcurrentTaskRunner
 from prefect.logging import get_run_logger
 from prefect.runtime import flow_run
 
-from src.data.processors.feature_engineering import FeatureEngineerPhase1And2
+from src.data.processors.feature_engineering import TradingFeatureEngine
 from src.utils.logging_config import get_combined_logger
 from src.data.storage.database import get_db_manager
 
@@ -116,7 +116,7 @@ def calculate_features_for_symbol(symbol: str, initial_run: bool = False) -> Dic
         run_type = "INITIAL" if initial_run else "INCREMENTAL"
         logger.info(f"Calculating Phase 1+2 features for {symbol} - {run_type} RUN")
         
-        engineer = FeatureEngineerPhase1And2()
+        engine = TradingFeatureEngine()
         success = engineer.process_symbol_phase1_and_phase2(symbol, initial_run=initial_run)
         
         return {

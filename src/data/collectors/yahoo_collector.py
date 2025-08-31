@@ -19,6 +19,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 from src.data.storage.database import get_db_manager
 from src.utils.logging_config import setup_logger, log_data_collection_event, log_error_event, log_performance_event
 from src.utils.logging_config import log_operation, get_correlation_id, set_correlation_id
+from src.utils.circuit_breaker import circuit_breaker
+from src.utils.retry_decorators import retry_on_api_error, retry_on_connection_error
 
 # Configure file-based logging with minimal database logging and reduced console output
 logger = setup_logger('mltrading.yahoo_collector', 'yahoo_collector.log', enable_database_logging=False)
@@ -51,8 +53,39 @@ def load_symbols_from_file(file_path: str = 'config/symbols.txt') -> List[str]:
         return []
 
 
+@circuit_breaker(name="yahoo_stock_info", failure_threshold=5, recovery_timeout=120)
+@retry_on_api_error(max_attempts=3, delay=2.0)
 def fetch_stock_info(symbol: str) -> Dict[str, Any]:
-    """Fetch stock information including sector and industry from Yahoo Finance."""
+    """
+    Fetch comprehensive stock information from Yahoo Finance API.
+    
+    Retrieves company metadata including sector classification, market cap,
+    and exchange information for fundamental analysis and data categorization.
+    
+    Args:
+        symbol: Stock ticker symbol (e.g., 'AAPL', 'MSFT')
+        
+    Returns:
+        Dictionary containing stock information:
+        - symbol: Ticker symbol
+        - company_name: Full company name
+        - sector: Business sector (e.g., 'Technology')
+        - industry: Specific industry classification
+        - market_cap: Market capitalization in USD
+        - country: Country of incorporation
+        - currency: Trading currency
+        - exchange: Primary exchange listing
+        - source: Data source identifier ('yahoo')
+        
+    Example:
+        >>> info = fetch_stock_info('AAPL')
+        >>> print(info['company_name'])
+        Apple Inc.
+        >>> print(info['sector'])
+        Technology
+        >>> print(info['market_cap'] > 1000000000)
+        True
+    """
     with log_operation(f"fetch_stock_info_{symbol}", logger, symbol=symbol, data_source='yahoo'):
         try:
             start_time = time.time()
@@ -129,6 +162,8 @@ def fetch_stock_info(symbol: str) -> Dict[str, Any]:
             }
 
 
+@circuit_breaker(name="yahoo_market_data", failure_threshold=3, recovery_timeout=60)
+@retry_on_api_error(max_attempts=4, delay=1.0)
 def fetch_yahoo_data(symbol: str, period: str = '2y', interval: str = '1h') -> pd.DataFrame:
     """Fetch data from Yahoo Finance."""
     with log_operation(f"fetch_yahoo_data_{symbol}", logger, symbol=symbol, period=period, interval=interval):

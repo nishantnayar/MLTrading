@@ -46,14 +46,36 @@ class ConnectionConfig:
     
     @classmethod
     def get_connection_params(cls) -> Dict[str, Any]:
-        """Get database connection parameters"""
+        """Get database connection parameters from unified settings"""
+        try:
+            from ..config.settings import get_settings
+            settings = get_settings()
+            return {
+                'host': settings.database.host,
+                'port': settings.database.port,
+                'database': settings.database.name,
+                'user': settings.database.user,
+                'password': settings.database.password,
+                'min_conn': settings.database.min_connections,
+                'max_conn': settings.database.max_connections,
+                'timeout': settings.database.timeout
+            }
+        except ImportError:
+            # Fallback to environment variables for backward compatibility
+            return cls._get_legacy_connection_params()
+    
+    @classmethod
+    def _get_legacy_connection_params(cls) -> Dict[str, Any]:
+        """Legacy connection parameters from environment variables"""
         return {
             'host': os.getenv('DB_HOST', 'localhost'),
             'port': int(os.getenv('DB_PORT', '5432')),
             'database': os.getenv('DB_NAME', 'mltrading'),
             'user': os.getenv('DB_USER', 'postgres'),
             'password': os.getenv('DB_PASSWORD', 'nishant'),
-            'connect_timeout': cls.CONNECTION_TIMEOUT
+            'min_conn': cls.MIN_POOL_SIZE,
+            'max_conn': cls.MAX_POOL_SIZE,
+            'timeout': cls.CONNECTION_TIMEOUT
         }
     
     @classmethod

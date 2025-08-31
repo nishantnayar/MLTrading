@@ -59,10 +59,34 @@ Manual testing procedures and checklists
 ## 🚀 Quick Start
 
 1. **Install dependencies**: `pip install -r requirements.txt`
-2. **Configure database**: Set up PostgreSQL connection
+2. **Configure system**: Edit `config/config.yaml` with your database credentials
 3. **Deploy workflows**: `cd deployments && prefect deploy --all`
 4. **Start dashboard**: `python scripts/run_ui.py`
 5. **Monitor**: Access dashboard at http://localhost:8050
+
+## ⚙️ Configuration
+
+All system settings are now managed through a single `config/config.yaml` file:
+
+```yaml
+# Database settings
+database:
+  host: localhost
+  port: 5432
+  name: mltrading
+  # password loaded from DB_PASSWORD environment variable
+
+# Trading configuration  
+trading:
+  mode: "paper"  # Start with paper trading
+  max_order_value: 10000
+
+# Enhanced error handling
+circuit_breakers:
+  yahoo_api:
+    failure_threshold: 5
+    recovery_timeout: 120
+```
 
 ## 💡 Key Components
 

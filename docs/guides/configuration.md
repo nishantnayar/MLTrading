@@ -1,28 +1,104 @@
 # Configuration Guide
 
-Learn how to configure MLTrading for your environment.
+Learn how to configure MLTrading using the unified configuration system.
+
+## Unified Configuration
+
+MLTrading now uses a single unified configuration file `config/config.yaml` that consolidates all system settings with type validation.
+
+### Main Configuration File
+
+Edit `config/config.yaml` to configure the entire system:
+
+```yaml
+# Database Configuration
+database:
+  host: localhost
+  port: 5432
+  name: mltrading
+  user: postgres
+  # password loaded from DB_PASSWORD environment variable
+  min_connections: 1
+  max_connections: 20
+  timeout: 30
+
+# Alpaca Trading Configuration
+alpaca:
+  paper_trading:
+    base_url: "https://paper-api.alpaca.markets"
+    # Credentials: ALPACA_PAPER_API_KEY, ALPACA_PAPER_SECRET_KEY
+  live_trading:
+    base_url: "https://api.alpaca.markets"
+    # Credentials: ALPACA_LIVE_API_KEY, ALPACA_LIVE_SECRET_KEY
+
+# Trading Settings
+trading:
+  mode: "paper"              # "paper" or "live" - START WITH PAPER!
+  default_order_type: "market"
+  default_time_in_force: "day"
+  max_order_value: 10000     # Maximum $ per order
+
+# Risk Management
+risk:
+  max_daily_orders: 25       # Limit orders per day
+  max_position_size: 1000    # Max shares per position
+  emergency_stop: false      # Emergency stop all trading
+
+# Deployment Configuration
+deployments:
+  feature-engineering:
+    name: "feature-engineering"
+    display_name: "Feature Engineering (Comprehensive)"
+    priority: 1
+    schedule_type: "comprehensive_schedule"
+    expected_runtime_minutes: 20
+    alert_threshold_hours: 3
+
+  yahoo-data-collection:
+    name: "yahoo-data-collection"
+    display_name: "Yahoo Finance Data Collection"
+    priority: 2
+    schedule_type: "market_hours"
+    expected_runtime_minutes: 8
+    alert_threshold_hours: 2
+
+# Enhanced Error Handling
+circuit_breakers:
+  yahoo_api:
+    failure_threshold: 5
+    recovery_timeout: 120
+    timeout: 30
+  database:
+    failure_threshold: 3
+    recovery_timeout: 60
+    timeout: 10
+
+retry_settings:
+  api_calls:
+    max_attempts: 4
+    base_delay: 1.0
+    max_delay: 60.0
+  database_operations:
+    max_attempts: 3
+    base_delay: 0.5
+    max_delay: 10.0
+```
 
 ## Environment Variables
 
-Create a `.env` file in the project root:
+Create a `.env` file for sensitive credentials:
 
 ```bash
-# Database Configuration
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=mltrading
-DB_USER=your_username
+# Database Password
 DB_PASSWORD=your_password
 
-# Trading Configuration (Optional)
-ALPACA_API_KEY=your_alpaca_key
-ALPACA_SECRET_KEY=your_alpaca_secret
-ALPACA_BASE_URL=https://paper-api.alpaca.markets  # Paper trading
+# Alpaca API Credentials
+ALPACA_PAPER_API_KEY=your_paper_key
+ALPACA_PAPER_SECRET_KEY=your_paper_secret
 
-# Dashboard Configuration
-DASHBOARD_HOST=0.0.0.0
-DASHBOARD_PORT=8050
-DASHBOARD_DEBUG=true
+# For live trading (use with extreme caution)
+ALPACA_LIVE_API_KEY=your_live_key
+ALPACA_LIVE_SECRET_KEY=your_live_secret
 ```
 
 ## Symbol Configuration
@@ -38,27 +114,23 @@ TSLA
 # Lines starting with # are comments
 ```
 
-## Deployment Configuration
+## Configuration Management
 
-Configure deployments in `config/deployments_config.yaml`:
+The unified configuration system provides:
 
-```yaml
-deployments:
-  feature-engineering:
-    name: "feature-engineering"
-    display_name: "Feature Engineering"
-    priority: 1
-    schedule_type: "comprehensive_schedule"
-    expected_runtime_minutes: 20
-    alert_threshold_hours: 3
+- **Type Safety**: Pydantic validation ensures correct data types
+- **Environment Integration**: Automatic loading of sensitive values from environment variables
+- **Single Source**: All settings in one file instead of scattered configs
+- **Auto-Reload**: Configuration changes are detected automatically
 
-  yahoo-data-collection:
-    name: "yahoo-data-collection" 
-    display_name: "Yahoo Finance Data Collection"
-    priority: 2
-    schedule_type: "market_hours"
-    expected_runtime_minutes: 8
-    alert_threshold_hours: 2
+### Accessing Configuration in Code
+
+```python
+from src.config.settings import get_settings
+
+settings = get_settings()
+print(f"Database: {settings.database.host}:{settings.database.port}")
+print(f"Trading mode: {settings.trading.mode}")
 ```
 
 ## Prefect Configuration
@@ -75,12 +147,10 @@ Set up Prefect for workflow orchestration:
    prefect work-pool create features-pool --type process
    ```
 
-3. **Configure deployment**:
-   Edit `deployments/prefect.yaml` for your environment:
-   ```yaml
-   pull:
-   - prefect.deployments.steps.set_working_directory:
-       directory: /your/project/path
+3. **Deploy workflows**:
+   ```bash
+   cd deployments
+   prefect deploy --all
    ```
 
 ## Database Setup
@@ -94,40 +164,24 @@ Set up Prefect for workflow orchestration:
 
 2. **Tables are created automatically** when you first run the data collector.
 
-## Logging Configuration
+## Enhanced Error Handling
 
-Logs are stored in `logs/` folder. Configure log levels in code or use production logging:
+The system includes circuit breakers and retry logic:
 
-```python
-from src.utils.production_logging import setup_production_logging
-setup_production_logging("INFO")
-```
+### Circuit Breakers
+Protect against external service failures:
+- **Yahoo API**: 5 failures triggers 120-second circuit break
+- **Database**: 3 failures triggers 60-second circuit break
 
-## Performance Tuning
-
-### Database Connection Pool
-
-Edit connection settings in `src/utils/connection_config.py`:
-
-```python
-# Connection pool settings
-MIN_CONNECTIONS = 1
-MAX_CONNECTIONS = 5
-CONNECTION_TIMEOUT = 30
-```
-
-### Feature Engineering
-
-Adjust batch sizes in `scripts/feature_engineering_processor.py`:
-
-```python
-# Process symbols in batches
-BATCH_SIZE = 10  # Reduce if memory issues
-```
+### Retry Logic
+Automatic retry with exponential backoff:
+- **API calls**: Up to 4 attempts with increasing delays
+- **Database ops**: Up to 3 attempts with shorter delays
 
 ## Security
 
 - Keep API keys in `.env` file (never commit to git)
-- Use paper trading URLs for testing
+- Use paper trading URLs for testing (`mode: "paper"`)
 - Restrict database access to application user only
 - Use HTTPS in production deployments
+- Emergency stop feature for immediate trading halt (`emergency_stop: true`)

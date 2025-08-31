@@ -59,9 +59,9 @@ class DeploymentConfigManager:
     def __init__(self, config_path: Optional[str] = None):
         """Initialize with config file path"""
         if config_path is None:
-            # Default to config/deployments_config.yaml in project root
+            # Default to unified config.yaml in project root
             project_root = Path(__file__).parent.parent.parent
-            config_path = project_root / "config" / "deployments_config.yaml"
+            config_path = project_root / "config" / "config.yaml"
         
         self.config_path = Path(config_path)
         self._config_data = None

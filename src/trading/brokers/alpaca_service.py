@@ -26,6 +26,7 @@ except ImportError:
     print("         Note: This will conflict with Prefect's websockets requirements")
 
 from ...utils.logging_config import get_ui_logger
+from ...config.settings import get_settings
 
 logger = get_ui_logger("alpaca_service")
 
@@ -44,29 +45,53 @@ class AlpacaService:
         self.connect()
     
     def _load_config(self, config_path: Optional[str] = None) -> Dict:
-        """Load Alpaca configuration from YAML file"""
-        if config_path is None:
-            # Default path relative to project root
-            project_root = Path(__file__).parent.parent.parent.parent
-            config_path = project_root / "config" / "alpaca_config.yaml"
-        
+        """Load Alpaca configuration from unified settings"""
         try:
-            with open(config_path, 'r') as f:
-                config = yaml.safe_load(f)
+            # Use unified configuration system
+            settings = get_settings()
             
-            # Validate required configuration
-            mode = config['trading']['mode']
-            if mode not in ['paper', 'live']:
-                raise ValueError(f"Invalid trading mode: {mode}")
+            # Convert unified config to legacy format for compatibility
+            config = {
+                'alpaca': {
+                    'paper_trading': {
+                        'base_url': settings.alpaca.paper_base_url
+                    },
+                    'live_trading': {
+                        'base_url': settings.alpaca.live_base_url
+                    }
+                },
+                'trading': {
+                    'mode': settings.trading.mode,
+                    'default_order_type': settings.trading.default_order_type,
+                    'default_time_in_force': settings.trading.default_time_in_force,
+                    'max_order_value': settings.trading.max_order_value
+                },
+                'risk': {
+                    'max_daily_orders': settings.risk.max_daily_orders,
+                    'max_position_size': settings.risk.max_position_size,
+                    'emergency_stop': settings.risk.emergency_stop
+                }
+            }
             
+            logger.info(f"Loaded Alpaca config from unified settings - mode: {settings.trading.mode}")
             return config
             
-        except FileNotFoundError:
-            logger.error(f"Config file not found: {config_path}")
-            raise
         except Exception as e:
-            logger.error(f"Error loading config: {e}")
-            raise
+            logger.error(f"Error loading unified Alpaca config: {e}")
+            
+            # Fallback to legacy file if unified config fails
+            if config_path is None:
+                project_root = Path(__file__).parent.parent.parent.parent
+                config_path = project_root / "config" / "legacy_backup" / "alpaca_config.yaml"
+            
+            try:
+                with open(config_path, 'r') as f:
+                    config = yaml.safe_load(f)
+                logger.warning(f"Fallback: Loaded legacy Alpaca config from {config_path}")
+                return config
+            except Exception as fallback_error:
+                logger.error(f"Both unified and legacy config loading failed: {fallback_error}")
+                raise
     
     def connect(self) -> bool:
         """Establish connection to Alpaca API"""

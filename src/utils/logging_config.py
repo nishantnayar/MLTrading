@@ -342,7 +342,7 @@ def log_request(request_info: dict, logger: logging.Logger = None):
 def log_data_collection_event(operation_type: str, data_source: str, 
                              symbol: str = None, records_processed: int = None,
                              duration_ms: float = None, status: str = 'success',
-                             logger: logging.Logger = None, **metadata):
+                             logger: logging.Logger = None, **metadata: Any):
     """
     Log data collection events with structured data and resilient database storage
     
@@ -403,7 +403,7 @@ def log_data_collection_event(operation_type: str, data_source: str,
 
 def log_ui_interaction_event(component: str, action: str = None, 
                            duration_ms: float = None, user_id: str = None,
-                           session_id: str = None, logger: logging.Logger = None, **metadata):
+                           session_id: str = None, logger: logging.Logger = None, **metadata: Any):
     """
     Log UI interaction events with structured data and database storage
     
@@ -458,7 +458,7 @@ def log_error_event(error_type: str, error_message: str, component: str = None,
                    severity: str = 'MEDIUM', stack_trace: str = None,
                    source_file: str = None, source_line: int = None,
                    source_function: str = None, user_impact: bool = False,
-                   logger: logging.Logger = None, **metadata):
+                   logger: logging.Logger = None, **metadata: Any):
     """
     Log error events with structured data and resilient database storage
     
@@ -590,7 +590,7 @@ def set_correlation_id(correlation_id: str):
 
 @contextmanager
 def log_operation(operation_name: str, logger: logging.Logger = None, 
-                 log_args: bool = False, **metadata):
+                 log_args: bool = False, **metadata: Any):
     """
     Context manager for logging operations with automatic timing and error handling
     

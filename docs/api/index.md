@@ -1,78 +1,92 @@
 # API Reference
 
-Detailed API documentation for all MLTrading modules, classes, and functions.
+Complete developer reference for the ML Trading System with interactive examples and source code.
 
-## Overview
+## Core Data Pipeline
 
-The MLTrading API is organized into several key modules:
+### Market Data Collection
+::: data.collectors.yahoo_collector
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
 
-- **Data Layer**: Data collection, processing, and storage
-- **Dashboard Services**: Web interface and data services  
-- **Trading Components**: Broker integration and trading logic
-- **Utilities**: Logging, configuration, and helper functions
+### Feature Engineering
+::: data.processors.feature_engineering
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
 
-## Auto-Generated API Documentation
+### Database Operations
+::: data.storage.database
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
 
-For detailed API reference with automatic documentation from docstrings, visit the **[Sphinx API Documentation](../../api-docs/_build/html/index.html)**.
+## Dashboard & Analytics
 
-The Sphinx documentation includes:
+### Unified Data Service
+::: dashboard.services.unified_data_service
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
 
-- **Class and method signatures**
-- **Parameter descriptions** 
-- **Return value documentation**
-- **Example usage**
-- **Inheritance hierarchies**
-- **Source code links**
+### Feature Data Access
+::: dashboard.services.feature_data_service
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
 
-## Key Modules
+### Market Data Access
+::: dashboard.services.market_data_service
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
 
-### Data Collection
-- `src.data.collectors.yahoo_collector` - Yahoo Finance data collection
-- `src.data.processors.feature_engineering` - ML feature generation
-- `src.data.storage.database` - Database management
+## Trading Operations
 
-### Dashboard Services  
-- `src.dashboard.services.market_data_service` - Market data access
-- `src.dashboard.services.feature_data_service` - Feature data access
-- `src.dashboard.services.unified_data_service` - Combined data services
+### Alpaca Broker Integration
+::: trading.brokers.alpaca_service
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
 
-### Trading Integration
-- `src.trading.brokers.alpaca_service` - Alpaca broker integration
+## System Configuration
 
-### Utilities
-- `src.utils.logging_config` - Logging configuration
-- `src.utils.connection_config` - Database connection settings
+### Logging System
+::: utils.logging_config
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
 
-## Development
+### Database Configuration
+::: utils.connection_config
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
 
-For development and contributing to the API:
+### Production Logging
+::: utils.production_logging
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
 
-1. **Install development dependencies**:
-   ```bash
-   pip install -r requirements-dev.txt
-   ```
+## Development Notes
 
-2. **Run tests**:
-   ```bash
-   python -m pytest tests/
-   ```
+This API documentation is automatically generated from Python docstrings using mkdocstrings. 
 
-3. **Generate API docs**:
-   ```bash
-   cd api-docs
-   sphinx-build -b html . _build/html
-   ```
-
-4. **Follow coding standards**:
-   - Use type hints
-   - Write docstrings in Google format
-   - Include examples in docstrings
-   - Add unit tests for new functions
-
-## API Design Principles
-
-- **Separation of concerns**: Each module has a single responsibility
-- **Dependency injection**: Services are injected rather than hardcoded
-- **Error handling**: Comprehensive exception handling with logging
-- **Type safety**: Full type hints for better IDE support
-- **Caching**: Intelligent caching for performance optimization
+**Key Features:**
+- Live source code links
+- Interactive examples
+- Type hint integration
+- Google-style docstring support
+- Cross-references between modules

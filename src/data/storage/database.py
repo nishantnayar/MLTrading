@@ -18,12 +18,45 @@ warnings.filterwarnings('ignore', message='pandas only supports SQLAlchemy')
 
 from ...utils.logging_config import get_combined_logger, log_operation
 from ...utils.connection_config import ConnectionConfig, get_safe_db_config
+from ...utils.retry_decorators import retry_on_database_error
 
 logger = get_combined_logger("mltrading.data.database", enable_database_logging=True)
 
 
 class DatabaseManager:
-    """Manages PostgreSQL database connections and operations."""
+    """
+    High-performance PostgreSQL database manager with connection pooling.
+    
+    Provides robust database operations for the ML trading system with automatic
+    connection pooling, timeout handling, and fallback mechanisms for production
+    reliability.
+    
+    Features:
+        - Connection pooling (configurable 1-20 connections)
+        - Automatic retry logic with exponential backoff
+        - Safe configuration management
+        - Structured logging integration
+        - Batch operations for performance
+    
+    Example:
+        >>> # Initialize with default configuration
+        >>> db = DatabaseManager()
+        >>> 
+        >>> # Get connection and execute query
+        >>> conn = db.get_connection()
+        >>> try:
+        ...     df = pd.read_sql("SELECT * FROM market_data LIMIT 5", conn)
+        ...     print(f"Retrieved {len(df)} records")
+        ... finally:
+        ...     db.return_connection(conn)
+        Retrieved 5 records
+        >>>
+        >>> # Using context manager (recommended)  
+        >>> with db.get_connection_context() as conn:
+        ...     df = pd.read_sql("SELECT COUNT(*) as total FROM market_data", conn)
+        ...     print(f"Total records: {df['total'].iloc[0]}")
+        Total records: 15847
+    """
     
     def __init__(self, host: str = None, port: int = None, 
                  database: str = None, user: str = None, 
@@ -65,6 +98,7 @@ class DatabaseManager:
             self.pool = None
             logger.warning("Database pool initialization failed, using fallback mode")
     
+    @retry_on_database_error(max_attempts=3, delay=0.5)
     def get_connection(self, timeout=60):
         """Get a connection from the pool with timeout and retry logic."""
         import time
