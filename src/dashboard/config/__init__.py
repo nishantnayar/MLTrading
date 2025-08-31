@@ -23,7 +23,7 @@ from .constants import (
 
 __all__ = [
     'CHART_COLORS',
-    'TIME_RANGE_OPTIONS', 
+    'TIME_RANGE_OPTIONS',
     'TIME_RANGE_DAYS',
     'DEFAULT_CHART_HEIGHT',
     'DEFAULT_TIME_RANGE',

@@ -41,7 +41,7 @@ class TradingConfig(BaseModel):
     default_order_type: str = Field(default="market", description="Default order type")
     default_time_in_force: str = Field(default="day", description="Default order time in force")
     max_order_value: float = Field(default=10000.0, gt=0, description="Maximum dollar value per order")
-    
+
     @validator('mode')
     def validate_mode(cls, v):
         if v not in ['paper', 'live']:
@@ -141,7 +141,7 @@ class FeatureEngineeringConfig(BaseModel):
     rsi_windows: Dict[str, int] = Field(
         default={
             'rsi_1d': 7,
-            'rsi_3d': 21, 
+            'rsi_3d': 21,
             'rsi_1w': 35,
             'rsi_2w': 70
         },
@@ -165,10 +165,10 @@ class LoggingConfig(BaseModel):
 class Settings(BaseSettings):
     """
     Unified configuration management for ML Trading System.
-    
+
     Automatically loads configuration from environment variables and YAML files,
     with full validation and type safety using Pydantic.
-    
+
     Example:
         >>> settings = Settings()
         >>> print(f"Database: {settings.database.host}:{settings.database.port}")
@@ -178,7 +178,7 @@ class Settings(BaseSettings):
         >>> print(f"Feature windows: {list(settings.feature_engineering.rsi_windows.keys())}")
         Feature windows: ['rsi_1d', 'rsi_3d', 'rsi_1w', 'rsi_2w']
     """
-    
+
     # Core system configurations
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     alpaca: AlpacaConfig = Field(default_factory=AlpacaConfig)
@@ -188,134 +188,134 @@ class Settings(BaseSettings):
     backtesting: BacktestingConfig = Field(default_factory=BacktestingConfig)
     feature_engineering: FeatureEngineeringConfig = Field(default_factory=FeatureEngineeringConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
-    
+
     # Deployment and dashboard configurations
     strategies: Dict[str, StrategyConfig] = Field(default_factory=dict)
     deployments: Dict[str, DeploymentConfig] = Field(default_factory=dict)
     schedule_types: Dict[str, ScheduleConfig] = Field(default_factory=dict)
     dashboard: Optional[DashboardConfig] = Field(default=None)
-    
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
         env_nested_delimiter = "__"  # Allow DB__HOST=localhost format
         case_sensitive = False
         extra = "ignore"  # Ignore extra environment variables
-        
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._load_yaml_configs()
         self._load_environment_overrides()
-    
+
     def _load_yaml_configs(self):
         """Load configuration from unified config file"""
         config_dir = Path("config")
-        
+
         # Try to load unified config first
         unified_config_file = config_dir / "config.yaml"
         if unified_config_file.exists():
             try:
                 with open(unified_config_file, 'r') as f:
                     config_data = yaml.safe_load(f)
-                
+
                 # Load all sections from unified config
                 if 'database' in config_data:
                     self.database = DatabaseConfig(**config_data['database'])
-                
+
                 if 'alpaca' in config_data:
                     self.alpaca = AlpacaConfig(**config_data['alpaca'])
-                
+
                 if 'trading' in config_data:
                     self.trading = TradingConfig(**config_data['trading'])
-                
+
                 if 'risk' in config_data:
                     self.risk = RiskConfig(**config_data['risk'])
-                
+
                 if 'execution' in config_data:
                     self.execution = ExecutionConfig(**config_data['execution'])
-                
+
                 if 'backtesting' in config_data:
                     self.backtesting = BacktestingConfig(**config_data['backtesting'])
-                
+
                 if 'feature_engineering' in config_data:
                     self.feature_engineering = FeatureEngineeringConfig(**config_data['feature_engineering'])
-                
+
                 if 'logging' in config_data:
                     self.logging = LoggingConfig(**config_data['logging'])
-                
+
                 if 'strategies' in config_data:
                     self.strategies = {
                         name: StrategyConfig(**config)
                         for name, config in config_data['strategies'].items()
                     }
-                
+
                 if 'deployments' in config_data:
                     self.deployments = {
                         name: DeploymentConfig(**config)
                         for name, config in config_data['deployments'].items()
                     }
-                
+
                 if 'schedule_types' in config_data:
                     self.schedule_types = {
                         name: ScheduleConfig(**config)
                         for name, config in config_data['schedule_types'].items()
                     }
-                
+
                 if 'dashboard' in config_data:
                     self.dashboard = DashboardConfig(**config_data['dashboard'])
-                
+
                 print("Loaded unified configuration from config.yaml")
                 return
-                
+
             except Exception as e:
                 print(f"Warning: Could not load unified config: {e}")
-        
+
         # Fallback to legacy config files if unified config not available
         print("Loading from legacy configuration files...")
         self._load_legacy_configs()
-    
+
     def _load_legacy_configs(self):
         """Load from legacy configuration files (backward compatibility)"""
         config_dir = Path("config")
-        
+
         # Load deployments config
         deployments_file = config_dir / "deployments_config.yaml"
         if deployments_file.exists():
             try:
                 with open(deployments_file, 'r') as f:
                     deployments_data = yaml.safe_load(f)
-                    
+
                 if 'deployments' in deployments_data:
                     self.deployments = {
-                        name: DeploymentConfig(**config) 
+                        name: DeploymentConfig(**config)
                         for name, config in deployments_data['deployments'].items()
                     }
-                    
+
                 if 'schedule_types' in deployments_data:
                     self.schedule_types = {
                         name: ScheduleConfig(**config)
                         for name, config in deployments_data['schedule_types'].items()
                     }
-                    
+
                 if 'dashboard' in deployments_data:
                     self.dashboard = DashboardConfig(**deployments_data['dashboard'])
-                    
+
             except Exception as e:
                 print(f"Warning: Could not load deployments config: {e}")
-        
+
         # Load strategies config
         strategies_file = config_dir / "strategies_config.yaml"
         if strategies_file.exists():
             try:
                 with open(strategies_file, 'r') as f:
                     strategies_data = yaml.safe_load(f)
-                    
+
                 if 'strategies' in strategies_data:
                     self.strategies = {
                         name: StrategyConfig(class_name=config.get('class', ''), **config)
                         for name, config in strategies_data['strategies'].items()
                     }
-                    
+
                 # Load global risk settings
                 if 'global_risk' in strategies_data:
                     global_risk = strategies_data['global_risk']
@@ -325,41 +325,41 @@ class Settings(BaseSettings):
                         max_portfolio_risk=global_risk.get('max_portfolio_risk', self.risk.max_portfolio_risk),
                         emergency_stop_loss=global_risk.get('emergency_stop_loss', self.risk.emergency_stop_loss)
                     )
-                    
+
                 # Load execution settings
                 if 'execution' in strategies_data:
                     exec_data = strategies_data['execution']
                     self.execution = ExecutionConfig(**exec_data)
-                    
+
                 # Load backtesting settings
                 if 'backtesting' in strategies_data:
                     backtest_data = strategies_data['backtesting']
                     self.backtesting = BacktestingConfig(**backtest_data)
-                    
+
             except Exception as e:
                 print(f"Warning: Could not load strategies config: {e}")
-        
+
         # Load alpaca config
         alpaca_file = config_dir / "alpaca_config.yaml"
         if alpaca_file.exists():
             try:
                 with open(alpaca_file, 'r') as f:
                     alpaca_data = yaml.safe_load(f)
-                    
+
                 if 'trading' in alpaca_data:
                     trading_data = alpaca_data['trading']
                     self.trading = TradingConfig(**trading_data)
-                    
+
                 if 'risk' in alpaca_data:
                     risk_data = alpaca_data['risk']
                     # Merge with existing risk config
                     current_risk = self.risk.dict()
                     current_risk.update(risk_data)
                     self.risk = RiskConfig(**current_risk)
-                    
+
             except Exception as e:
                 print(f"Warning: Could not load alpaca config: {e}")
-    
+
     def _load_environment_overrides(self):
         """Load environment variable overrides"""
         # Database environment variables
@@ -373,7 +373,7 @@ class Settings(BaseSettings):
             self.database.user = os.getenv('DB_USER')
         if os.getenv('DB_PASSWORD'):
             self.database.password = os.getenv('DB_PASSWORD')
-            
+
         # Alpaca environment variables
         if os.getenv('ALPACA_PAPER_API_KEY'):
             self.alpaca.paper_api_key = os.getenv('ALPACA_PAPER_API_KEY')
@@ -383,11 +383,11 @@ class Settings(BaseSettings):
             self.alpaca.live_api_key = os.getenv('ALPACA_LIVE_API_KEY')
         if os.getenv('ALPACA_LIVE_SECRET_KEY'):
             self.alpaca.live_secret_key = os.getenv('ALPACA_LIVE_SECRET_KEY')
-    
+
     def get_database_url(self) -> str:
         """Get database connection URL"""
         return f"postgresql://{self.database.user}:{self.database.password}@{self.database.host}:{self.database.port}/{self.database.name}"
-    
+
     def get_alpaca_credentials(self) -> Dict[str, str]:
         """Get Alpaca credentials based on trading mode"""
         if self.trading.mode == "paper":
@@ -402,30 +402,30 @@ class Settings(BaseSettings):
                 "secret_key": self.alpaca.live_secret_key,
                 "base_url": self.alpaca.live_base_url
             }
-    
+
     def get_enabled_strategies(self) -> Dict[str, StrategyConfig]:
         """Get only enabled strategies"""
         return {name: config for name, config in self.strategies.items() if config.enabled}
-    
+
     def validate_configuration(self) -> List[str]:
         """Validate configuration and return list of issues"""
         issues = []
-        
+
         # Check required database password
         if not self.database.password:
             issues.append("Database password is required")
-            
+
         # Check Alpaca credentials for current mode
         creds = self.get_alpaca_credentials()
         if not creds["api_key"] or not creds["secret_key"]:
             issues.append(f"Alpaca credentials missing for {self.trading.mode} mode")
-            
+
         # Validate strategy windows
         for name, strategy in self.strategies.items():
             if strategy.parameters.short_window and strategy.parameters.long_window:
                 if strategy.parameters.short_window >= strategy.parameters.long_window:
                     issues.append(f"Strategy {name}: short_window must be less than long_window")
-        
+
         return issues
 
 
@@ -435,10 +435,10 @@ _settings_instance = None
 def get_settings() -> Settings:
     """
     Get global settings instance (singleton pattern).
-    
+
     Returns:
         Settings instance with all configurations loaded and validated
-        
+
     Example:
         >>> settings = get_settings()
         >>> db_config = settings.database
@@ -454,7 +454,7 @@ def get_settings() -> Settings:
 def reload_settings() -> Settings:
     """
     Force reload settings from files and environment.
-    
+
     Returns:
         Fresh settings instance
     """
@@ -483,7 +483,7 @@ if __name__ == "__main__":
     # Configuration validation script
     settings = get_settings()
     issues = settings.validate_configuration()
-    
+
     if issues:
         print("Configuration Issues Found:")
         for issue in issues:

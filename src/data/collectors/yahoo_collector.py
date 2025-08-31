@@ -33,7 +33,7 @@ for handler in logger.handlers:
 def load_symbols_from_file(file_path: str = 'config/symbols.txt') -> List[str]:
     """Load symbols from the configuration file."""
     symbols = []
-    
+
     try:
         with open(file_path, 'r') as f:
             for line in f:
@@ -41,10 +41,10 @@ def load_symbols_from_file(file_path: str = 'config/symbols.txt') -> List[str]:
                 # Skip empty lines and comments
                 if line and not line.startswith('#'):
                     symbols.append(line.upper())
-        
+
         logger.info(f"Loaded {len(symbols)} symbols from {file_path}")
         return symbols
-    
+
     except FileNotFoundError:
         logger.error(f"Symbols file not found: {file_path}")
         return []
@@ -58,13 +58,13 @@ def load_symbols_from_file(file_path: str = 'config/symbols.txt') -> List[str]:
 def fetch_stock_info(symbol: str) -> Dict[str, Any]:
     """
     Fetch comprehensive stock information from Yahoo Finance API.
-    
+
     Retrieves company metadata including sector classification, market cap,
     and exchange information for fundamental analysis and data categorization.
-    
+
     Args:
         symbol: Stock ticker symbol (e.g., 'AAPL', 'MSFT')
-        
+
     Returns:
         Dictionary containing stock information:
         - symbol: Ticker symbol
@@ -76,7 +76,7 @@ def fetch_stock_info(symbol: str) -> Dict[str, Any]:
         - currency: Trading currency
         - exchange: Primary exchange listing
         - source: Data source identifier ('yahoo')
-        
+
     Example:
         >>> info = fetch_stock_info('AAPL')
         >>> print(info['company_name'])
@@ -92,7 +92,7 @@ def fetch_stock_info(symbol: str) -> Dict[str, Any]:
             ticker = yf.Ticker(symbol)
             info = ticker.info
             duration_ms = (time.time() - start_time) * 1000
-            
+
             stock_data = {
                 'symbol': symbol,
                 'company_name': info.get('longName', info.get('shortName', '')),
@@ -104,7 +104,7 @@ def fetch_stock_info(symbol: str) -> Dict[str, Any]:
                 'exchange': info.get('exchange', ''),
                 'source': 'yahoo'
             }
-            
+
             # Log to database
             log_data_collection_event(
                 operation_type='fetch_info',
@@ -118,13 +118,13 @@ def fetch_stock_info(symbol: str) -> Dict[str, Any]:
                 sector=stock_data['sector'],
                 industry=stock_data['industry']
             )
-            
+
             logger.info(f"Fetched stock info for {symbol}: {stock_data['company_name']} - {stock_data['sector']}/{stock_data['industry']}")
             return stock_data
-            
+
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000 if 'start_time' in locals() else 0
-            
+
             # Log error to database
             log_error_event(
                 error_type=type(e).__name__,
@@ -135,7 +135,7 @@ def fetch_stock_info(symbol: str) -> Dict[str, Any]:
                 logger=logger,
                 symbol=symbol
             )
-            
+
             # Log failed data collection
             log_data_collection_event(
                 operation_type='fetch_info',
@@ -147,7 +147,7 @@ def fetch_stock_info(symbol: str) -> Dict[str, Any]:
                 logger=logger,
                 error=str(e)
             )
-            
+
             logger.error(f"Error fetching stock info for {symbol}: {e}")
             return {
                 'symbol': symbol,
@@ -170,28 +170,28 @@ def fetch_yahoo_data(symbol: str, period: str = '2y', interval: str = '1h') -> p
         try:
             start_time = time.time()
             ticker = yf.Ticker(symbol)
-            
+
             # Try to fetch data with the requested interval
             try:
                 logger.info(f"Fetching {symbol} with interval {interval}")
-                data = ticker.history(period=period, interval=interval, 
+                data = ticker.history(period=period, interval=interval,
                                     actions=False, auto_adjust=True)
-                
+
                 if data.empty:
                     # If hourly fails, try daily as fallback
                     logger.warning(f"No {interval} data for {symbol}, trying daily data")
-                    data = ticker.history(period=period, interval='1d', 
+                    data = ticker.history(period=period, interval='1d',
                                         actions=False, auto_adjust=True)
-                    
+
             except Exception as e:
                 logger.warning(f"Failed to fetch {symbol} with interval {interval}: {e}")
                 # Try daily as fallback
                 try:
-                    data = ticker.history(period=period, interval='1d', 
+                    data = ticker.history(period=period, interval='1d',
                                         actions=False, auto_adjust=True)
                 except Exception as e2:
                     duration_ms = (time.time() - start_time) * 1000
-                    
+
                     # Log error to database
                     log_error_event(
                         error_type=type(e2).__name__,
@@ -204,7 +204,7 @@ def fetch_yahoo_data(symbol: str, period: str = '2y', interval: str = '1h') -> p
                         period=period,
                         interval=interval
                     )
-                    
+
                     # Log failed data collection
                     log_data_collection_event(
                         operation_type='fetch_data',
@@ -218,14 +218,14 @@ def fetch_yahoo_data(symbol: str, period: str = '2y', interval: str = '1h') -> p
                         interval=interval,
                         error=str(e2)
                     )
-                    
+
                     logger.error(f"Failed to fetch {symbol} with daily interval: {e2}")
                     return pd.DataFrame()
-            
+
             if data.empty:
                 duration_ms = (time.time() - start_time) * 1000
                 logger.warning(f"No data found for symbol: {symbol}")
-                
+
                 # Log partial success (no error but no data)
                 log_data_collection_event(
                     operation_type='fetch_data',
@@ -239,22 +239,22 @@ def fetch_yahoo_data(symbol: str, period: str = '2y', interval: str = '1h') -> p
                     interval=interval,
                     reason='no_data_available'
                 )
-                
+
                 return pd.DataFrame()
-            
+
             # Reset index to make Date a column
             data = data.reset_index()
-            
+
             # Check what columns we actually have
             #logger.info(f"Available columns for {symbol}: {list(data.columns)}")
-            
+
             # Rename columns to match our database schema
             column_mapping = {}
             if 'Date' in data.columns:
                 column_mapping['Date'] = 'timestamp'
             elif 'Datetime' in data.columns:
                 column_mapping['Datetime'] = 'timestamp'
-            
+
             if 'Open' in data.columns:
                 column_mapping['Open'] = 'open'
             if 'High' in data.columns:
@@ -265,23 +265,23 @@ def fetch_yahoo_data(symbol: str, period: str = '2y', interval: str = '1h') -> p
                 column_mapping['Close'] = 'close'
             if 'Volume' in data.columns:
                 column_mapping['Volume'] = 'volume'
-            
+
             data = data.rename(columns=column_mapping)
-            
+
             # Add symbol and source columns
             data['symbol'] = symbol
             data['source'] = 'yahoo'
-            
+
             # Ensure we have all required columns
             required_columns = ['symbol', 'timestamp', 'open', 'high', 'low', 'close', 'volume', 'source']
             available_columns = [col for col in required_columns if col in data.columns]
-            
+
             # Select only the columns we have
             data = data[available_columns]
-            
+
             duration_ms = (time.time() - start_time) * 1000
             records_count = len(data)
-            
+
             # Log successful data collection to database
             log_data_collection_event(
                 operation_type='fetch_data',
@@ -295,13 +295,13 @@ def fetch_yahoo_data(symbol: str, period: str = '2y', interval: str = '1h') -> p
                 interval=interval,
                 columns=list(data.columns)
             )
-            
+
             logger.info(f"Fetched {records_count} records for {symbol}")
             return data
-        
+
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000 if 'start_time' in locals() else 0
-            
+
             # Log error to database
             log_error_event(
                 error_type=type(e).__name__,
@@ -314,7 +314,7 @@ def fetch_yahoo_data(symbol: str, period: str = '2y', interval: str = '1h') -> p
                 period=period,
                 interval=interval
             )
-            
+
             # Log failed data collection
             log_data_collection_event(
                 operation_type='fetch_data',
@@ -328,7 +328,7 @@ def fetch_yahoo_data(symbol: str, period: str = '2y', interval: str = '1h') -> p
                 interval=interval,
                 error=str(e)
             )
-            
+
             logger.error(f"Error fetching data for {symbol}: {e}")
             return pd.DataFrame()
 
@@ -336,7 +336,7 @@ def fetch_yahoo_data(symbol: str, period: str = '2y', interval: str = '1h') -> p
 def prepare_data_for_insert(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Convert DataFrame to list of dictionaries for database insertion."""
     data_list = []
-    
+
     for _, row in df.iterrows():
         data_dict = {
             'symbol': row['symbol'],
@@ -349,14 +349,14 @@ def prepare_data_for_insert(df: pd.DataFrame) -> List[Dict[str, Any]]:
             'source': row['source']
         }
         data_list.append(data_dict)
-    
+
     return data_list
 
 
 def extract_and_load_data(symbols: List[str], period: str = '3d', interval: str = '1h'):
     """
     Extract data from Yahoo Finance and load into database.
-    
+
     Optimized to use 3-day window for incremental updates instead of 1-year:
     - 97% reduction in data processing (72 vs 1,780 records per symbol)
     - Faster collection (~2 minutes vs 10+ minutes)
@@ -366,14 +366,14 @@ def extract_and_load_data(symbols: List[str], period: str = '3d', interval: str 
     # Set a correlation ID for the entire batch operation
     batch_correlation_id = f"yahoo_batch_{int(time.time())}"
     set_correlation_id(batch_correlation_id)
-    
-    with log_operation("extract_and_load_batch", logger, 
+
+    with log_operation("extract_and_load_batch", logger,
                       symbol_count=len(symbols), period=period, interval=interval):
         db_manager = get_db_manager()
         total_records = 0
         stock_info_count = 0
         failed_symbols = []
-        
+
         # Log start of batch operation
         log_data_collection_event(
             operation_type='batch_start',
@@ -385,17 +385,17 @@ def extract_and_load_data(symbols: List[str], period: str = '3d', interval: str 
             period=period,
             interval=interval
         )
-        
+
         # Process symbols in chunks to avoid overwhelming the API
         chunk_size = 10
         for i in range(0, len(symbols), chunk_size):
             chunk_symbols = symbols[i:i + chunk_size]
             chunk_number = i // chunk_size + 1
             logger.info(f"Processing chunk {chunk_number} containing {len(chunk_symbols)} symbols...")
-            
+
             for symbol in chunk_symbols:
                 logger.info(f"Processing symbol: {symbol}")
-                
+
                 # Fetch stock information first
                 try:
                     with log_operation(f"store_stock_info_{symbol}", logger, symbol=symbol):
@@ -403,7 +403,7 @@ def extract_and_load_data(symbols: List[str], period: str = '3d', interval: str 
                         stock_info = fetch_stock_info(symbol)
                         db_manager.insert_stock_info(stock_info)
                         duration_ms = (time.time() - start_time) * 1000
-                        
+
                         # Log successful storage
                         log_data_collection_event(
                             operation_type='store_info',
@@ -414,10 +414,10 @@ def extract_and_load_data(symbols: List[str], period: str = '3d', interval: str 
                             status='success',
                             logger=logger
                         )
-                        
+
                         stock_info_count += 1
                         logger.info(f"Successfully loaded stock info for {symbol}")
-                        
+
                 except Exception as e:
                     # Log error for stock info storage
                     log_error_event(
@@ -430,25 +430,25 @@ def extract_and_load_data(symbols: List[str], period: str = '3d', interval: str 
                         symbol=symbol
                     )
                     logger.error(f"Error loading stock info for {symbol}: {e}")
-                
+
                 # Fetch market data from Yahoo Finance
                 df = fetch_yahoo_data(symbol, period, interval)
-                
+
                 if df.empty:
                     continue
-                
+
                 # Prepare data for database insertion
                 data_list = prepare_data_for_insert(df)
-                
+
                 if data_list:
                     try:
-                        with log_operation(f"store_market_data_{symbol}", logger, 
+                        with log_operation(f"store_market_data_{symbol}", logger,
                                          symbol=symbol, record_count=len(data_list)):
                             start_time = time.time()
                             # Insert data into database
                             db_manager.insert_market_data(data_list)
                             duration_ms = (time.time() - start_time) * 1000
-                            
+
                             # Log successful storage
                             log_data_collection_event(
                                 operation_type='store_data',
@@ -461,10 +461,10 @@ def extract_and_load_data(symbols: List[str], period: str = '3d', interval: str 
                                 period=period,
                                 interval=interval
                             )
-                            
+
                             total_records += len(data_list)
                             logger.info(f"Successfully loaded {len(data_list)} records for {symbol}")
-                    
+
                     except Exception as e:
                         # Log error for market data storage
                         log_error_event(
@@ -478,7 +478,7 @@ def extract_and_load_data(symbols: List[str], period: str = '3d', interval: str 
                             symbol=symbol,
                             record_count=len(data_list)
                         )
-                        
+
                         # Log failed storage
                         log_data_collection_event(
                             operation_type='store_data',
@@ -490,15 +490,15 @@ def extract_and_load_data(symbols: List[str], period: str = '3d', interval: str 
                             error=str(e),
                             attempted_records=len(data_list)
                         )
-                        
+
                         failed_symbols.append(symbol)
                         logger.error(f"Error inserting data for {symbol}: {e}")
-            
+
             # Add a small delay between chunks to be respectful to the API
             if i + chunk_size < len(symbols):
                 logger.info("Waiting 2 seconds before processing next chunk...")
                 time.sleep(2)
-        
+
         # Log completion of batch operation
         success_rate = (len(symbols) - len(failed_symbols)) / len(symbols) * 100 if symbols else 0
         log_data_collection_event(
@@ -513,10 +513,10 @@ def extract_and_load_data(symbols: List[str], period: str = '3d', interval: str 
             success_rate=success_rate,
             stock_info_loaded=stock_info_count
         )
-        
+
         #logger.info(f"Data extraction complete. Total records loaded: {total_records}, "
         #           f"Stock info loaded: {stock_info_count}, Failed symbols: {len(failed_symbols)}")
-        
+
         if failed_symbols:
             logger.warning(f"Failed symbols: {', '.join(failed_symbols)}")
 
@@ -526,10 +526,10 @@ def main():
     # Set correlation ID for the entire session
     session_correlation_id = f"yahoo_session_{int(time.time())}"
     set_correlation_id(session_correlation_id)
-    
+
     with log_operation("yahoo_extraction_session", logger):
         logger.info("Starting Yahoo Finance data extraction...")
-        
+
         # Log system startup event
         log_data_collection_event(
             operation_type='system_start',
@@ -539,11 +539,11 @@ def main():
             logger=logger,
             session_id=session_correlation_id
         )
-        
+
         try:
             # Load symbols from config file
             symbols = load_symbols_from_file()
-            
+
             if not symbols:
                 # Log error event
                 log_error_event(
@@ -557,10 +557,10 @@ def main():
                 )
                 logger.error("No symbols loaded. Please check the config/symbols.txt file.")
                 return
-            
+
             # Extract and load data (use 3-day window for incremental updates)
             extract_and_load_data(symbols, period='3d', interval='1h')
-            
+
             # Log successful completion
             log_data_collection_event(
                 operation_type='system_complete',
@@ -571,9 +571,9 @@ def main():
                 session_id=session_correlation_id,
                 total_symbols=len(symbols)
             )
-            
+
             logger.info("Data extraction process completed.")
-            
+
         except Exception as e:
             # Log critical system error
             log_error_event(
@@ -586,7 +586,7 @@ def main():
                 logger=logger,
                 session_id=session_correlation_id
             )
-            
+
             logger.error(f"Critical error in data extraction process: {e}")
             raise
 
@@ -594,5 +594,5 @@ def main():
 if __name__ == "__main__":
     # Create logs directory if it doesn't exist
     os.makedirs('logs', exist_ok=True)
-    
-    main() 
+
+    main()

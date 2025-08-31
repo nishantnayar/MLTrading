@@ -86,14 +86,14 @@ NAV_ITEMS = [
 
 # Card Styling
 CARD_STYLE = {
-    "border": "none", 
+    "border": "none",
     "box-shadow": "0 4px 6px rgba(0,0,0,0.07)",
     "border-radius": "8px",
     "transition": "box-shadow 0.3s ease, transform 0.2s ease"
 }
 
 CARD_STYLE_NONE = {
-    "border": "none", 
+    "border": "none",
     "box-shadow": "none",
     "border-radius": "8px"
 }

@@ -21,7 +21,7 @@ logger = get_combined_logger("mltrading.circuit_breaker")
 class CircuitState(Enum):
     """Circuit breaker states"""
     CLOSED = "closed"      # Normal operation
-    OPEN = "open"          # Blocking requests  
+    OPEN = "open"          # Blocking requests
     HALF_OPEN = "half_open"  # Testing recovery
 
 
@@ -54,10 +54,10 @@ class CircuitBreakerError(Exception):
 class CircuitBreaker:
     """
     Circuit breaker implementation for fault tolerance.
-    
+
     Automatically opens when failure threshold is reached, preventing further
     calls to failing services. Attempts recovery after timeout period.
-    
+
     Example:
         >>> # Decorator usage
         >>> @CircuitBreaker(failure_threshold=3, recovery_timeout=30)
@@ -70,27 +70,27 @@ class CircuitBreaker:
         >>> with cb:
         ...     result = external_api_call()
     """
-    
+
     _instances: Dict[str, 'CircuitBreaker'] = {}
     _lock = Lock()
-    
+
     def __init__(self, name: str, config: Optional[CircuitBreakerConfig] = None):
         self.name = name
         self.config = config or CircuitBreakerConfig()
         self.state = CircuitState.CLOSED
         self.stats = CircuitBreakerStats()
         self._lock = Lock()
-        
+
         # Register instance for monitoring
         with CircuitBreaker._lock:
             CircuitBreaker._instances[name] = self
-    
+
     @classmethod
     def get_instance(cls, name: str) -> 'CircuitBreaker':
         """Get existing circuit breaker instance by name"""
         with cls._lock:
             return cls._instances.get(name)
-    
+
     @classmethod
     def get_all_stats(cls) -> Dict[str, Dict[str, Any]]:
         """Get statistics for all circuit breakers"""
@@ -105,71 +105,71 @@ class CircuitBreaker:
                 }
                 for name, cb in cls._instances.items()
             }
-    
+
     def _should_attempt_reset(self) -> bool:
         """Check if we should attempt to reset from open state"""
         if self.state != CircuitState.OPEN:
             return False
-            
+
         if self.stats.last_failure_time is None:
             return True
-            
+
         time_since_failure = time.time() - self.stats.last_failure_time
         return time_since_failure >= self.config.recovery_timeout
-    
+
     def _record_success(self):
         """Record successful operation"""
         with self._lock:
             self.stats.success_count += 1
             self.stats.total_calls += 1
-            
+
             if self.state == CircuitState.HALF_OPEN:
                 if self.stats.success_count >= self.config.success_threshold:
                     self._transition_to_closed()
             elif self.state == CircuitState.OPEN:
                 # Shouldn't happen, but handle gracefully
                 self._transition_to_half_open()
-    
+
     def _record_failure(self, exception: Exception):
         """Record failed operation"""
         with self._lock:
             self.stats.failure_count += 1
             self.stats.total_calls += 1
             self.stats.last_failure_time = time.time()
-            
+
             logger.warning(f"Circuit breaker {self.name} recorded failure: {exception}")
-            
+
             if self.state == CircuitState.CLOSED:
                 if self.stats.failure_count >= self.config.failure_threshold:
                     self._transition_to_open()
             elif self.state == CircuitState.HALF_OPEN:
                 self._transition_to_open()
-    
+
     def _transition_to_open(self):
         """Transition circuit breaker to open state"""
         self.state = CircuitState.OPEN
         self.stats.state_changes += 1
         self.stats.success_count = 0  # Reset success counter
         logger.error(f"Circuit breaker {self.name} opened after {self.stats.failure_count} failures")
-    
+
     def _transition_to_half_open(self):
         """Transition circuit breaker to half-open state"""
         self.state = CircuitState.HALF_OPEN
         self.stats.state_changes += 1
         self.stats.success_count = 0  # Reset success counter for testing
         logger.info(f"Circuit breaker {self.name} half-opened for recovery testing")
-    
+
     def _transition_to_closed(self):
         """Transition circuit breaker to closed state"""
         self.state = CircuitState.CLOSED
         self.stats.state_changes += 1
         self.stats.failure_count = 0  # Reset failure counter
         logger.info(f"Circuit breaker {self.name} closed after {self.stats.success_count} successful calls")
-    
+
     def __enter__(self):
         """Context manager entry"""
         return self.call
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit"""
         if exc_type and issubclass(exc_type, self.config.expected_exception):
@@ -178,26 +178,26 @@ class CircuitBreaker:
         elif exc_type is None:
             self._record_success()
         return False
-    
+
     def call(self, func: Callable, *args, **kwargs) -> Any:
         """
         Execute function with circuit breaker protection.
-        
+
         Args:
             func: Function to execute
             *args: Function arguments
             **kwargs: Function keyword arguments
-            
+
         Returns:
             Function result
-            
+
         Raises:
             CircuitBreakerError: When circuit is open
             Original exception: When function fails
         """
         with self._lock:
             self.stats.total_calls += 1
-            
+
             # Check if circuit is open
             if self.state == CircuitState.OPEN:
                 if not self._should_attempt_reset():
@@ -205,7 +205,7 @@ class CircuitBreaker:
                     raise CircuitBreakerError(f"Circuit breaker {self.name} is open")
                 else:
                     self._transition_to_half_open()
-        
+
         # Execute the function
         try:
             result = func(*args, **kwargs)
@@ -214,19 +214,19 @@ class CircuitBreaker:
         except self.config.expected_exception as e:
             self._record_failure(e)
             raise
-    
+
     def force_open(self):
         """Manually open the circuit breaker"""
         with self._lock:
             self._transition_to_open()
             logger.warning(f"Circuit breaker {self.name} manually opened")
-    
+
     def force_close(self):
         """Manually close the circuit breaker"""
         with self._lock:
             self._transition_to_closed()
             logger.info(f"Circuit breaker {self.name} manually closed")
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """Get current statistics"""
         return {
@@ -241,17 +241,17 @@ class CircuitBreaker:
         }
 
 
-def circuit_breaker(name: str = None, failure_threshold: int = 5, 
+def circuit_breaker(name: str = None, failure_threshold: int = 5,
                    recovery_timeout: float = 60.0, expected_exception: type = Exception):
     """
     Decorator for applying circuit breaker pattern to functions.
-    
+
     Args:
         name: Circuit breaker name (defaults to function name)
         failure_threshold: Number of failures before opening circuit
         recovery_timeout: Seconds to wait before attempting recovery
         expected_exception: Exception type to monitor for failures
-        
+
     Example:
         >>> @circuit_breaker(name="yahoo_api", failure_threshold=3, recovery_timeout=30)
         ... def fetch_yahoo_data(symbol):
@@ -269,25 +269,25 @@ def circuit_breaker(name: str = None, failure_threshold: int = 5,
             expected_exception=expected_exception
         )
         breaker = CircuitBreaker(breaker_name, config)
-        
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             return breaker.call(func, *args, **kwargs)
-        
+
         # Attach circuit breaker for monitoring
         wrapper._circuit_breaker = breaker
         return wrapper
-    
+
     return decorator
 
 
 def get_circuit_breaker_stats() -> Dict[str, Any]:
     """
     Get statistics for all circuit breakers in the system.
-    
+
     Returns:
         Dictionary with circuit breaker statistics
-        
+
     Example:
         >>> stats = get_circuit_breaker_stats()
         >>> for name, stat in stats.items():

@@ -12,7 +12,7 @@ from .email_service import EmailService
 
 class RateLimiter:
     """Rate limiter for alerts to prevent spam."""
-    
+
     def __init__(self, max_per_hour: int = 10, max_per_day: int = 50):
         """Initialize rate limiter."""
         self.max_per_hour = max_per_hour
@@ -20,14 +20,14 @@ class RateLimiter:
         self.hourly_counts = defaultdict(lambda: deque())
         self.daily_counts = defaultdict(lambda: deque())
         self.lock = threading.Lock()
-    
+
     def can_send_alert(self, category: AlertCategory) -> bool:
         """
         Check if an alert can be sent based on rate limits.
-        
+
         Args:
             category: Alert category to check
-            
+
         Returns:
             bool: True if alert can be sent, False if rate limited
         """
@@ -35,31 +35,31 @@ class RateLimiter:
             now = datetime.now(timezone.utc)
             hour_ago = now - timedelta(hours=1)
             day_ago = now - timedelta(days=1)
-            
+
             # Clean old entries
             hourly_queue = self.hourly_counts[category]
             while hourly_queue and hourly_queue[0] < hour_ago:
                 hourly_queue.popleft()
-            
+
             daily_queue = self.daily_counts[category]
             while daily_queue and daily_queue[0] < day_ago:
                 daily_queue.popleft()
-            
+
             # Check limits
             if len(hourly_queue) >= self.max_per_hour:
                 return False
             if len(daily_queue) >= self.max_per_day:
                 return False
-            
+
             return True
-    
+
     def record_alert_sent(self, category: AlertCategory) -> None:
         """Record that an alert was sent."""
         with self.lock:
             now = datetime.now(timezone.utc)
             self.hourly_counts[category].append(now)
             self.daily_counts[category].append(now)
-    
+
     def get_stats(self) -> Dict[str, Dict[str, int]]:
         """Get current rate limiting statistics."""
         with self.lock:
@@ -76,19 +76,19 @@ class RateLimiter:
 
 class AlertManager:
     """Central alert management system."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         """Initialize alert manager with configuration."""
         self.config = config
         self.logger = logging.getLogger(__name__)
-        
+
         # Parse configuration
         alert_config = config.get('alerts', {})
         email_config = config.get('email_alerts', {})
-        
+
         self.enabled = alert_config.get('enabled', True)
         self.min_severity = AlertSeverity(alert_config.get('min_severity', 'MEDIUM'))
-        
+
         # Initialize rate limiter
         rate_config = alert_config.get('rate_limiting', {})
         if rate_config.get('enabled', True):
@@ -98,13 +98,13 @@ class AlertManager:
             )
         else:
             self.rate_limiter = None
-        
+
         # Category configurations
         self.category_configs = alert_config.get('alert_categories', {})
-        
+
         # Initialize email service
         self.email_service = EmailService(email_config)
-        
+
         # Alert statistics
         self.stats = {
             'total_alerts': 0,
@@ -116,9 +116,9 @@ class AlertManager:
             'alerts_by_category': defaultdict(int)
         }
         self.stats_lock = threading.Lock()
-        
+
         self.logger.info(f"Alert manager initialized. Enabled: {self.enabled}")
-    
+
     def send_alert(
         self,
         title: str,
@@ -130,7 +130,7 @@ class AlertManager:
     ) -> AlertStatus:
         """
         Send an alert through the system.
-        
+
         Args:
             title: Alert title
             message: Alert message
@@ -138,7 +138,7 @@ class AlertManager:
             category: Alert category
             component: Component that generated the alert
             metadata: Additional metadata
-            
+
         Returns:
             AlertStatus: Status of the alert processing
         """
@@ -152,16 +152,16 @@ class AlertManager:
             component=component,
             metadata=metadata or {}
         )
-        
+
         return self.process_alert(alert)
-    
+
     def process_alert(self, alert: Alert) -> AlertStatus:
         """
         Process an alert through all filters and send if appropriate.
-        
+
         Args:
             alert: Alert to process
-            
+
         Returns:
             AlertStatus: Processing result
         """
@@ -169,29 +169,29 @@ class AlertManager:
             self.stats['total_alerts'] += 1
             self.stats['alerts_by_severity'][alert.severity.value] += 1
             self.stats['alerts_by_category'][alert.category.value] += 1
-        
+
         self.logger.debug(
             f"Processing alert: {alert.severity.value} - {alert.title}"
         )
-        
+
         if not self.enabled:
             self.logger.debug("Alert system disabled, skipping alert")
             return AlertStatus.FILTERED
-        
+
         # Check severity filter
         if not self._should_send_by_severity(alert):
             self.logger.debug(f"Alert filtered by severity: {alert.severity.value}")
             with self.stats_lock:
                 self.stats['filtered_alerts'] += 1
             return AlertStatus.FILTERED
-        
+
         # Check category configuration
         if not self._should_send_by_category(alert):
             self.logger.debug(f"Alert filtered by category: {alert.category.value}")
             with self.stats_lock:
                 self.stats['filtered_alerts'] += 1
             return AlertStatus.FILTERED
-        
+
         # Check rate limits
         if not self._should_send_by_rate_limit(alert):
             self.logger.info(
@@ -200,10 +200,10 @@ class AlertManager:
             with self.stats_lock:
                 self.stats['rate_limited_alerts'] += 1
             return AlertStatus.RATE_LIMITED
-        
+
         # Send the alert
         success = self.email_service.send_alert(alert)
-        
+
         if success:
             self.logger.info(f"Alert sent successfully: {alert.severity.value} - {alert.title}")
             if self.rate_limiter:
@@ -216,22 +216,22 @@ class AlertManager:
             with self.stats_lock:
                 self.stats['failed_alerts'] += 1
             return AlertStatus.FAILED
-    
+
     def _should_send_by_severity(self, alert: Alert) -> bool:
         """Check if alert meets minimum severity threshold."""
         return alert.severity >= self.min_severity
-    
+
     def _should_send_by_category(self, alert: Alert) -> bool:
         """Check if alert category is enabled."""
         category_config = self.category_configs.get(alert.category.value, {})
         return category_config.get('enabled', True)
-    
+
     def _should_send_by_rate_limit(self, alert: Alert) -> bool:
         """Check if alert passes rate limiting."""
         if not self.rate_limiter:
             return True
         return self.rate_limiter.can_send_alert(alert.category)
-    
+
     def send_critical_alert(
         self,
         title: str,
@@ -249,7 +249,7 @@ class AlertManager:
             component=component,
             metadata=metadata
         )
-    
+
     def send_trading_error_alert(
         self,
         error_message: str,
@@ -265,7 +265,7 @@ class AlertManager:
             component=component,
             metadata=metadata
         )
-    
+
     def send_system_health_alert(
         self,
         title: str,
@@ -283,7 +283,7 @@ class AlertManager:
             component=component,
             metadata=metadata
         )
-    
+
     def send_data_pipeline_alert(
         self,
         title: str,
@@ -301,7 +301,7 @@ class AlertManager:
             component=component,
             metadata=metadata
         )
-    
+
     def send_security_alert(
         self,
         title: str,
@@ -318,11 +318,11 @@ class AlertManager:
             component=component,
             metadata=metadata
         )
-    
+
     def test_alert_system(self) -> bool:
         """Test the alert system by sending a test alert."""
         self.logger.info("Testing alert system...")
-        
+
         status = self.send_alert(
             title="Alert System Test",
             message="This is a test alert to verify the alert system is working correctly.",
@@ -331,27 +331,27 @@ class AlertManager:
             component="AlertManager",
             metadata={"test": True, "timestamp": datetime.now(timezone.utc).isoformat()}
         )
-        
+
         success = status == AlertStatus.SENT
         self.logger.info(f"Alert system test {'passed' if success else 'failed'}: {status.value}")
         return success
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """Get alert system statistics."""
         with self.stats_lock:
             stats = dict(self.stats)
             stats['alerts_by_severity'] = dict(stats['alerts_by_severity'])
             stats['alerts_by_category'] = dict(stats['alerts_by_category'])
-        
+
         # Add rate limiter stats if available
         if self.rate_limiter:
             stats['rate_limiter'] = self.rate_limiter.get_stats()
-        
+
         # Add email service stats
         stats['email_service'] = self.email_service.get_status()
-        
+
         return stats
-    
+
     def get_status(self) -> Dict[str, Any]:
         """Get current status of the alert system."""
         return {

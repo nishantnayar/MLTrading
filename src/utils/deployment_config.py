@@ -34,7 +34,7 @@ class DeploymentConfig:
     tags: List[str]
     expected_runtime_minutes: int
     alert_threshold_hours: int
-    
+
     def __post_init__(self):
         """Validate configuration after initialization"""
         if self.priority < 1:
@@ -55,31 +55,31 @@ class ScheduleType:
 
 class DeploymentConfigManager:
     """Manages deployment configurations for the dashboard"""
-    
+
     def __init__(self, config_path: Optional[str] = None):
         """Initialize with config file path"""
         if config_path is None:
             # Default to unified config.yaml in project root
             project_root = Path(__file__).parent.parent.parent
             config_path = project_root / "config" / "config.yaml"
-        
+
         self.config_path = Path(config_path)
         self._config_data = None
         self._deployments = {}
         self._schedule_types = {}
         self._dashboard_settings = {}
-        
+
         self._load_config()
-    
+
     def _load_config(self) -> None:
         """Load configuration from YAML file"""
         try:
             if not self.config_path.exists():
                 raise FileNotFoundError(f"Config file not found: {self.config_path}")
-            
+
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 self._config_data = yaml.safe_load(f)
-            
+
             # Parse deployments
             deployments_data = self._config_data.get('deployments', {})
             for name, config in deployments_data.items():
@@ -98,7 +98,7 @@ class DeploymentConfigManager:
                 except (KeyError, ValueError) as e:
                     logger.error(f"Invalid deployment config for '{name}': {e}")
                     continue
-            
+
             # Parse schedule types
             schedule_types_data = self._config_data.get('schedule_types', {})
             for name, config in schedule_types_data.items():
@@ -107,78 +107,78 @@ class DeploymentConfigManager:
                     timezone=config['timezone'],
                     description=config['description']
                 )
-            
+
             # Parse dashboard settings
             self._dashboard_settings = self._config_data.get('dashboard', {})
-            
+
             logger.info(f"Loaded {len(self._deployments)} deployment configs and {len(self._schedule_types)} schedule types")
-            
+
         except Exception as e:
             logger.error(f"Error loading deployment config: {e}")
             # Initialize with empty configs to prevent crashes
             self._deployments = {}
             self._schedule_types = {}
             self._dashboard_settings = {}
-    
+
     def get_deployment(self, name: str) -> Optional[DeploymentConfig]:
         """Get deployment configuration by name"""
         return self._deployments.get(name)
-    
+
     def get_all_deployments(self) -> Dict[str, DeploymentConfig]:
         """Get all deployment configurations"""
         return self._deployments.copy()
-    
+
     def get_deployments_by_category(self, category: str) -> Dict[str, DeploymentConfig]:
         """Get deployments filtered by category"""
         return {
-            name: config for name, config in self._deployments.items() 
+            name: config for name, config in self._deployments.items()
             if config.category == category
         }
-    
+
     def get_deployments_by_priority(self, limit: Optional[int] = None) -> List[DeploymentConfig]:
         """Get deployments sorted by priority (highest first)"""
         sorted_deployments = sorted(
-            self._deployments.values(), 
+            self._deployments.values(),
             key=lambda x: x.priority
         )
-        
+
         if limit is not None:
             sorted_deployments = sorted_deployments[:limit]
-        
+
         return sorted_deployments
-    
+
     def get_primary_deployments(self) -> List[str]:
         """Get list of primary deployment names for dashboard"""
         primary = self._dashboard_settings.get('primary_deployments', [])
-        
+
         # If no primary deployments configured, return top priority ones
         if not primary:
             top_deployments = self.get_deployments_by_priority(limit=3)
             return [d.name for d in top_deployments]
-        
+
         return primary
-    
+
     def get_schedule_type(self, name: str) -> Optional[ScheduleType]:
         """Get schedule type by name"""
         return self._schedule_types.get(name)
-    
+
     def get_dashboard_setting(self, key: str, default: Any = None) -> Any:
         """Get dashboard setting by key"""
         return self._dashboard_settings.get(key, default)
-    
+
     def calculate_next_run(self, deployment_name: str, current_time: Optional[datetime] = None) -> Optional[datetime]:
         """Calculate next scheduled run for a deployment"""
         deployment = self.get_deployment(deployment_name)
         if not deployment:
             return None
-        
+
         schedule_type = self.get_schedule_type(deployment.schedule_type)
         if not schedule_type:
             return None
-        
+
         if current_time is None:
             current_time = datetime.now()
-        
+
         # Convert to deployment timezone
         try:
             tz = pytz.timezone(schedule_type.timezone)
@@ -187,15 +187,15 @@ class DeploymentConfigManager:
             logger.warning(f"Invalid timezone {schedule_type.timezone}, using UTC")
             tz = pytz.UTC
             current_time = current_time.astimezone(tz)
-        
+
         return self._calculate_next_run_from_cron(schedule_type.cron, current_time, tz)
-    
+
     def _calculate_next_run_from_cron(self, cron: str, current_time: datetime, tz: pytz.BaseTzInfo) -> Optional[datetime]:
         """Calculate next run from cron expression (simplified implementation)"""
         try:
             # This is a simplified implementation for common patterns
             # For production, consider using croniter library
-            
+
             if cron == "0 9-16 * * 1-5":  # Market hours pattern
                 return self._calculate_market_hours_next_run(current_time, tz)
             elif cron == "10 9-15/2 * * 1-5":  # Every 2 hours during market, 10 minutes after
@@ -209,15 +209,15 @@ class DeploymentConfigManager:
             else:
                 logger.warning(f"Unsupported cron pattern: {cron}")
                 return None
-                
+
         except Exception as e:
             logger.error(f"Error calculating next run from cron '{cron}': {e}")
             return None
-    
+
     def _calculate_market_hours_next_run(self, current_time: datetime, tz: pytz.BaseTzInfo) -> datetime:
         """Calculate next run for market hours schedule (9 AM - 4 PM EST, weekdays)"""
         now = current_time.astimezone(tz)
-        
+
         # Market hours: 9 AM - 4 PM (16:00), Monday-Friday
         if now.weekday() < 5:  # Weekday
             if 9 <= now.hour < 16:  # During market hours
@@ -238,13 +238,13 @@ class DeploymentConfigManager:
                 days_until_monday = 1
             next_monday = now + timedelta(days=days_until_monday)
             next_run = next_monday.replace(hour=9, minute=0, second=0, microsecond=0)
-        
+
         return next_run
-    
+
     def _calculate_daily_next_run(self, current_time: datetime, tz: pytz.BaseTzInfo, hour: int) -> datetime:
         """Calculate next run for daily schedule at specific hour"""
         now = current_time.astimezone(tz)
-        
+
         if now.hour < hour:
             # Today at the specified hour
             next_run = now.replace(hour=hour, minute=0, second=0, microsecond=0)
@@ -252,62 +252,62 @@ class DeploymentConfigManager:
             # Tomorrow at the specified hour
             tomorrow = now + timedelta(days=1)
             next_run = tomorrow.replace(hour=hour, minute=0, second=0, microsecond=0)
-        
+
         return next_run
-    
+
     def _calculate_interval_next_run(self, current_time: datetime, interval_minutes: int) -> datetime:
         """Calculate next run for interval-based schedule"""
         # Round up to next interval boundary
         minutes_since_hour = current_time.minute
         next_boundary = ((minutes_since_hour // interval_minutes) + 1) * interval_minutes
-        
+
         if next_boundary >= 60:
             next_run = current_time.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1, minutes=next_boundary-60)
         else:
             next_run = current_time.replace(minute=next_boundary, second=0, microsecond=0)
-        
+
         return next_run
-    
+
     def _calculate_every_two_hours_next_run(self, current_time: datetime, tz: pytz.BaseTzInfo) -> datetime:
         """Calculate next run for every 2 hours during market hours (9, 11, 1, 3 PM)"""
         # Convert to market timezone
         market_time = current_time.astimezone(tz)
-        
+
         # Market hours schedule: 9:10, 11:10, 13:10, 15:10 EST
         market_hours = [9, 11, 13, 15]
         minute = 10  # 10 minutes past the hour
-        
+
         # Check if today is a weekday
         if market_time.weekday() >= 5:  # Saturday or Sunday
             # Find next Monday
             days_until_monday = 7 - market_time.weekday()
             next_monday = market_time.replace(hour=9, minute=minute, second=0, microsecond=0) + timedelta(days=days_until_monday)
             return next_monday.astimezone(pytz.UTC)
-        
+
         # Find next run time today
         for hour in market_hours:
             potential_run = market_time.replace(hour=hour, minute=minute, second=0, microsecond=0)
             if potential_run > market_time:
                 return potential_run.astimezone(pytz.UTC)
-        
+
         # All runs for today are past, find next weekday
         next_day = market_time + timedelta(days=1)
         while next_day.weekday() >= 5:  # Skip weekends
             next_day += timedelta(days=1)
-        
+
         # First run of next trading day
         next_run = next_day.replace(hour=9, minute=minute, second=0, microsecond=0)
         return next_run.astimezone(pytz.UTC)
-    
+
     def should_alert(self, deployment_name: str, last_failure_time: datetime) -> bool:
         """Check if an alert should be raised for a failed deployment"""
         deployment = self.get_deployment(deployment_name)
         if not deployment:
             return False
-        
+
         time_since_failure = datetime.now() - last_failure_time
         return time_since_failure.total_seconds() > (deployment.alert_threshold_hours * 3600)
-    
+
     def reload_config(self) -> None:
         """Reload configuration from file"""
         logger.info("Reloading deployment configuration...")

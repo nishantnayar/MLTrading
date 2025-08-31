@@ -25,7 +25,7 @@ logger = get_ui_logger("pipeline_callbacks")
 
 def register_pipeline_callbacks(app):
     """Register all pipeline-related callbacks"""
-    
+
     @app.callback(
         Output("pipeline-status-card", "children"),
         [Input("pipeline-status-interval", "n_intervals")]
@@ -35,7 +35,7 @@ def register_pipeline_callbacks(app):
         try:
             prefect_service = get_prefect_service()
             config_manager = get_deployment_config()
-            
+
             # Get primary deployment from config
             primary_deployments = config_manager.get_primary_deployments()
             if not primary_deployments:
@@ -43,22 +43,22 @@ def register_pipeline_callbacks(app):
                     html.I(className="fas fa-info-circle me-2"),
                     "No deployments configured"
                 ], color="info")
-            
+
             # Get deployment status for primary deployment
             status_data = prefect_service.get_deployment_status(primary_deployments[0])
-            
+
             return create_pipeline_status_card(status_data)
-            
+
         except Exception as e:
             logger.error(f"Error updating pipeline status: {e}")
             logger.error(traceback.format_exc())
-            
+
             # Return error card
             return dbc.Alert([
                 html.I(className="fas fa-exclamation-triangle me-2"),
                 f"Error loading pipeline status: {str(e)}"
             ], color="danger")
-    
+
     @app.callback(
         Output("system-health-summary", "children"),
         [Input("pipeline-status-interval", "n_intervals")]
@@ -68,17 +68,17 @@ def register_pipeline_callbacks(app):
         try:
             prefect_service = get_prefect_service()
             health_data = prefect_service.get_system_health()
-            
+
             return create_system_health_summary(health_data)
-            
+
         except Exception as e:
             logger.error(f"Error updating system health: {e}")
-            
+
             return dbc.Alert([
                 html.I(className="fas fa-exclamation-triangle me-2"),
                 "Error loading system health"
             ], color="warning", className="mb-0")
-    
+
     @app.callback(
         Output("data-freshness-indicator", "children"),
         [Input("pipeline-status-interval", "n_intervals")]
@@ -88,15 +88,15 @@ def register_pipeline_callbacks(app):
         try:
             prefect_service = get_prefect_service()
             freshness_data = prefect_service.get_data_freshness_metrics()
-            
+
             return create_data_freshness_indicator(freshness_data)
-            
+
         except Exception as e:
             logger.error(f"Error updating data freshness: {e}")
-            
+
             # Return empty div on error to avoid breaking the layout
             return html.Div()
-    
+
     @app.callback(
         [Output("pipeline-history-modal", "is_open"),
          Output("pipeline-history-content", "children")],
@@ -107,18 +107,18 @@ def register_pipeline_callbacks(app):
     def toggle_pipeline_history_modal(close_clicks, is_open):
         """Toggle the pipeline history modal and load data"""
         ctx = callback_context
-        
+
         if not ctx.triggered:
             return False, html.Div()
-        
+
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-        
+
         if trigger_id == "close-pipeline-history-modal":
             # Close modal
             return False, html.Div()
-        
+
         return is_open, dash.no_update
-    
+
     @app.callback(
         Output("trigger-pipeline-notification", "children"),
         [Input("trigger-pipeline-btn", "n_clicks")],
@@ -128,11 +128,11 @@ def register_pipeline_callbacks(app):
         """Handle manual pipeline trigger"""
         if not trigger_clicks:
             return dash.no_update
-        
+
         try:
             prefect_service = get_prefect_service()
             config_manager = get_deployment_config()
-            
+
             # Get primary deployment to trigger
             primary_deployments = config_manager.get_primary_deployments()
             if not primary_deployments:
@@ -149,11 +149,11 @@ def register_pipeline_callbacks(app):
                 duration=5000,
                 style={"position": "fixed", "top": 66, "right": 10, "width": 350}
                 )
-            
+
             # Trigger the flow run for the primary deployment
             deployment_name = primary_deployments[0]
             flow_run = prefect_service.trigger_flow_run(deployment_name)
-            
+
             if flow_run:
                 return dbc.Toast([
                     html.P([
@@ -183,10 +183,10 @@ def register_pipeline_callbacks(app):
                 duration=5000,
                 style={"position": "fixed", "top": 66, "right": 10, "width": 350}
             )
-            
+
         except Exception as e:
             logger.error(f"Error triggering pipeline: {e}")
-            
+
             return dbc.Toast([
                 html.P([
                     html.I(className="fas fa-times-circle me-2 text-danger"),
@@ -200,7 +200,7 @@ def register_pipeline_callbacks(app):
             duration=7000,
             style={"position": "fixed", "top": 66, "right": 10, "width": 350}
         )
-    
+
     @app.callback(
         Output("pipeline-status-alert", "children"),
         [Input("pipeline-status-interval", "n_intervals")]
@@ -210,28 +210,28 @@ def register_pipeline_callbacks(app):
         try:
             prefect_service = get_prefect_service()
             config_manager = get_deployment_config()
-            
+
             # Check if we're connected
             if not prefect_service.is_connected():
                 return html.Div()  # Don't show alert if not connected
-            
+
             # Get primary deployment from config
             primary_deployments = config_manager.get_primary_deployments()
             if not primary_deployments:
                 return html.Div()  # No deployments to check
-            
+
             deployment_name = primary_deployments[0]
-            
+
             # Get recent runs to check for failures
             recent_runs = prefect_service.get_flow_runs(
                 deployment_name=deployment_name,
                 limit=5
             )
-            
+
             # Check for consecutive failures
             if recent_runs:
                 recent_states = [run.get('state', {}).get('type', 'UNKNOWN') for run in recent_runs[:3]]
-                
+
                 # If last 3 runs failed, show critical alert
                 if all(state == 'FAILED' for state in recent_states):
                     return dbc.Alert([
@@ -239,7 +239,7 @@ def register_pipeline_callbacks(app):
                         html.Strong("Critical: "),
                         "Data pipeline has failed multiple times. Manual intervention may be required."
                     ], color="danger", dismissable=True, className="mt-2")
-                
+
                 # If last run failed and it's been more than 2 hours, show warning
                 last_run = recent_runs[0]
                 if last_run.get('state', {}).get('type') == 'FAILED':
@@ -248,9 +248,9 @@ def register_pipeline_callbacks(app):
                         if end_time:
                             if isinstance(end_time, str):
                                 end_time = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
-                            
+
                             time_since_failure = datetime.now().astimezone() - end_time.astimezone()
-                            
+
                             if time_since_failure.total_seconds() > 7200:  # 2 hours
                                 return dbc.Alert([
                                     html.I(className="fas fa-exclamation-triangle me-2"),
@@ -260,13 +260,13 @@ def register_pipeline_callbacks(app):
                                 ], color="warning", dismissable=True, className="mt-2")
                     except Exception:
                         pass
-            
+
             return html.Div()  # No alerts needed
-            
+
         except Exception as e:
             logger.error(f"Error checking pipeline health alerts: {e}")
             return html.Div()  # Don't show errors for health checks
-    
+
     # New callback for multiple deployments overview
     @app.callback(
         Output("multi-deployment-status", "children"),
@@ -277,7 +277,7 @@ def register_pipeline_callbacks(app):
         try:
             prefect_service = get_prefect_service()
             config_manager = get_deployment_config()
-            
+
             # Get all configured deployments
             primary_deployments = config_manager.get_primary_deployments()
             if not primary_deployments:
@@ -287,15 +287,15 @@ def register_pipeline_callbacks(app):
                         "No deployments configured for monitoring"
                     ], color="info")
                 ])
-            
+
             # Get status for multiple deployments
             deployments_status = prefect_service.get_multiple_deployment_status(primary_deployments)
-            
+
             return create_multi_deployment_status_card(deployments_status)
-            
+
         except Exception as e:
             logger.error(f"Error updating multi-deployment status: {e}")
-            
+
             return dbc.Alert([
                 html.I(className="fas fa-exclamation-triangle me-2"),
                 "Error loading deployment status"

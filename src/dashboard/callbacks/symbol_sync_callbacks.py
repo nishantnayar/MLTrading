@@ -28,27 +28,27 @@ def register_symbol_sync_callbacks(app):
     def sync_selected_symbol(overview_symbol, detailed_symbol, comparison_symbol, analyze_clicks, compare_clicks, stored_symbol, current_tab):
         """
         Synchronize symbol selection across all tabs and handle overview button clicks.
-        
+
         Handles both symbol dropdown changes and analyze/compare button clicks from overview.
         """
-        
+
         # Determine which input triggered the callback
         if not callback_context.triggered:
             # Initial load - use stored symbol or default to AAPL
             default_symbol = stored_symbol or "AAPL"
             return default_symbol, default_symbol, default_symbol, default_symbol, current_tab or "overview-tab"
-        
+
         # Get the triggering input
         triggered_id = callback_context.triggered[0]["prop_id"].split(".")[0]
         trigger_value = callback_context.triggered[0]["value"]
-        
+
         # Handle overview button clicks (analyze/compare)
         try:
             btn_info = json.loads(triggered_id)
             if 'type' in btn_info and 'index' in btn_info:
                 button_type = btn_info['type']
                 symbol = btn_info['index']
-                
+
                 # Only proceed if this is actually a button click with n_clicks > 0
                 if trigger_value is not None and trigger_value > 0:
                     if button_type == "analyze-symbol-btn":
@@ -60,7 +60,7 @@ def register_symbol_sync_callbacks(app):
         except (json.JSONDecodeError, KeyError, TypeError):
             # Not a button click, continue with dropdown logic
             pass
-        
+
         # Handle dropdown changes
         new_symbol = None
         if triggered_id == "symbol-search" and overview_symbol:
@@ -69,17 +69,17 @@ def register_symbol_sync_callbacks(app):
             new_symbol = detailed_symbol
         elif triggered_id == "comparison-symbol-1" and comparison_symbol:
             new_symbol = comparison_symbol
-        
+
         # If we have a new symbol, sync it across all dropdowns
         if new_symbol and new_symbol != stored_symbol:
             return new_symbol, new_symbol, new_symbol, new_symbol, current_tab or "overview-tab"
-        
+
         # Otherwise, maintain current values
         current_overview = overview_symbol or stored_symbol or "AAPL"
         current_detailed = detailed_symbol or stored_symbol or "AAPL"
         current_comparison = comparison_symbol or stored_symbol or "AAPL"
         current_stored = stored_symbol or "AAPL"
-        
+
         return current_stored, current_overview, current_detailed, current_comparison, current_tab or "overview-tab"
 
 

@@ -14,28 +14,28 @@ def generate_friendly_flow_name(
 ) -> str:
     """
     Generate a user-friendly flow run name
-    
+
     Args:
         flow_type: Type of flow (e.g., 'yahoo-data', 'portfolio-analysis')
         context: Additional context (e.g., 'manual', 'scheduled', 'retry')
         timezone: Timezone for timestamp
-        
+
     Returns:
         Formatted flow run name
     """
     tz = pytz.timezone(timezone)
     now = datetime.now(tz)
-    
+
     # Format timestamp
     date_str = now.strftime("%Y-%m-%d")
     time_str = now.strftime("%H%M")
-    
+
     # Build name components
     name_parts = [flow_type, date_str, f"{time_str}EST"]
-    
+
     if context:
         name_parts.append(context)
-    
+
     return "-".join(name_parts)
 
 def generate_market_context_name(
@@ -44,27 +44,27 @@ def generate_market_context_name(
 ) -> str:
     """
     Generate a flow name with market context
-    
+
     Args:
         flow_type: Base flow type name
         timezone: Market timezone
-        
+
     Returns:
         Flow name with market status context
     """
     tz = pytz.timezone(timezone)
     now = datetime.now(tz)
     current_time = now.time()
-    
+
     # Market hours (9:30 AM - 4:00 PM EST)
     from datetime import time
     MARKET_OPEN = time(9, 30)
     MARKET_CLOSE = time(16, 0)
-    
+
     is_weekday = now.weekday() < 5
     is_market_hours = MARKET_OPEN <= current_time <= MARKET_CLOSE
     market_open = is_weekday and is_market_hours
-    
+
     # Determine context
     if market_open:
         context = "market-open"
@@ -75,7 +75,7 @@ def generate_market_context_name(
             context = "after-market"
     else:
         context = "weekend"
-    
+
     return generate_friendly_flow_name(flow_type, context, timezone)
 
 def generate_manual_trigger_name(
@@ -85,12 +85,12 @@ def generate_manual_trigger_name(
 ) -> str:
     """
     Generate a name for manually triggered flows
-    
+
     Args:
         flow_type: Base flow type
         user_context: User-provided context (e.g., 'testing', 'backfill')
         timezone: Timezone for timestamp
-        
+
     Returns:
         Manual trigger flow name
     """
@@ -101,7 +101,7 @@ def generate_manual_trigger_name(
         # Remove special characters except hyphens
         clean_context = "".join(c for c in clean_context if c.isalnum() or c == "-")
         context_parts.append(clean_context)
-    
+
     context = "-".join(context_parts)
     return generate_friendly_flow_name(flow_type, context, timezone)
 

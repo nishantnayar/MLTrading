@@ -48,11 +48,11 @@ class StrategySignal:
     price: Optional[float] = None
     quantity: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
-    
+
     def __post_init__(self):
         if self.timestamp.tzinfo is None:
             self.timestamp = self.timestamp.replace(tzinfo=timezone.utc)
-        
+
         # Validate strength
         if not 0.0 <= self.strength <= 1.0:
             raise ValueError(f"Signal strength must be between 0.0 and 1.0, got {self.strength}")
@@ -89,20 +89,20 @@ class StrategyPerformance:
 class BaseStrategy(ABC):
     """
     Abstract base class for all trading strategies
-    
+
     This class provides the framework for implementing trading strategies
     with common functionality like signal generation, risk management,
     and performance tracking.
     """
-    
-    def __init__(self, 
+
+    def __init__(self,
                  name: str,
                  symbols: List[str],
                  parameters: Dict[str, Any] = None,
                  risk_params: Dict[str, Any] = None):
         """
         Initialize the strategy
-        
+
         Args:
             name: Strategy name
             symbols: List of symbols to trade
@@ -113,56 +113,56 @@ class BaseStrategy(ABC):
         self.symbols = symbols
         self.parameters = parameters or {}
         self.risk_params = risk_params or {}
-        
+
         # Strategy state
         self.state = StrategyState.CREATED
         self.positions: Dict[str, StrategyPosition] = {}
         self.signals_history: List[StrategySignal] = []
         self.performance = StrategyPerformance()
-        
+
         # Data storage
         self.market_data: Dict[str, pd.DataFrame] = {}
         self.indicators: Dict[str, Dict[str, Any]] = {}
-        
+
         # Configuration
         self.max_position_size = self.risk_params.get('max_position_size', 1000)
         self.max_drawdown = self.risk_params.get('max_drawdown', 0.05)  # 5%
         self.stop_loss_pct = self.risk_params.get('stop_loss_pct', 0.02)  # 2%
         self.take_profit_pct = self.risk_params.get('take_profit_pct', 0.04)  # 4%
-        
+
         # Logging
         self.logger = get_combined_logger(f"mltrading.strategies.{name.lower()}")
-        
+
         logger.info(f"Strategy '{name}' created with symbols: {symbols}")
-    
+
     @abstractmethod
     def generate_signals(self, market_data: Dict[str, pd.DataFrame]) -> List[StrategySignal]:
         """
         Generate trading signals based on market data
-        
+
         Args:
             market_data: Dictionary of symbol -> DataFrame with OHLCV data
-            
+
         Returns:
             List of trading signals
         """
         pass
-    
+
     @abstractmethod
-    def calculate_position_size(self, signal: StrategySignal, 
+    def calculate_position_size(self, signal: StrategySignal,
                               available_capital: float) -> int:
         """
         Calculate position size for a signal
-        
+
         Args:
             signal: Trading signal
             available_capital: Available capital for trading
-            
+
         Returns:
             Position size (number of shares)
         """
         pass
-    
+
     def initialize(self, **kwargs):
         """
         Initialize the strategy with any required setup
@@ -172,7 +172,7 @@ class BaseStrategy(ABC):
             with log_operation(f"initialize_strategy_{self.name}", self.logger):
                 self.state = StrategyState.INITIALIZED
                 self.performance.start_time = datetime.now(timezone.utc)
-                
+
                 # Log strategy initialization
                 trading_logger.log_trading_event(
                     event_type="strategy_initialized",
@@ -181,83 +181,83 @@ class BaseStrategy(ABC):
                     parameters=self.parameters,
                     risk_params=self.risk_params
                 )
-                
+
                 self.logger.info(f"Strategy '{self.name}' initialized successfully")
-                
+
         except Exception as e:
             self.state = StrategyState.ERROR
             self.logger.error(f"Failed to initialize strategy '{self.name}': {e}")
             raise
-    
+
     def start(self):
         """Start the strategy execution"""
         if self.state != StrategyState.INITIALIZED:
             raise ValueError(f"Strategy must be initialized before starting. Current state: {self.state}")
-        
+
         self.state = StrategyState.RUNNING
         self.logger.info(f"Strategy '{self.name}' started")
-        
+
         trading_logger.log_trading_event(
             event_type="strategy_started",
             strategy=self.name
         )
-    
+
     def pause(self):
         """Pause the strategy execution"""
         if self.state == StrategyState.RUNNING:
             self.state = StrategyState.PAUSED
             self.logger.info(f"Strategy '{self.name}' paused")
-    
+
     def stop(self):
         """Stop the strategy execution"""
         self.state = StrategyState.STOPPED
         self.performance.end_time = datetime.now(timezone.utc)
         self.logger.info(f"Strategy '{self.name}' stopped")
-        
+
         trading_logger.log_trading_event(
             event_type="strategy_stopped",
             strategy=self.name,
             performance=self._get_performance_summary()
         )
-    
+
     def update_market_data(self, symbol: str, data: pd.DataFrame):
         """
         Update market data for a symbol
-        
+
         Args:
             symbol: Trading symbol
             data: OHLCV data
         """
         self.market_data[symbol] = data
         self._update_indicators(symbol, data)
-    
+
     def _update_indicators(self, symbol: str, data: pd.DataFrame):
         """
         Update technical indicators for a symbol
         Override this method to calculate custom indicators
-        
+
         Args:
             symbol: Trading symbol
             data: OHLCV data
         """
         if symbol not in self.indicators:
             self.indicators[symbol] = {}
-        
+
         # Basic indicators that most strategies will use
         if len(data) >= 20:
             # Simple Moving Averages
             self.indicators[symbol]['sma_10'] = data['close'].rolling(10).mean()
             self.indicators[symbol]['sma_20'] = data['close'].rolling(20).mean()
-            
+
             # RSI
             self.indicators[symbol]['rsi'] = self._calculate_rsi(data['close'])
-            
+
             # Bollinger Bands
             bb_upper, bb_middle, bb_lower = self._calculate_bollinger_bands(data['close'])
             self.indicators[symbol]['bb_upper'] = bb_upper
             self.indicators[symbol]['bb_middle'] = bb_middle
             self.indicators[symbol]['bb_lower'] = bb_lower
-    
+
     def _calculate_rsi(self, prices: pd.Series, period: int = 14) -> pd.Series:
         """Calculate RSI indicator"""
         delta = prices.diff()
@@ -266,7 +266,7 @@ class BaseStrategy(ABC):
         rs = gain / loss
         rsi = 100 - (100 / (1 + rs))
         return rsi
-    
+
     def _calculate_bollinger_bands(self, prices: pd.Series, period: int = 20, std_dev: int = 2):
         """Calculate Bollinger Bands"""
         sma = prices.rolling(period).mean()
@@ -274,15 +274,15 @@ class BaseStrategy(ABC):
         upper = sma + (std * std_dev)
         lower = sma - (std * std_dev)
         return upper, sma, lower
-    
+
     def process_signal(self, signal: StrategySignal, available_capital: float) -> Optional[Dict[str, Any]]:
         """
         Process a trading signal and generate order instructions
-        
+
         Args:
             signal: Trading signal to process
             available_capital: Available capital for trading
-            
+
         Returns:
             Order instructions or None if signal is rejected
         """
@@ -291,17 +291,17 @@ class BaseStrategy(ABC):
                 # Validate signal
                 if not self._validate_signal(signal):
                     return None
-                
+
                 # Calculate position size
                 position_size = self.calculate_position_size(signal, available_capital)
                 if position_size == 0:
                     self.logger.info(f"Position size is 0 for signal {signal.symbol} {signal.signal_type}")
                     return None
-                
+
                 # Apply risk management
                 if not self._check_risk_limits(signal, position_size):
                     return None
-                
+
                 # Create order instructions
                 order_instructions = {
                     'symbol': signal.symbol,
@@ -313,7 +313,7 @@ class BaseStrategy(ABC):
                     'signal_metadata': signal.metadata,
                     'strategy': self.name
                 }
-                
+
                 # Log signal processing
                 trading_logger.log_trading_event(
                     event_type="signal_processed",
@@ -323,51 +323,51 @@ class BaseStrategy(ABC):
                     strategy=self.name,
                     signal_strength=signal.strength
                 )
-                
+
                 # Store signal in history
                 self.signals_history.append(signal)
-                
+
                 return order_instructions
-                
+
         except Exception as e:
             self.logger.error(f"Error processing signal for {signal.symbol}: {e}")
             return None
-    
+
     def _validate_signal(self, signal: StrategySignal) -> bool:
         """Validate a trading signal"""
         # Check if symbol is in our trading list
         if signal.symbol not in self.symbols:
             self.logger.warning(f"Signal for {signal.symbol} not in strategy symbols")
             return False
-        
+
         # Check signal strength threshold
         min_strength = self.parameters.get('min_signal_strength', 0.5)
         if signal.strength < min_strength:
             self.logger.debug(f"Signal strength {signal.strength} below threshold {min_strength}")
             return False
-        
+
         return True
-    
+
     def _check_risk_limits(self, signal: StrategySignal, position_size: int) -> bool:
         """Check if signal passes risk management rules"""
         # Check maximum position size
         if abs(position_size) > self.max_position_size:
             self.logger.warning(f"Position size {position_size} exceeds max {self.max_position_size}")
             return False
-        
+
         # Check if we already have a position in this symbol
         existing_position = self.positions.get(signal.symbol)
         if existing_position and signal.signal_type in [SignalType.BUY, SignalType.SELL]:
             # Don't add to existing position (can be changed based on strategy)
             self.logger.info(f"Already have position in {signal.symbol}, skipping signal")
             return False
-        
+
         return True
-    
+
     def update_position(self, symbol: str, fill_data: Dict[str, Any]):
         """
         Update position after an order fill
-        
+
         Args:
             symbol: Trading symbol
             fill_data: Fill information from broker
@@ -376,10 +376,10 @@ class BaseStrategy(ABC):
             quantity = fill_data.get('quantity', 0)
             price = fill_data.get('price', 0.0)
             side = fill_data.get('side', '')
-            
+
             if side == 'sell':
                 quantity = -quantity
-            
+
             if symbol in self.positions:
                 # Update existing position
                 position = self.positions[symbol]
@@ -395,7 +395,7 @@ class BaseStrategy(ABC):
                     entry_price=price,
                     entry_time=datetime.now(timezone.utc)
                 )
-            
+
             # Log position update
             trading_logger.log_trading_event(
                 event_type="position_updated",
@@ -405,28 +405,28 @@ class BaseStrategy(ABC):
                 price=price,
                 strategy=self.name
             )
-            
+
             self.logger.info(f"Position updated for {symbol}: {quantity} shares at ${price}")
-            
+
         except Exception as e:
             self.logger.error(f"Error updating position for {symbol}: {e}")
-    
+
     def close_position(self, symbol: str) -> Optional[StrategySignal]:
         """
         Generate signal to close a position
-        
+
         Args:
             symbol: Symbol to close position for
-            
+
         Returns:
             Close signal or None
         """
         if symbol not in self.positions:
             return None
-        
+
         position = self.positions[symbol]
         signal_type = SignalType.CLOSE_SHORT if position.quantity < 0 else SignalType.CLOSE_LONG
-        
+
         signal = StrategySignal(
             symbol=symbol,
             signal_type=signal_type,
@@ -435,9 +435,9 @@ class BaseStrategy(ABC):
             quantity=abs(position.quantity),
             metadata={'reason': 'strategy_close_position'}
         )
-        
+
         return signal
-    
+
     def _get_performance_summary(self) -> Dict[str, Any]:
         """Get current performance summary"""
         return {
@@ -448,7 +448,7 @@ class BaseStrategy(ABC):
             'win_rate': self.performance.win_rate,
             'max_drawdown': self.performance.max_drawdown
         }
-    
+
     def get_status(self) -> Dict[str, Any]:
         """Get current strategy status"""
         return {

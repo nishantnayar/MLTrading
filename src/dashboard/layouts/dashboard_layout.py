@@ -7,8 +7,8 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc
 
 from ..config import (
-    DEFAULT_CHART_HEIGHT, 
-    DEFAULT_TIME_RANGE, 
+    DEFAULT_CHART_HEIGHT,
+    DEFAULT_TIME_RANGE,
     DEFAULT_SYMBOL,
     TIME_RANGE_OPTIONS,
     CARD_STYLE,
@@ -46,12 +46,12 @@ def create_overview_tab():
                                 dbc.Badge("Real-time Analysis", color="info", className="me-2"),
                                 dbc.Badge("Smart Filtering", color="primary")
                             ], className="mb-2"),
-                            html.P("Advanced market analysis and stock filtering platform", 
+                            html.P("Advanced market analysis and stock filtering platform",
                                    className="text-muted mb-0 small")
                         ], className="text-center py-2")
                     ], width=12)
                 ], className="mb-3"),
-                
+
                 # Market Status Cards
                 dbc.Row([
                     dbc.Col([
@@ -93,7 +93,7 @@ def create_overview_tab():
                         )
                     ], width=3)
                 ], className="mb-3"),
-                
+
                 # Data Pipeline Status Section
                 dbc.Row([
                     dbc.Col([
@@ -103,7 +103,7 @@ def create_overview_tab():
                         html.Div(id="system-health-summary")
                     ], width=4)
                 ], className="mb-3"),
-                
+
                 # Advanced Filtering Controls
                 dbc.Row([
                     dbc.Col([
@@ -168,18 +168,18 @@ def create_overview_tab():
                         ], style=CARD_STYLE)
                     ], width=12)
                 ], className="mb-3"),
-                
+
                 # Stock Filtering Charts Section
                 dbc.Row([
                     dbc.Col([
                         create_section_header(
-                            "Market Analytics Dashboard", 
+                            "Market Analytics Dashboard",
                             subtitle="Interactive charts for discovering and filtering stocks",
                             icon_class="fas fa-chart-bar"
                         )
                     ], width=12)
                 ], className="mb-3"),
-                
+
                 # First Row: Sector and Industry Charts
                 dbc.Row([
                     # Sector Distribution Chart
@@ -196,10 +196,10 @@ def create_overview_tab():
                             ]),
                             dbc.CardBody([
                                 dcc.Graph(
-                                    id="sector-distribution-chart", 
+                                    id="sector-distribution-chart",
                                     style={'height': '400px'},
                                     config={
-                                        'displayModeBar': False, 
+                                        'displayModeBar': False,
                                         'staticPlot': False,
                                         'doubleClick': False,
                                         'showTips': False,
@@ -210,7 +210,7 @@ def create_overview_tab():
                             ], className="p-0")
                         ], style=CARD_STYLE)
                     ], width=6),
-                    
+
                     # Industry Distribution Chart (driven by sector)
                     dbc.Col([
                         dbc.Card([
@@ -230,7 +230,7 @@ def create_overview_tab():
                             ]),
                             dbc.CardBody([
                                 dcc.Graph(
-                                    id="industry-distribution-chart", 
+                                    id="industry-distribution-chart",
                                     style={'height': '400px'},
                                     config={'displayModeBar': False, 'staticPlot': False}
                                 )
@@ -238,10 +238,10 @@ def create_overview_tab():
                         ], style=CARD_STYLE)
                     ], width=6)
                 ], className="mb-3"),
-                
+
                 # Second Row: Volume, Performance, and Activity Charts
                 dbc.Row([
-                    # Top Symbols by Volume Chart  
+                    # Top Symbols by Volume Chart
                     dbc.Col([
                         dbc.Card([
                             dbc.CardHeader([
@@ -252,14 +252,14 @@ def create_overview_tab():
                             ]),
                             dbc.CardBody([
                                 dcc.Graph(
-                                    id="top-volume-chart", 
+                                    id="top-volume-chart",
                                     style={'height': '400px'},
                                     config={'displayModeBar': False, 'staticPlot': False}
                                 )
                             ], className="p-0")
                         ], style=CARD_STYLE)
                     ], width=4),
-                    
+
                     # Price Performance Chart
                     dbc.Col([
                         dbc.Card([
@@ -271,14 +271,14 @@ def create_overview_tab():
                             ]),
                             dbc.CardBody([
                                 dcc.Graph(
-                                    id="price-performance-chart", 
+                                    id="price-performance-chart",
                                     style={'height': '400px'},
                                     config={'displayModeBar': False, 'staticPlot': False}
                                 )
                             ], className="p-0")
                         ], style=CARD_STYLE)
                     ], width=4),
-                    
+
                     # Market Activity Chart
                     dbc.Col([
                         dbc.Card([
@@ -290,7 +290,7 @@ def create_overview_tab():
                             ]),
                             dbc.CardBody([
                                 dcc.Graph(
-                                    id="market-activity-chart", 
+                                    id="market-activity-chart",
                                     style={'height': '400px'},
                                     config={'displayModeBar': False, 'staticPlot': False}
                                 )
@@ -298,7 +298,7 @@ def create_overview_tab():
                         ], style=CARD_STYLE)
                     ], width=4)
                 ], className="mb-3"),
-                
+
                 # Enhanced Filtered Symbols Section
                 dbc.Row([
                     dbc.Col([
@@ -327,7 +327,7 @@ def create_overview_tab():
                                     html.Div([
                                         html.I(className="fas fa-mouse-pointer fa-2x text-muted mb-3"),
                                         html.H6("Interactive Stock Discovery", className="text-muted"),
-                                        html.P("Click on any bar in the charts above to discover stocks by sector, industry, volume, or performance.", 
+                                        html.P("Click on any bar in the charts above to discover stocks by sector, industry, volume, or performance.",
                                                className="text-muted"),
                                         html.Small("💡 Tip: Start by clicking on a sector to see related industries", className="text-info")
                                     ], className="text-center py-4")
@@ -336,7 +336,7 @@ def create_overview_tab():
                         ], style=CARD_STYLE)
                     ], width=12)
                 ], className="mb-3"),
-                
+
                 # Quick Stats Footer
                 dbc.Row([
                     dbc.Col([
@@ -362,7 +362,7 @@ def create_overview_tab():
                         ], style=CARD_STYLE, className="border-0 bg-light")
                     ], width=12)
                 ], className="mb-2"),
-                
+
                 # Refresh Button for Charts
                 dbc.Row([
                     dbc.Col([
@@ -376,7 +376,7 @@ def create_overview_tab():
                     ], width="auto", className="ms-auto")
                 ], className="mb-3")
             ], className="p-3"),
-            
+
             # Pipeline Status Modal (hidden by default)
             create_pipeline_history_modal()
         ], style=CARD_STYLE_NONE),
@@ -402,7 +402,7 @@ def create_charts_tab():
                         )
                     ], width="auto", className="ms-auto")
                 ], className="mb-3 justify-content-end"),
-                
+
                 # Technical Analysis Header
                 dbc.Row([
                     dbc.Col([
@@ -413,21 +413,21 @@ def create_charts_tab():
                                         html.I(className="fas fa-chart-line me-2 text-primary"),
                                         "Technical Analysis Dashboard"
                                     ], className="text-center mb-2"),
-                                    html.P("Complete market data and technical indicators for any symbol", 
+                                    html.P("Complete market data and technical indicators for any symbol",
                                            className="text-center text-muted mb-0")
                                 ], className="text-center")
                             ], className="py-3")
                         ], style=CARD_STYLE)
                     ], width=12)
                 ], className="mb-3"),
-                
+
                 # Interactive Chart Controls Row
                 dbc.Row([
                     dbc.Col([
                         dbc.Card([
                             dbc.CardBody([
                                 create_section_header(
-                                    "Chart Controls", 
+                                    "Chart Controls",
                                     subtitle="Customize your technical analysis view",
                                     icon_class="fas fa-sliders-h"
                                 ),
@@ -454,14 +454,14 @@ def create_charts_tab():
                                         ], className="d-flex align-items-end justify-content-end")
                                     ], width=4)
                                 ], className="align-items-end"),
-                                
+
                                 # New Chart Controls
                                 create_chart_controls()
                             ], className="p-3")
                         ], style=CARD_STYLE_NONE)
                     ], width=12)
                 ], className="mb-3"),
-                
+
                 # Technical Analysis Summary Row (moved above chart for better space utilization)
                 dbc.Row([
                     dbc.Col([
@@ -472,9 +472,9 @@ def create_charts_tab():
                                     icon_class="fas fa-chart-line"
                                 ),
                                 dbc.Button(
-                                    [html.I(className="fas fa-external-link-alt me-2"), "View Detailed Analysis"], 
-                                    id="analysis-modal-btn", 
-                                    color="outline-primary", 
+                                    [html.I(className="fas fa-external-link-alt me-2"), "View Detailed Analysis"],
+                                    id="analysis-modal-btn",
+                                    color="outline-primary",
                                     size="sm",
                                     className="hover-lift"
                                 )
@@ -487,7 +487,7 @@ def create_charts_tab():
                         ], style=CARD_STYLE_NONE)
                     ], width=12)
                 ], className="mb-2"),  # Reduced margin for more chart space
-                
+
                 # Main Interactive Chart Row (now gets maximum available space)
                 dbc.Row([
                     dbc.Col([
@@ -532,11 +532,11 @@ def create_comparison_tab():
                             html.I(className="fas fa-balance-scale me-3"),
                             "Symbol Comparison"
                         ], className="mb-3"),
-                        html.P("Compare multiple symbols side-by-side with detailed metrics and charts", 
+                        html.P("Compare multiple symbols side-by-side with detailed metrics and charts",
                                className="text-muted mb-4")
                     ], width=12)
                 ]),
-                
+
                 # Symbol Selection Panel
                 dbc.Row([
                     dbc.Col([
@@ -585,13 +585,13 @@ def create_comparison_tab():
                         ], style=CARD_STYLE)
                     ], width=12)
                 ], className="mb-3"),
-                
+
                 # Comparison Results
                 html.Div(id="comparison-results", children=[
                     html.Div([
                         html.I(className="fas fa-chart-bar fa-3x text-muted mb-3"),
                         html.H5("Ready to Compare", className="text-muted"),
-                        html.P("Select 2-3 symbols above and click 'Compare' to see detailed side-by-side analysis", 
+                        html.P("Select 2-3 symbols above and click 'Compare' to see detailed side-by-side analysis",
                                className="text-muted")
                     ], className="text-center py-5")
                 ])
@@ -611,7 +611,7 @@ def create_analysis_tab():
                         html.I(className="fas fa-microscope me-2 text-primary"),
                         "Detailed Analysis"
                     ], className="mb-0"),
-                    html.P("Comprehensive 90+ Features & Advanced Indicators", 
+                    html.P("Comprehensive 90+ Features & Advanced Indicators",
                            className="text-muted mb-0 small")
                 ], className="text-center")
             ], className="py-3"),
@@ -658,7 +658,7 @@ def create_analysis_tab():
                         )
                     ], width=3)
                 ], className="mb-4"),
-                
+
                 # Feature categories tabs
                 dbc.Tabs([
                     # Technical Indicators Tab
@@ -673,7 +673,7 @@ def create_analysis_tab():
                                     ])
                                 ], style=CARD_STYLE)
                             ], width=6),
-                            
+
                             # Bollinger Bands + Position
                             dbc.Col([
                                 dbc.Card([
@@ -684,7 +684,7 @@ def create_analysis_tab():
                                 ], style=CARD_STYLE)
                             ], width=6)
                         ], className="mb-4"),
-                        
+
                         dbc.Row([
                             # MACD Detailed
                             dbc.Col([
@@ -695,7 +695,7 @@ def create_analysis_tab():
                                     ])
                                 ], style=CARD_STYLE)
                             ], width=6),
-                            
+
                             # Moving Averages + Ratios
                             dbc.Col([
                                 dbc.Card([
@@ -707,7 +707,7 @@ def create_analysis_tab():
                             ], width=6)
                         ])
                     ], label="Technical Indicators", tab_id="tech-indicators"),
-                    
+
                     # Volatility Analysis Tab
                     dbc.Tab([
                         dbc.Row([
@@ -720,7 +720,7 @@ def create_analysis_tab():
                                     ])
                                 ], style=CARD_STYLE)
                             ], width=6),
-                            
+
                             # Volatility Ratios
                             dbc.Col([
                                 dbc.Card([
@@ -731,7 +731,7 @@ def create_analysis_tab():
                                 ], style=CARD_STYLE)
                             ], width=6)
                         ], className="mb-4"),
-                        
+
                         dbc.Row([
                             # Garman-Klass vs Realized
                             dbc.Col([
@@ -744,7 +744,7 @@ def create_analysis_tab():
                             ], width=12)
                         ])
                     ], label="Volatility Analysis", tab_id="volatility-analysis"),
-                    
+
                     # Volume Analysis Tab
                     dbc.Tab([
                         dbc.Row([
@@ -757,7 +757,7 @@ def create_analysis_tab():
                                     ])
                                 ], style=CARD_STYLE)
                             ], width=6),
-                            
+
                             # Money Flow Index
                             dbc.Col([
                                 dbc.Card([
@@ -768,7 +768,7 @@ def create_analysis_tab():
                                 ], style=CARD_STYLE)
                             ], width=6)
                         ], className="mb-4"),
-                        
+
                         dbc.Row([
                             # Volume Price Trend
                             dbc.Col([
@@ -781,7 +781,7 @@ def create_analysis_tab():
                             ], width=12)
                         ])
                     ], label="Volume Analysis", tab_id="volume-analysis"),
-                    
+
                     # Advanced Features Tab
                     dbc.Tab([
                         dbc.Row([
@@ -794,7 +794,7 @@ def create_analysis_tab():
                                     ])
                                 ], style=CARD_STYLE)
                             ], width=6),
-                            
+
                             # Lagged Features Heatmap
                             dbc.Col([
                                 dbc.Card([
@@ -805,7 +805,7 @@ def create_analysis_tab():
                                 ], style=CARD_STYLE)
                             ], width=6)
                         ], className="mb-4"),
-                        
+
                         dbc.Row([
                             # Rolling Statistics
                             dbc.Col([
@@ -818,7 +818,7 @@ def create_analysis_tab():
                             ], width=12)
                         ])
                     ], label="Advanced Features", tab_id="advanced-features"),
-                    
+
                     # Feature Summary Tab
                     dbc.Tab([
                         dbc.Row([
@@ -831,7 +831,7 @@ def create_analysis_tab():
                                     ])
                                 ], style=CARD_STYLE)
                             ], width=6),
-                            
+
                             # Feature Statistics
                             dbc.Col([
                                 dbc.Card([
@@ -842,7 +842,7 @@ def create_analysis_tab():
                                 ], style=CARD_STYLE)
                             ], width=6)
                         ], className="mb-4"),
-                        
+
                         dbc.Row([
                             # Feature Categories Overview
                             dbc.Col([
@@ -855,9 +855,9 @@ def create_analysis_tab():
                             ], width=12)
                         ])
                     ], label="Feature Summary", tab_id="feature-summary")
-                    
+
                 ], id="detailed-analysis-tabs", active_tab="tech-indicators")
-                
+
             ], className="p-0")
         ], style=CARD_STYLE_NONE),
         label="Detailed Analysis",
@@ -874,11 +874,11 @@ def create_dashboard_content():
         dcc.Store(id="filtered-symbols-store", data=[]),
         dcc.Store(id="selected-symbol-store", data=""),
         dcc.Store(id="selected-sector-store", data=""),
-        
+
         # Main tabs
         dbc.Tabs([
             create_overview_tab(),
-            create_charts_tab(), 
+            create_charts_tab(),
             create_comparison_tab(),
             create_analysis_tab()
         ], id="main-tabs", active_tab="overview-tab")

@@ -31,22 +31,22 @@ MARKET_CLOSE = time(16, 0)  # 4:00 PM EST
 def generate_flow_run_name() -> str:
     """
     Generate a user-friendly name for the flow run
-    
+
     Returns:
         Formatted run name with timestamp and context
     """
     now = datetime.now(MARKET_TIMEZONE)
-    
+
     # Determine market status
     current_time = now.time()
     is_weekday = now.weekday() < 5
     is_market_hours = MARKET_OPEN <= current_time <= MARKET_CLOSE
     market_open = is_weekday and is_market_hours
-    
+
     # Create descriptive name
     date_str = now.strftime("%Y-%m-%d")
     time_str = now.strftime("%H%M")  # Remove colon and spaces
-    
+
     if market_open:
         status = "market-open"
     elif is_weekday:
@@ -56,68 +56,68 @@ def generate_flow_run_name() -> str:
             status = "after-market"
     else:
         status = "weekend"
-    
+
     return f"yahoo-data-{date_str}-{time_str}EST-{status}"
 
 @task(retries=3, retry_delay_seconds=60)
 def check_market_hours() -> bool:
     """
     Check if current time is during market hours
-    
+
     Returns:
         bool: True if market is open, False otherwise
     """
     logger = get_run_logger()
-    
+
     now = datetime.now(MARKET_TIMEZONE)
     current_time = now.time()
-    
+
     # Check if it's a weekday (0=Monday, 6=Sunday)
     is_weekday = now.weekday() < 5
-    
+
     # Check if within market hours
     is_market_hours = MARKET_OPEN <= current_time <= MARKET_CLOSE
-    
+
     market_open = is_weekday and is_market_hours
-    
+
     logger.info(f"Market status check: {now.strftime('%Y-%m-%d %H:%M:%S %Z')}")
     logger.info(f"Weekday: {is_weekday}, Market hours: {is_market_hours}, Market open: {market_open}")
-    
+
     return market_open
 
 @task(retries=2, retry_delay_seconds=30)
 def get_active_symbols() -> List[str]:
     """
     Get list of active symbols from database
-    
+
     Returns:
         List of stock symbols to collect data for
     """
     logger = get_run_logger()
-    
+
     try:
         db_manager = get_db_manager()
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
                 # Get active symbols from stock_info table
                 cursor.execute("""
-                    SELECT DISTINCT symbol 
-                    FROM stock_info 
+                    SELECT DISTINCT symbol
+                    FROM stock_info
                     WHERE market_cap > 1000000000  -- Only large cap stocks
                     ORDER BY symbol
                     LIMIT 100  -- Limit to avoid rate limiting
                 """)
-                
+
                 symbols = [row[0] for row in cursor.fetchall()]
-                
+
         logger.info(f"Retrieved {len(symbols)} symbols for data collection")
         return symbols
-        
+
     except Exception as e:
         logger.error(f"Failed to get active symbols: {e}")
         # Fallback to a small set of major symbols
         fallback_symbols = [
-            'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 
+            'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA',
             'META', 'NVDA', 'NFLX', 'AMD', 'INTC'
         ]
         logger.info(f"Using fallback symbols: {fallback_symbols}")
@@ -127,21 +127,21 @@ def get_active_symbols() -> List[str]:
 def collect_symbol_data(symbol: str, period: str = "1d") -> Dict[str, Any]:
     """
     Collect data for a single symbol
-    
+
     Args:
         symbol: Stock symbol to collect
         period: Time period for data collection
-        
+
     Returns:
         Dictionary with collection results
     """
     logger = get_run_logger()
-    
+
     try:
         # Fetch data from Yahoo Finance
         logger.info(f"Collecting data for {symbol}")
         df = fetch_yahoo_data(symbol=symbol, period=period, interval='1h')
-        
+
         if df.empty:
             return {
                 'symbol': symbol,
@@ -149,17 +149,17 @@ def collect_symbol_data(symbol: str, period: str = "1d") -> Dict[str, Any]:
                 'records_collected': 0,
                 'message': f"No data available for {symbol}"
             }
-        
+
         # Prepare data for database insertion
         records = prepare_data_for_insert(df)
-        
+
         # Insert into database
         db_manager = get_db_manager()
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
                 for record in records:
                     cursor.execute("""
-                        INSERT INTO market_data 
+                        INSERT INTO market_data
                         (symbol, timestamp, open, high, low, close, volume, source)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT (symbol, timestamp, source) DO UPDATE SET
@@ -179,14 +179,14 @@ def collect_symbol_data(symbol: str, period: str = "1d") -> Dict[str, Any]:
                         record['source']
                     ))
                 conn.commit()
-        
+
         return {
             'symbol': symbol,
             'status': 'success',
             'records_collected': len(records),
             'message': f"Successfully collected {len(records)} records for {symbol}"
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to collect data for {symbol}: {e}")
         return {
@@ -200,20 +200,20 @@ def collect_symbol_data(symbol: str, period: str = "1d") -> Dict[str, Any]:
 def generate_collection_summary(results: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Generate summary of data collection results
-    
+
     Args:
         results: List of collection results from individual symbols
-        
+
     Returns:
         Summary statistics
     """
     logger = get_run_logger()
-    
+
     total_symbols = len(results)
     successful_collections = len([r for r in results if r['status'] == 'success'])
     failed_collections = total_symbols - successful_collections
     total_records = sum(r['records_collected'] for r in results)
-    
+
     summary = {
         'timestamp': datetime.now(MARKET_TIMEZONE).isoformat(),
         'total_symbols': total_symbols,
@@ -222,12 +222,12 @@ def generate_collection_summary(results: List[Dict[str, Any]]) -> Dict[str, Any]
         'total_records_collected': total_records,
         'success_rate': (successful_collections / total_symbols * 100) if total_symbols > 0 else 0
     }
-    
+
     # Log failed symbols
     failed_symbols = [r['symbol'] for r in results if r['status'] == 'error']
     if failed_symbols:
         logger.warning(f"Failed to collect data for: {', '.join(failed_symbols)}")
-    
+
     logger.info(f"Collection summary: {summary}")
     return summary
 
@@ -235,29 +235,29 @@ def generate_collection_summary(results: List[Dict[str, Any]]) -> Dict[str, Any]
 def log_workflow_metrics(summary: Dict[str, Any]) -> None:
     """
     Log workflow execution metrics to database
-    
+
     Args:
         summary: Collection summary data
     """
     logger = get_run_logger()
-    
+
     try:
         # Log to application database using our logging system
         app_logger = get_combined_logger("prefect.yahoo_collector")
-        
+
         app_logger.info(
             f"Yahoo Finance collection completed: "
             f"{summary['successful_collections']}/{summary['total_symbols']} symbols, "
             f"{summary['total_records_collected']} records, "
             f"{summary['success_rate']:.1f}% success rate"
         )
-        
+
         # Store metrics in performance_logs table
         db_manager = get_db_manager()
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    INSERT INTO performance_logs 
+                    INSERT INTO performance_logs
                     (operation_name, duration_ms, status, component, metadata)
                     VALUES (%s, %s, %s, %s, %s)
                 """, (
@@ -268,9 +268,9 @@ def log_workflow_metrics(summary: Dict[str, Any]) -> None:
                     f'{{"symbols_collected": {summary["successful_collections"]}, "total_records": {summary["total_records_collected"]}}}'
                 ))
                 conn.commit()
-        
+
         logger.info("Workflow metrics logged successfully")
-        
+
     except Exception as e:
         logger.error(f"Failed to log workflow metrics: {e}")
 
@@ -283,26 +283,26 @@ def log_workflow_metrics(summary: Dict[str, Any]) -> None:
 def yahoo_market_hours_collection_flow(data_period: str = "3d") -> Dict[str, Any]:
     """
     Main workflow for collecting Yahoo Finance data during market hours.
-    
+
     Args:
         data_period: Time period for data collection ('3d' for incremental, '1y' for comprehensive)
-    
+
     Data Collection:
     - 5-10 minutes for 3d period (incremental updates)
     - 15-30 minutes for 1y period (comprehensive data)
     - Concurrent processing with 5 workers
-    
+
     Returns:
         Workflow execution summary for data collection only
     """
     logger = get_run_logger()
-    
+
     # Log run start with friendly name and data period
     logger.info(f"Starting Yahoo Finance data collection: {generate_flow_run_name()} - Data Period: {data_period}")
-    
+
     # Check if market is open
     market_open = check_market_hours()
-    
+
     if not market_open:
         logger.info("Market is closed. Skipping data collection.")
         return {
@@ -310,12 +310,12 @@ def yahoo_market_hours_collection_flow(data_period: str = "3d") -> Dict[str, Any
             'reason': 'market_closed',
             'timestamp': datetime.now(MARKET_TIMEZONE).isoformat()
         }
-    
+
     logger.info("Market is open. Starting data collection...")
-    
+
     # Get symbols to collect
     symbols = get_active_symbols()
-    
+
     if not symbols:
         logger.warning("No symbols found for collection")
         return {
@@ -323,21 +323,21 @@ def yahoo_market_hours_collection_flow(data_period: str = "3d") -> Dict[str, Any
             'reason': 'no_symbols',
             'timestamp': datetime.now(MARKET_TIMEZONE).isoformat()
         }
-    
+
     # Collect data for all symbols concurrently
     logger.info(f"Starting concurrent collection for {len(symbols)} symbols")
-    
+
     # Use Prefect's mapping for concurrent execution with specified data period
     collection_results = collect_symbol_data.map(symbols, [data_period] * len(symbols))
-    
+
     # Generate summary
     summary = generate_collection_summary(collection_results)
-    
+
     # Log metrics
     log_workflow_metrics(summary)
-    
+
     logger.info("Yahoo Finance data collection completed")
-    
+
     return {
         'status': 'completed',
         'summary': summary,

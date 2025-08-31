@@ -16,7 +16,7 @@ try:
     PREFECT_AVAILABLE = True
 except ImportError:
     PREFECT_AVAILABLE = False
-    
+
 from .alert_manager import AlertManager
 from .models import AlertSeverity, AlertCategory
 from .alert_factory import AlertFactory
@@ -24,22 +24,22 @@ from .alert_factory import AlertFactory
 
 class PrefectAlertManager:
     """Alert manager with Prefect context awareness."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         """Initialize Prefect-aware alert manager."""
         self.alert_manager = AlertManager(config)
         self.logger = logging.getLogger(__name__)
         self._prefect_available = PREFECT_AVAILABLE
-    
+
     def _get_prefect_context(self) -> Dict[str, Any]:
         """Get current Prefect context information."""
         if not self._prefect_available:
             return {}
-        
+
         try:
             context = get_run_context()
             metadata = {}
-            
+
             if isinstance(context, FlowRunContext):
                 metadata.update({
                     'prefect_type': 'flow',
@@ -55,13 +55,13 @@ class PrefectAlertManager:
                     'task_run_name': context.task_run.name,
                     'flow_run_id': str(context.task_run.flow_run_id),
                 })
-            
+
             return metadata
-            
+
         except Exception as e:
             self.logger.debug(f"Could not get Prefect context: {e}")
             return {}
-    
+
     def send_alert(
         self,
         title: str,
@@ -75,14 +75,14 @@ class PrefectAlertManager:
         # Merge Prefect context with provided metadata
         prefect_context = self._get_prefect_context()
         combined_metadata = {**(metadata or {}), **prefect_context}
-        
+
         # Use Prefect component name if not specified
         if not component and prefect_context:
             if prefect_context.get('prefect_type') == 'flow':
                 component = f"Flow: {prefect_context.get('flow_name')}"
             elif prefect_context.get('prefect_type') == 'task':
                 component = f"Task: {prefect_context.get('task_name')}"
-        
+
         return self.alert_manager.send_alert(
             title=title,
             message=message,
@@ -91,7 +91,7 @@ class PrefectAlertManager:
             component=component,
             metadata=combined_metadata
         )
-    
+
     def send_flow_start_alert(self, flow_name: str, metadata: Optional[Dict[str, Any]] = None):
         """Send flow start notification."""
         return self.send_alert(
@@ -101,7 +101,7 @@ class PrefectAlertManager:
             category=AlertCategory.DATA_PIPELINE,
             metadata=metadata
         )
-    
+
     def send_flow_success_alert(self, flow_name: str, duration: Optional[float] = None, metadata: Optional[Dict[str, Any]] = None):
         """Send flow success notification."""
         duration_text = f" in {duration:.1f}s" if duration else ""
@@ -112,7 +112,7 @@ class PrefectAlertManager:
             category=AlertCategory.DATA_PIPELINE,
             metadata=metadata
         )
-    
+
     def send_flow_failure_alert(self, flow_name: str, error: Exception, metadata: Optional[Dict[str, Any]] = None):
         """Send flow failure notification."""
         error_metadata = {
@@ -120,7 +120,7 @@ class PrefectAlertManager:
             'error_message': str(error),
             **(metadata or {})
         }
-        
+
         return self.send_alert(
             title=f"Flow Failed: {flow_name}",
             message=f"Prefect flow '{flow_name}' failed with error: {str(error)}",
@@ -128,7 +128,7 @@ class PrefectAlertManager:
             category=AlertCategory.DATA_PIPELINE,
             metadata=error_metadata
         )
-    
+
     def send_task_failure_alert(self, task_name: str, error: Exception, metadata: Optional[Dict[str, Any]] = None):
         """Send task failure notification."""
         error_metadata = {
@@ -136,7 +136,7 @@ class PrefectAlertManager:
             'error_message': str(error),
             **(metadata or {})
         }
-        
+
         return self.send_alert(
             title=f"Task Failed: {task_name}",
             message=f"Prefect task '{task_name}' failed with error: {str(error)}",
@@ -144,7 +144,7 @@ class PrefectAlertManager:
             category=AlertCategory.DATA_PIPELINE,
             metadata=error_metadata
         )
-    
+
     # Delegate other methods to the underlying alert manager
     def __getattr__(self, name):
         """Delegate unknown methods to the underlying AlertManager."""
@@ -174,7 +174,7 @@ def alert_on_failure(
 ):
     """
     Decorator to automatically send alerts on function failure.
-    
+
     Args:
         severity: Alert severity for failures
         category: Alert category
@@ -187,16 +187,16 @@ def alert_on_failure(
             if not alert_manager:
                 # No alert manager available, just run the function
                 return func(*args, **kwargs)
-            
+
             func_name = func.__name__
             start_time = datetime.now(timezone.utc)
-            
+
             try:
                 result = func(*args, **kwargs)
-                
+
                 if send_success_alert:
                     duration = (datetime.now(timezone.utc) - start_time).total_seconds()
-                    
+
                     if PREFECT_AVAILABLE:
                         try:
                             context = get_run_context()
@@ -220,9 +220,9 @@ def alert_on_failure(
                                 severity=AlertSeverity.INFO,
                                 category=category
                             )
-                
+
                 return result
-                
+
             except Exception as e:
                 if PREFECT_AVAILABLE:
                     try:
@@ -255,10 +255,10 @@ def alert_on_failure(
                         category=category,
                         metadata={'error_type': type(e).__name__}
                     )
-                
+
                 # Re-raise the exception
                 raise
-        
+
         return wrapper
     return decorator
 
@@ -270,7 +270,7 @@ def alert_on_long_runtime(
 ):
     """
     Decorator to send alerts when functions take longer than expected.
-    
+
     Args:
         threshold_seconds: Runtime threshold in seconds
         severity: Alert severity
@@ -282,10 +282,10 @@ def alert_on_long_runtime(
             alert_manager = get_alert_manager()
             func_name = func.__name__
             start_time = datetime.now(timezone.utc)
-            
+
             try:
                 result = func(*args, **kwargs)
-                
+
                 # Check runtime
                 duration = (datetime.now(timezone.utc) - start_time).total_seconds()
                 if alert_manager and duration > threshold_seconds:
@@ -300,9 +300,9 @@ def alert_on_long_runtime(
                             'function_name': func_name
                         }
                     )
-                
+
                 return result
-                
+
             except Exception as e:
                 # Still check runtime even on failure
                 duration = (datetime.now(timezone.utc) - start_time).total_seconds()
@@ -321,7 +321,7 @@ def alert_on_long_runtime(
                         }
                     )
                 raise
-        
+
         return wrapper
     return decorator
 
@@ -330,18 +330,18 @@ def alert_on_long_runtime(
 def create_data_pipeline_alerts(config: Dict[str, Any]) -> PrefectAlertManager:
     """Create alert manager optimized for data pipeline workflows."""
     alert_manager = PrefectAlertManager(config)
-    
+
     # You could customize settings here for data pipelines
     # For example, adjust rate limits, severity thresholds, etc.
-    
+
     return alert_manager
 
 
 def create_trading_alerts(config: Dict[str, Any]) -> PrefectAlertManager:
     """Create alert manager optimized for trading workflows."""
     alert_manager = PrefectAlertManager(config)
-    
+
     # You could customize settings here for trading workflows
     # For example, higher sensitivity for trading errors
-    
+
     return alert_manager

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-import time
 import sys
+import time
 from pathlib import Path
 
 # Add the project root to Python path
@@ -29,17 +29,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     """Middleware to log all requests"""
     start_time = time.time()
-    
+
     # Process the request
     response = await call_next(request)
-    
+
     # Calculate duration
     duration = round((time.time() - start_time) * 1000, 2)
-    
+
     # Log request details
     request_info = {
         "method": request.method,
@@ -48,13 +49,15 @@ async def log_requests(request: Request, call_next):
         "duration": duration
     }
     log_request(request_info, logger)
-    
+
     return response
+
 
 @app.get("/")
 async def root():
     logger.info("Root endpoint accessed")
     return {"message": "ML Trading API is running"}
+
 
 @app.get("/health")
 async def health_check():
@@ -67,7 +70,7 @@ app.include_router(data.router)
 if __name__ == "__main__":
     import uvicorn
     import socket
-    
+
     def find_free_port(start_port=8000, max_attempts=10):
         """Find a free port starting from start_port."""
         for port in range(start_port, start_port + max_attempts):
@@ -78,7 +81,7 @@ if __name__ == "__main__":
             except OSError:
                 continue
         return start_port  # Fallback to original port
-    
+
     port = find_free_port(8000)
     logger.info(f"Starting FastAPI server on 0.0.0.0:{port}")
     try:
@@ -86,4 +89,4 @@ if __name__ == "__main__":
     except OSError as e:
         logger.error(f"Failed to start server on port {port}: {e}")
         logger.info("Trying alternative port 8001...")
-        uvicorn.run(app, host="0.0.0.0", port=8001) 
+        uvicorn.run(app, host="0.0.0.0", port=8001)

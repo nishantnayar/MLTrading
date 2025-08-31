@@ -11,7 +11,7 @@ from ..data.storage.database import DatabaseManager
 
 class ConnectionPoolMonitor:
     """Monitor database connection pool usage and health"""
-    
+
     def __init__(self, db_manager: DatabaseManager):
         self.db_manager = db_manager
         self.stats = {
@@ -20,7 +20,7 @@ class ConnectionPoolMonitor:
             'connection_errors': 0,
             'last_check': None
         }
-    
+
     def get_pool_status(self) -> Dict[str, Any]:
         """Get current connection pool status"""
         try:
@@ -43,9 +43,9 @@ class ConnectionPoolMonitor:
         except Exception as e:
             self.stats['connection_errors'] += 1
             self.stats['last_error'] = str(e)
-        
+
         return self.stats.copy()
-    
+
     def test_connection(self) -> bool:
         """Test if we can get a connection from the pool"""
         try:
@@ -59,7 +59,7 @@ class ConnectionPoolMonitor:
             self.stats['connection_errors'] += 1
             self.stats['last_error'] = str(e)
             return False
-    
+
     def close_idle_connections(self):
         """Close idle connections if possible"""
         try:
@@ -87,25 +87,25 @@ def create_optimized_db_manager() -> DatabaseManager:
 def monitor_pool_health(db_manager: DatabaseManager, interval: int = 30):
     """Background thread to monitor pool health"""
     monitor = ConnectionPoolMonitor(db_manager)
-    
+
     def monitor_loop():
         while True:
             try:
                 status = monitor.get_pool_status()
-                
+
                 # Log warning if pool is heavily used
                 if status.get('used_connections', 0) > status.get('max_connections', 0) * 0.8:
                     print(f"WARNING: Database pool heavily used: {status['used_connections']}/{status['max_connections']}")
-                
+
                 # Test connection health
                 if not monitor.test_connection():
                     print(f"WARNING: Database connection test failed")
-                
+
             except Exception as e:
                 print(f"Error in pool monitor: {e}")
-            
+
             time.sleep(interval)
-    
+
     monitor_thread = threading.Thread(target=monitor_loop, daemon=True)
     monitor_thread.start()
     return monitor

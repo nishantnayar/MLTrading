@@ -116,7 +116,7 @@ def create_tests_layout():
                     ])
                 ], style=CARD_STYLE)
             ], width=2),
-            
+
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -126,7 +126,7 @@ def create_tests_layout():
                     ])
                 ], style=CARD_STYLE)
             ], width=2),
-            
+
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -136,7 +136,7 @@ def create_tests_layout():
                     ])
                 ], style=CARD_STYLE)
             ], width=2),
-            
+
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -146,7 +146,7 @@ def create_tests_layout():
                     ])
                 ], style=CARD_STYLE)
             ], width=2),
-            
+
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -156,7 +156,7 @@ def create_tests_layout():
                     ])
                 ], style=CARD_STYLE)
             ], width=2),
-            
+
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -191,7 +191,7 @@ def create_tests_layout():
                     ])
                 ], style=CARD_STYLE)
             ], width=8),
-            
+
             dbc.Col([
                 dbc.Card([
                     dbc.CardHeader(html.H5("Test Suite Overview", className="mb-0")),
@@ -233,7 +233,7 @@ def create_test_suite_summary():
             "coverage": "95%"
         },
         {
-            "name": "Technical Summary", 
+            "name": "Technical Summary",
             "tests": 20,
             "passed": 20,
             "status": "✅",
@@ -254,7 +254,7 @@ def create_test_suite_summary():
             "coverage": "85%"
         }
     ]
-    
+
     suite_cards = []
     for suite in test_suites:
         color = "success" if suite["status"] == "✅" else "warning"
@@ -267,7 +267,7 @@ def create_test_suite_summary():
                 ], className="py-2")
             ], style={"border": "1px solid #dee2e6", "marginBottom": "8px"})
         )
-    
+
     return suite_cards
 
 
@@ -280,7 +280,7 @@ def create_test_history_table():
         {"time": "2025-08-13 13:28:00", "type": "Indicators", "result": "✅ 17/17", "duration": "0.80s"},
         {"time": "2025-08-13 13:28:00", "type": "Summary Tests", "result": "✅ 20/20", "duration": "1.17s"},
     ]
-    
+
     return dbc.Table(
         [
             html.Thead([
@@ -310,10 +310,10 @@ def format_test_output(output_text):
     """Format pytest output for display in the UI."""
     if not output_text:
         return html.Pre("No output available", style={"color": "#6c757d"})
-    
+
     lines = output_text.split('\n')
     formatted_lines = []
-    
+
     for line in lines:
         if 'PASSED' in line:
             formatted_lines.append(html.Div(line, style={"color": "#28a745"}))
@@ -327,7 +327,7 @@ def format_test_output(output_text):
             formatted_lines.append(html.Div(line, style={"color": "#dc3545"}))
         else:
             formatted_lines.append(html.Div(line, style={"color": "#212529"}))
-    
+
     return html.Pre(formatted_lines, style={
         "fontSize": "12px",
         "backgroundColor": "#f8f9fa",
@@ -364,12 +364,12 @@ def format_test_output(output_text):
 )
 def handle_test_execution(run_clicks, stop_clicks, refresh_clicks, interval_n, test_type, options):
     """Handle test execution and display results."""
-    
+
     if not ctx.triggered:
         return get_default_test_display()
-    
+
     trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    
+
     if trigger_id == "run-tests-btn" and run_clicks:
         return execute_tests(test_type, options)
     elif trigger_id == "refresh-results-btn" and refresh_clicks:
@@ -389,11 +389,11 @@ def get_default_test_display():
             cwd=Path(__file__).parent.parent.parent.parent,
             timeout=60  # Increased from 30 to 60 seconds
         )
-        
+
         # Parse collection output to get actual test count
         output_lines = result.stdout.split('\n')
         total_tests = 0
-        
+
         for line in output_lines:
             if " test" in line and "collected" in line:
                 parts = line.split()
@@ -402,15 +402,15 @@ def get_default_test_display():
                         total_tests = int(part)
                         break
                 break
-        
+
         # If we couldn't get test count, use our known count
         if total_tests == 0:
             total_tests = 117  # Current actual test count from collection
-        
+
         # Show current status
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         default_output = format_test_output(f"Ready to run tests...\n\nLast scan found {total_tests} tests available.\nClick 'Run Tests' to execute the test suite.")
-        
+
         return (
             default_output,         # test-output-container
             "Ready",               # test-status-badge children
@@ -428,12 +428,12 @@ def get_default_test_display():
             "--",                  # test-duration (will be updated after run)
             current_time           # last-run-time
         )
-        
+
     except Exception:
         # Fallback to basic display
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         default_output = format_test_output("Click 'Run Tests' to execute the test suite...")
-        
+
         return (
             default_output, "Ready", "secondary", False, True, True,
             "117", "117", "0", "0", "100%", "0%", "0%", "--", current_time
@@ -444,20 +444,20 @@ def execute_tests(test_type, options):
     """Execute the specified test type and return results."""
     # Add immediate feedback for user
     start_time = datetime.now()
-    
+
     # Quick validation check
     project_dir = Path(__file__).parent.parent.parent.parent
     if not (project_dir / "tests").exists():
         return (
             format_test_output("Error: Tests directory not found. Please ensure you're in the correct project directory."),
-            "Error", "danger", False, True, True, "0", "0", "0", "0", "0%", "0%", "0%", "0s", 
+            "Error", "danger", False, True, True, "0", "0", "0", "0", "0%", "0%", "0%", "0s",
             datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         )
-    
+
     try:
         # Build pytest command
         cmd = ["python", "-m", "pytest"]
-        
+
         # Determine test path
         if test_type == "all":
             cmd.append("tests/")
@@ -471,7 +471,7 @@ def execute_tests(test_type, options):
             cmd.append("tests/unit/indicators/test_technical_indicators.py")
         elif test_type == "summary":
             cmd.append("tests/unit/dashboard/test_technical_summary.py")
-        
+
         # Add options
         if "verbose" in options:
             cmd.append("-v")
@@ -479,13 +479,13 @@ def execute_tests(test_type, options):
             cmd.extend(["--cov=src", "--cov-report=term"])
         if "timing" in options:
             cmd.append("--durations=10")
-        
+
         # Add fail-fast option to speed up test runs
         cmd.append("-x")  # Stop on first failure
-        
+
         # Optimize pytest startup
         cmd.extend(["--tb=short", "--no-header"])  # Shorter output
-        
+
         # For "all tests", use a shorter timeout and run unit tests only for UI responsiveness
         actual_timeout = 120 if test_type == "all" else 300  # 2 minutes for all, 5 for specific
         if test_type == "all":
@@ -493,13 +493,13 @@ def execute_tests(test_type, options):
             cmd = ["python", "-m", "pytest", "tests/unit/", "-x", "--tb=short", "--no-header"]
             if "verbose" in options:
                 cmd.append("-v")
-        
+
         # Change to project directory
         project_dir = Path(__file__).parent.parent.parent.parent
-        
+
         # Show immediate feedback to user
         progress_output = format_test_output(f"Starting {test_type} tests...\nCommand: {' '.join(cmd)}\nThis may take a few minutes...")
-        
+
         # Create the process with better configuration
         process = subprocess.Popen(
             cmd,
@@ -510,7 +510,7 @@ def execute_tests(test_type, options):
             bufsize=1,
             universal_newlines=True
         )
-        
+
         try:
             # Wait for completion with dynamic timeout
             output, _ = process.communicate(timeout=actual_timeout)
@@ -520,10 +520,10 @@ def execute_tests(test_type, options):
             process.kill()
             process.wait()
             raise subprocess.TimeoutExpired(cmd, actual_timeout)
-        
+
         # Parse results
         total_tests, passed_tests, failed_tests, skipped_tests, duration = parse_test_results(output)
-        
+
         # Determine status
         if failed_tests > 0:
             status = "Failed"
@@ -534,14 +534,14 @@ def execute_tests(test_type, options):
         else:
             status = "All Passed"
             status_color = "success"
-        
+
         # Calculate percentages
         passed_pct = f"{(passed_tests/total_tests*100):.1f}%" if total_tests > 0 else "0%"
         failed_pct = f"{(failed_tests/total_tests*100):.1f}%" if total_tests > 0 else "0%"
         skipped_pct = f"{(skipped_tests/total_tests*100):.1f}%" if total_tests > 0 else "0%"
-        
+
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
+
         return (
             format_test_output(output),
             status,
@@ -559,12 +559,12 @@ def execute_tests(test_type, options):
             duration,
             current_time
         )
-        
+
     except subprocess.TimeoutExpired:
         timeout_msg = f"Test execution timed out after {actual_timeout//60} minutes."
         if test_type == "all":
             timeout_msg += " Try running specific test suites for better performance."
-        
+
         return (
             format_test_output(timeout_msg),
             "Timeout",
@@ -587,10 +587,10 @@ def parse_test_results(output):
     failed_tests = 0
     skipped_tests = 0
     duration = "0s"
-    
+
     try:
         lines = output.split('\n')
-        
+
         for line in lines:
             # Look for summary line like "109 passed, 2 skipped in 2.52s"
             if " passed" in line and " in " in line:
@@ -604,21 +604,21 @@ def parse_test_results(output):
                                 failed_tests = int(part)
                             elif parts[i + 1] == "skipped":
                                 skipped_tests = int(part)
-                
+
                 # Extract duration
                 if " in " in line:
                     duration_part = line.split(" in ")[-1]
                     if duration_part:
                         duration = duration_part.split()[0]
-                
+
                 break
-        
+
         total_tests = passed_tests + failed_tests + skipped_tests
-        
+
     except Exception:
         # Fallback values
         pass
-    
+
     return total_tests, passed_tests, failed_tests, skipped_tests, duration
 
 

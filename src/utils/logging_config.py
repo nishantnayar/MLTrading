@@ -24,12 +24,12 @@ except ImportError:
 
 class SanitizingFormatter(logging.Formatter):
     """Custom formatter that sanitizes sensitive information"""
-    
+
     def format(self, record):
         # Sanitize the message
         if hasattr(record, 'msg') and record.msg:
             record.msg = sanitize_log_message(str(record.msg))
-        
+
         # Add correlation ID if available
         try:
             correlation_id = get_correlation_id()
@@ -37,16 +37,16 @@ class SanitizingFormatter(logging.Formatter):
                 record.correlation_id = correlation_id
         except:
             record.correlation_id = 'N/A'
-        
+
         return super().format(record)
 
-def setup_logger(name: str, log_file: str = None, level: str = "INFO", 
-                 enable_database_logging: bool = True, 
+def setup_logger(name: str, log_file: str = None, level: str = "INFO",
+                 enable_database_logging: bool = True,
                  file_log_level: str = "DEBUG",
                  db_log_level: str = "INFO") -> logging.Logger:
     """
     Set up a logger with file, console, and optional database handlers
-    
+
     Args:
         name: Logger name
         log_file: Log file path (optional)
@@ -54,22 +54,22 @@ def setup_logger(name: str, log_file: str = None, level: str = "INFO",
         enable_database_logging: Whether to enable database logging
         file_log_level: Log level for file handlers
         db_log_level: Log level for database handler
-    
+
     Returns:
         Configured logger instance
     """
     # Create logs directory if it doesn't exist
     logs_dir = Path("logs")
     logs_dir.mkdir(exist_ok=True)
-    
+
     # Create logger
     logger = logging.getLogger(name)
     logger.setLevel(getattr(logging, level.upper()))
-    
+
     # Avoid adding handlers multiple times
     if logger.handlers:
         return logger
-    
+
     # Create formatters with sanitization
     detailed_formatter = SanitizingFormatter(
         '%(asctime)s - %(name)s - %(levelname)s - [%(correlation_id)s] - %(message)s'
@@ -77,13 +77,13 @@ def setup_logger(name: str, log_file: str = None, level: str = "INFO",
     simple_formatter = SanitizingFormatter(
         '%(asctime)s - %(levelname)s - [%(correlation_id)s] - %(message)s'
     )
-    
+
     # Console handler
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(simple_formatter)
     logger.addHandler(console_handler)
-    
+
     # Combined log handler (all components write to this)
     try:
         from .concurrent_safe_logging import ConcurrentSafeRotatingFileHandler
@@ -95,11 +95,11 @@ def setup_logger(name: str, log_file: str = None, level: str = "INFO",
     except ImportError:
         # Fallback to regular file handler if concurrent safe handler not available
         combined_handler = logging.FileHandler(logs_dir / "mltrading_combined.log")
-    
+
     combined_handler.setLevel(logging.DEBUG)
     combined_handler.setFormatter(detailed_formatter)
     logger.addHandler(combined_handler)
-    
+
     # Individual file handler (if log_file specified)
     if log_file:
         try:
@@ -112,17 +112,17 @@ def setup_logger(name: str, log_file: str = None, level: str = "INFO",
         except ImportError:
             # Fallback to regular file handler
             file_handler = logging.FileHandler(logs_dir / log_file)
-            
+
         file_handler.setLevel(getattr(logging, file_log_level.upper()))
         file_handler.setFormatter(detailed_formatter)
         logger.addHandler(file_handler)
-    
+
     # Database handler (if enabled and available)
     if enable_database_logging and DATABASE_LOGGING_AVAILABLE and DatabaseLogHandler:
         try:
             from ..data.storage.database import DatabaseManager
             db_manager = DatabaseManager()
-            
+
             db_handler = DatabaseLogHandler(
                 db_manager=db_manager,
                 table_name="system_logs",
@@ -132,7 +132,7 @@ def setup_logger(name: str, log_file: str = None, level: str = "INFO",
             )
             db_handler.setLevel(getattr(logging, db_log_level.upper()))
             logger.addHandler(db_handler)
-            
+
         except Exception as e:
             # If database logging fails, log to file as fallback
             fallback_logger = logging.getLogger('database_setup_fallback')
@@ -142,17 +142,17 @@ def setup_logger(name: str, log_file: str = None, level: str = "INFO",
                 fallback_handler.setFormatter(detailed_formatter)
                 fallback_logger.addHandler(fallback_handler)
             fallback_logger.error(f"Failed to set up database logging for {name}: {e}")
-    
+
     return logger
 
 def get_ui_logger(component: str, enable_database_logging: bool = True) -> logging.Logger:
     """
     Get a logger for UI components - now consolidated into single log file
-    
+
     Args:
         component: Component name (e.g., 'api', 'dashboard')
         enable_database_logging: Whether to enable database logging
-    
+
     Returns:
         Configured logger for the component
     """
@@ -167,21 +167,21 @@ def get_ui_logger(component: str, enable_database_logging: bool = True) -> loggi
 def get_combined_logger(name: str, enable_database_logging: bool = True) -> logging.Logger:
     """
     Get a logger that writes to combined log file and optionally to database
-    
+
     Args:
         name: Logger name
         enable_database_logging: Whether to enable database logging
-    
+
     Returns:
         Configured logger that writes to combined log and database
     """
     return setup_logger(name=name, enable_database_logging=enable_database_logging)
 
-def log_structured_event(component: str, level: str, message: str, 
+def log_structured_event(component: str, level: str, message: str,
                         metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
     Log structured events with metadata for better parsing and analytics
-    
+
     Args:
         component: Component name (e.g., 'api', 'dashboard', 'trading')
         level: Log level (DEBUG, INFO, WARNING, ERROR)
@@ -191,7 +191,7 @@ def log_structured_event(component: str, level: str, message: str,
     """
     if logger is None:
         logger = get_combined_logger(f"mltrading.{component}")
-    
+
     # Create structured log entry
     log_entry = {
         'timestamp': datetime.now().isoformat(),
@@ -200,16 +200,16 @@ def log_structured_event(component: str, level: str, message: str,
         'message': message,
         'metadata': metadata or {}
     }
-    
+
     # Log the structured entry
     log_message = f"STRUCTURED_LOG: {json.dumps(log_entry)}"
     getattr(logger, level.lower())(log_message)
 
-def log_trading_event(event_type: str, symbol: str, details: str, 
+def log_trading_event(event_type: str, symbol: str, details: str,
                      metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
     Log trading-specific events with structured data
-    
+
     Args:
         event_type: Type of trading event (order, fill, signal, etc.)
         symbol: Trading symbol
@@ -222,14 +222,14 @@ def log_trading_event(event_type: str, symbol: str, details: str,
         'symbol': symbol,
         'trading_data': metadata or {}
     }
-    
+
     log_structured_event('trading', 'INFO', details, trading_metadata, logger)
 
-def log_system_event(event_type: str, details: str, 
+def log_system_event(event_type: str, details: str,
                     metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
     Log system-level events with structured data
-    
+
     Args:
         event_type: Type of system event (startup, shutdown, error, etc.)
         details: Event details
@@ -240,14 +240,14 @@ def log_system_event(event_type: str, details: str,
         'event_type': event_type,
         'system_data': metadata or {}
     }
-    
+
     log_structured_event('system', 'INFO', details, system_metadata, logger)
 
-def log_performance_event(operation: str, duration_ms: float, 
+def log_performance_event(operation: str, duration_ms: float,
                          metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
     Log performance metrics with structured data and resilient database storage
-    
+
     Args:
         operation: Operation name
         duration_ms: Duration in milliseconds
@@ -259,24 +259,24 @@ def log_performance_event(operation: str, duration_ms: float,
         'duration_ms': duration_ms,
         'performance_data': metadata or {}
     }
-    
+
     # Log to regular logs (file)
-    log_structured_event('performance', 'INFO', 
-                       f"Operation '{operation}' completed in {duration_ms:.2f}ms", 
+    log_structured_event('performance', 'INFO',
+                       f"Operation '{operation}' completed in {duration_ms:.2f}ms",
                        perf_metadata, logger)
-    
+
     # Use resilient database logger (async with circuit breaker)
     try:
         from .resilient_database_logging import get_resilient_performance_logger
         perf_logger = get_resilient_performance_logger()
-        
+
         # Extract component from metadata
         component = metadata.get('component') if metadata else None
-        
+
         # Clean metadata to avoid conflicts with explicit parameters
-        clean_perf_metadata = {k: v for k, v in (metadata or {}).items() 
+        clean_perf_metadata = {k: v for k, v in (metadata or {}).items()
                               if k not in ['component', 'correlation_id']}
-        
+
         perf_logger.log_performance(
             operation_name=operation,
             duration_ms=duration_ms,
@@ -291,18 +291,18 @@ def log_performance_event(operation: str, duration_ms: float,
 def log_request(request_info: dict, logger: logging.Logger = None):
     """
     Log HTTP request information with structured data
-    
+
     Args:
         request_info: Dictionary containing request details
         logger: Logger instance (optional)
     """
     if logger is None:
         logger = get_ui_logger("api")
-    
+
     # Extract performance data
     duration = request_info.get('duration', 0)
     status_code = request_info.get('status_code', 'UNKNOWN')
-    
+
     # Create structured metadata
     metadata = {
         'method': request_info.get('method', 'UNKNOWN'),
@@ -312,18 +312,18 @@ def log_request(request_info: dict, logger: logging.Logger = None):
         'user_agent': request_info.get('user_agent', ''),
         'ip_address': request_info.get('ip_address', '')
     }
-    
+
     # Log as structured event
-    log_structured_event('api', 'INFO', 
+    log_structured_event('api', 'INFO',
                        f"Request: {metadata['method']} {metadata['path']} - "
-                       f"Status: {status_code} - Duration: {duration}ms", 
+                       f"Status: {status_code} - Duration: {duration}ms",
                        metadata, logger)
-    
+
     # Also log to database API request logs
     try:
         from ..utils.database_logging import get_api_request_logger
         api_logger = get_api_request_logger()
-        
+
         api_logger.log_api_request(
             endpoint=request_info.get('path', 'UNKNOWN'),
             method=request_info.get('method', 'GET'),
@@ -332,20 +332,20 @@ def log_request(request_info: dict, logger: logging.Logger = None):
             user_id=request_info.get('user_id'),
             ip_address=request_info.get('ip_address'),
             user_agent=request_info.get('user_agent'),
-            **{k: v for k, v in request_info.items() 
+            **{k: v for k, v in request_info.items()
                if k not in ['path', 'method', 'status_code', 'duration', 'user_id', 'ip_address', 'user_agent']}
         )
     except Exception as e:
         if logger:
             logger.warning(f"Failed to log API request to database: {e}")
 
-def log_data_collection_event(operation_type: str, data_source: str, 
+def log_data_collection_event(operation_type: str, data_source: str,
                              symbol: str = None, records_processed: int = None,
                              duration_ms: float = None, status: str = 'success',
                              logger: logging.Logger = None, **metadata: Any):
     """
     Log data collection events with structured data and resilient database storage
-    
+
     Args:
         operation_type: Type of operation ('fetch', 'store', 'process')
         data_source: Data source ('yahoo', 'alpaca', 'polygon')
@@ -358,7 +358,7 @@ def log_data_collection_event(operation_type: str, data_source: str,
     """
     if logger is None:
         logger = get_combined_logger("mltrading.data_collection")
-    
+
     # Log as structured event to file
     log_message = f"Data Collection - {operation_type} from {data_source}"
     if symbol:
@@ -368,7 +368,7 @@ def log_data_collection_event(operation_type: str, data_source: str,
     if duration_ms is not None:
         log_message += f" in {duration_ms:.2f}ms"
     log_message += f" - Status: {status}"
-    
+
     data_metadata = {
         'operation_type': operation_type,
         'data_source': data_source,
@@ -378,16 +378,16 @@ def log_data_collection_event(operation_type: str, data_source: str,
         'status': status,
         **metadata
     }
-    
+
     # Determine log level based on status
     level = 'INFO' if status == 'success' else 'WARNING' if status == 'partial' else 'ERROR'
     log_structured_event('data_collection', level, log_message, data_metadata, logger)
-    
+
     # Use resilient database logger (async with circuit breaker)
     try:
         from .resilient_database_logging import get_resilient_data_collection_logger
         dc_logger = get_resilient_data_collection_logger()
-        
+
         dc_logger.log_data_collection(
             operation_type=operation_type,
             data_source=data_source,
@@ -401,12 +401,12 @@ def log_data_collection_event(operation_type: str, data_source: str,
         # Fail silently - primary logging to file already succeeded
         pass
 
-def log_ui_interaction_event(component: str, action: str = None, 
+def log_ui_interaction_event(component: str, action: str = None,
                            duration_ms: float = None, user_id: str = None,
                            session_id: str = None, logger: logging.Logger = None, **metadata: Any):
     """
     Log UI interaction events with structured data and database storage
-    
+
     Args:
         component: UI component name ('dashboard', 'chart', 'settings')
         action: Action performed ('click', 'load', 'update')
@@ -418,14 +418,14 @@ def log_ui_interaction_event(component: str, action: str = None,
     """
     if logger is None:
         logger = get_ui_logger(component)
-    
+
     # Log as structured event
     log_message = f"UI Interaction - {component}"
     if action:
         log_message += f" ({action})"
     if duration_ms is not None:
         log_message += f" in {duration_ms:.2f}ms"
-    
+
     ui_metadata = {
         'component': component,
         'action': action,
@@ -434,14 +434,14 @@ def log_ui_interaction_event(component: str, action: str = None,
         'session_id': session_id,
         **metadata
     }
-    
+
     log_structured_event('ui_interaction', 'INFO', log_message, ui_metadata, logger)
-    
+
     # Also log to database UI interaction logs
     try:
         from ..utils.database_logging import get_ui_interaction_logger
         ui_logger = get_ui_interaction_logger()
-        
+
         ui_logger.log_ui_interaction(
             component=component,
             action=action,
@@ -461,7 +461,7 @@ def log_error_event(error_type: str, error_message: str, component: str = None,
                    logger: logging.Logger = None, **metadata: Any):
     """
     Log error events with structured data and resilient database storage
-    
+
     Args:
         error_type: Type of error ('ValueError', 'ConnectionError', etc.)
         error_message: Error message
@@ -477,12 +477,12 @@ def log_error_event(error_type: str, error_message: str, component: str = None,
     """
     if logger is None:
         logger = get_combined_logger(f"mltrading.{component or 'error'}")
-    
+
     # Log as structured event to file
     log_message = f"Error - {error_type}: {error_message}"
     if component:
         log_message = f"[{component}] " + log_message
-    
+
     error_metadata = {
         'error_type': error_type,
         'component': component,
@@ -493,16 +493,16 @@ def log_error_event(error_type: str, error_message: str, component: str = None,
         'user_impact': user_impact,
         **metadata
     }
-    
+
     # Determine log level based on severity
     level = 'ERROR' if severity in ['HIGH', 'CRITICAL'] else 'WARNING'
     log_structured_event('error', level, log_message, error_metadata, logger)
-    
+
     # Use resilient database logger (async with circuit breaker)
     try:
         from .resilient_database_logging import get_resilient_error_logger
         err_logger = get_resilient_error_logger()
-        
+
         err_logger.log_error(
             error_type=error_type,
             error_message=error_message,
@@ -519,11 +519,11 @@ def log_error_event(error_type: str, error_message: str, component: str = None,
         # Fail silently - primary logging to file already succeeded
         pass
 
-def log_dashboard_event(event_type: str, details: str, 
+def log_dashboard_event(event_type: str, details: str,
                        metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
     Log dashboard events with structured data
-    
+
     Args:
         event_type: Type of event (e.g., 'user_action', 'data_update')
         details: Event details
@@ -534,9 +534,9 @@ def log_dashboard_event(event_type: str, details: str,
         'event_type': event_type,
         'dashboard_data': metadata or {}
     }
-    
-    log_structured_event('dashboard', 'INFO', 
-                       f"Dashboard Event - {event_type}: {details}", 
+
+    log_structured_event('dashboard', 'INFO',
+                       f"Dashboard Event - {event_type}: {details}",
                        dashboard_metadata, logger)
 
 # Global variables for log management
@@ -556,10 +556,10 @@ SENSITIVE_PATTERNS = {
 def sanitize_log_message(message: str) -> str:
     """
     Sanitize log messages by masking sensitive information
-    
+
     Args:
         message: Raw log message
-        
+
     Returns:
         Sanitized log message with sensitive data masked
     """
@@ -571,7 +571,7 @@ def sanitize_log_message(message: str) -> str:
 def get_correlation_id() -> str:
     """
     Get or create a correlation ID for the current thread
-    
+
     Returns:
         Correlation ID string
     """
@@ -582,18 +582,18 @@ def get_correlation_id() -> str:
 def set_correlation_id(correlation_id: str):
     """
     Set the correlation ID for the current thread
-    
+
     Args:
         correlation_id: Correlation ID to set
     """
     _correlation_context.correlation_id = correlation_id
 
 @contextmanager
-def log_operation(operation_name: str, logger: logging.Logger = None, 
+def log_operation(operation_name: str, logger: logging.Logger = None,
                  log_args: bool = False, **metadata: Any):
     """
     Context manager for logging operations with automatic timing and error handling
-    
+
     Args:
         operation_name: Name of the operation being performed
         logger: Logger instance to use
@@ -602,28 +602,28 @@ def log_operation(operation_name: str, logger: logging.Logger = None,
     """
     if logger is None:
         logger = get_combined_logger("mltrading.operation")
-    
+
     correlation_id = get_correlation_id()
     start_time = time.time()
-    
+
     # Sanitize metadata
     clean_metadata = {k: sanitize_log_message(str(v)) for k, v in metadata.items()}
-    
+
     try:
-        logger.info(f"[{correlation_id}] Starting operation: {operation_name}", 
-                   extra={'correlation_id': correlation_id, 'operation': operation_name, 
+        logger.info(f"[{correlation_id}] Starting operation: {operation_name}",
+                   extra={'correlation_id': correlation_id, 'operation': operation_name,
                          'metadata': clean_metadata if log_args else {}})
         yield
-        
+
         duration_ms = (time.time() - start_time) * 1000
         logger.info(f"[{correlation_id}] Completed operation: {operation_name} in {duration_ms:.2f}ms",
                    extra={'correlation_id': correlation_id, 'operation': operation_name,
                          'duration_ms': duration_ms, 'status': 'success'})
-        
+
         # Log performance event
-        log_performance_event(operation_name, duration_ms, 
+        log_performance_event(operation_name, duration_ms,
                             {**clean_metadata, 'correlation_id': correlation_id}, logger)
-        
+
     except Exception as e:
         duration_ms = (time.time() - start_time) * 1000
         error_msg = sanitize_log_message(str(e))
@@ -631,17 +631,17 @@ def log_operation(operation_name: str, logger: logging.Logger = None,
                     extra={'correlation_id': correlation_id, 'operation': operation_name,
                           'duration_ms': duration_ms, 'status': 'error', 'error': error_msg},
                     exc_info=True)
-        
+
         # Log performance event for failed operations too
         try:
             from .resilient_database_logging import get_resilient_performance_logger
             perf_logger = get_resilient_performance_logger()
-            
+
             # Clean metadata to avoid conflicts
-            error_metadata = {k: v for k, v in clean_metadata.items() 
+            error_metadata = {k: v for k, v in clean_metadata.items()
                             if k not in ['component', 'correlation_id']}
             error_metadata['error'] = error_msg
-            
+
             perf_logger.log_performance(
                 operation_name=operation_name,
                 duration_ms=duration_ms,
@@ -652,13 +652,13 @@ def log_operation(operation_name: str, logger: logging.Logger = None,
         except Exception:
             # Fail silently - primary logging to file already succeeded
             pass
-        
+
         raise
 
 def get_combined_log_path() -> Path:
     """
     Get the path to the combined log file
-    
+
     Returns:
         Path to the combined log file
     """
@@ -669,7 +669,7 @@ def get_combined_log_path() -> Path:
 def get_structured_logs_path() -> Path:
     """
     Get the path to the structured logs file
-    
+
     Returns:
         Path to the structured logs file
     """
@@ -680,16 +680,16 @@ def get_structured_logs_path() -> Path:
 def parse_structured_log_line(line: str) -> Optional[Dict[str, Any]]:
     """
     Parse a structured log line into components
-    
+
     Args:
         line: Log line string
-        
+
     Returns:
         Dictionary with parsed log components or None if invalid
     """
     if not line.startswith('STRUCTURED_LOG: '):
         return None
-    
+
     try:
         # Extract JSON part after "STRUCTURED_LOG: "
         json_str = line[16:]  # Remove "STRUCTURED_LOG: " prefix
@@ -701,20 +701,20 @@ def parse_structured_log_line(line: str) -> Optional[Dict[str, Any]]:
 def compress_log_file(file_path: Path) -> bool:
     """
     Compress a log file using gzip
-    
+
     Args:
         file_path: Path to the log file to compress
-        
+
     Returns:
         True if compression successful, False otherwise
     """
     try:
         compressed_path = file_path.with_suffix(file_path.suffix + '.gz')
-        
+
         with open(file_path, 'rb') as f_in:
             with gzip.open(compressed_path, 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
-        
+
         # Remove original file after successful compression
         file_path.unlink()
         return True
@@ -725,85 +725,85 @@ def compress_log_file(file_path: Path) -> bool:
 def consolidate_logs(logs_dir: Path = None, max_age_days: int = 7) -> Dict[str, Any]:
     """
     Consolidate old log files by compressing them
-    
+
     Args:
         logs_dir: Directory containing log files
         max_age_days: Maximum age in days before compression
-        
+
     Returns:
         Dictionary with consolidation results
     """
     if logs_dir is None:
         logs_dir = Path("logs")
-    
+
     if not logs_dir.exists():
         return {'status': 'error', 'message': 'Logs directory does not exist'}
-    
+
     results = {
         'compressed_files': [],
         'failed_files': [],
         'total_space_saved': 0,
         'errors': []
     }
-    
+
     cutoff_date = datetime.now() - timedelta(days=max_age_days)
-    
+
     try:
         # Find log files older than cutoff date
         for log_file in logs_dir.glob('*.log'):
             if log_file.stat().st_mtime < cutoff_date.timestamp():
                 original_size = log_file.stat().st_size
-                
+
                 if compress_log_file(log_file):
                     compressed_file = log_file.with_suffix(log_file.suffix + '.gz')
                     compressed_size = compressed_file.stat().st_size if compressed_file.exists() else 0
                     space_saved = original_size - compressed_size
-                    
+
                     results['compressed_files'].append(str(log_file))
                     results['total_space_saved'] += space_saved
                 else:
                     results['failed_files'].append(str(log_file))
-        
+
         results['status'] = 'success'
         results['message'] = f"Compressed {len(results['compressed_files'])} files, saved {results['total_space_saved']} bytes"
-        
+
     except Exception as e:
         results['status'] = 'error'
         results['message'] = f"Error during consolidation: {e}"
         results['errors'].append(str(e))
-    
+
     return results
 
-def cleanup_old_logs(logs_dir: Path = None, max_age_days: int = 30, 
+def cleanup_old_logs(logs_dir: Path = None, max_age_days: int = 30,
                     max_compressed_age_days: int = 90) -> Dict[str, Any]:
     """
     Clean up old log files and compressed archives
-    
+
     Args:
         logs_dir: Directory containing log files
         max_age_days: Maximum age for regular log files before deletion
         max_compressed_age_days: Maximum age for compressed files before deletion
-        
+
     Returns:
         Dictionary with cleanup results
     """
     if logs_dir is None:
         logs_dir = Path("logs")
-    
+
     if not logs_dir.exists():
         return {'status': 'error', 'message': 'Logs directory does not exist'}
-    
+
     results = {
         'deleted_files': [],
         'deleted_compressed': [],
         'total_space_freed': 0,
         'errors': []
     }
-    
+
     try:
         cutoff_date = datetime.now() - timedelta(days=max_age_days)
         compressed_cutoff_date = datetime.now() - timedelta(days=max_compressed_age_days)
-        
+
         # Delete old regular log files
         for log_file in logs_dir.glob('*.log'):
             if log_file.stat().st_mtime < cutoff_date.timestamp():
@@ -814,7 +814,7 @@ def cleanup_old_logs(logs_dir: Path = None, max_age_days: int = 30,
                     results['total_space_freed'] += size
                 except Exception as e:
                     results['errors'].append(f"Failed to delete {log_file}: {e}")
-        
+
         # Delete old compressed log files
         for compressed_file in logs_dir.glob('*.log.gz'):
             if compressed_file.stat().st_mtime < compressed_cutoff_date.timestamp():
@@ -825,24 +825,24 @@ def cleanup_old_logs(logs_dir: Path = None, max_age_days: int = 30,
                     results['total_space_freed'] += size
                 except Exception as e:
                     results['errors'].append(f"Failed to delete {compressed_file}: {e}")
-        
+
         results['status'] = 'success'
         results['message'] = f"Deleted {len(results['deleted_files'])} log files and {len(results['deleted_compressed'])} compressed files, freed {results['total_space_freed']} bytes"
-        
+
     except Exception as e:
         results['status'] = 'error'
         results['message'] = f"Error during cleanup: {e}"
         results['errors'].append(str(e))
-    
+
     return results
 
-def start_log_cleanup_scheduler(cleanup_interval_hours: int = 24, 
+def start_log_cleanup_scheduler(cleanup_interval_hours: int = 24,
                               consolidate_after_days: int = 7,
                               delete_after_days: int = 30,
                               delete_compressed_after_days: int = 90):
     """
     Start a background thread for periodic log cleanup
-    
+
     Args:
         cleanup_interval_hours: Hours between cleanup runs
         consolidate_after_days: Days before consolidating logs
@@ -850,15 +850,15 @@ def start_log_cleanup_scheduler(cleanup_interval_hours: int = 24,
         delete_compressed_after_days: Days before deleting compressed logs
     """
     global _log_cleanup_thread
-    
+
     if _cleanup_running:
         return
-    
+
     def cleanup_worker():
         global _cleanup_running
         _cleanup_running = True
         logger = get_combined_logger("mltrading.log_cleanup")
-        
+
         while _cleanup_running:
             try:
                 # Consolidate old logs
@@ -867,7 +867,7 @@ def start_log_cleanup_scheduler(cleanup_interval_hours: int = 24,
                     logger.info(f"Log consolidation completed: {consolidate_results['message']}")
                 else:
                     logger.error(f"Log consolidation failed: {consolidate_results['message']}")
-                
+
                 # Clean up old logs
                 cleanup_results = cleanup_old_logs(
                     max_age_days=delete_after_days,
@@ -877,14 +877,14 @@ def start_log_cleanup_scheduler(cleanup_interval_hours: int = 24,
                     logger.info(f"Log cleanup completed: {cleanup_results['message']}")
                 else:
                     logger.error(f"Log cleanup failed: {cleanup_results['message']}")
-                
+
                 # Wait for next cleanup cycle
                 time.sleep(cleanup_interval_hours * 3600)
-                
+
             except Exception as e:
                 logger.error(f"Error in log cleanup worker: {e}")
                 time.sleep(3600)  # Wait 1 hour before retrying
-    
+
     _log_cleanup_thread = threading.Thread(target=cleanup_worker, daemon=True)
     _log_cleanup_thread.start()
 
@@ -898,19 +898,19 @@ def stop_log_cleanup_scheduler():
 def get_log_statistics(logs_dir: Path = None) -> Dict[str, Any]:
     """
     Get statistics about log files
-    
+
     Args:
         logs_dir: Directory containing log files
-        
+
     Returns:
         Dictionary with log statistics
     """
     if logs_dir is None:
         logs_dir = Path("logs")
-    
+
     if not logs_dir.exists():
         return {'status': 'error', 'message': 'Logs directory does not exist'}
-    
+
     stats = {
         'total_log_files': 0,
         'total_compressed_files': 0,
@@ -919,30 +919,30 @@ def get_log_statistics(logs_dir: Path = None) -> Dict[str, Any]:
         'newest_file': None,
         'files_by_age': {'1d': 0, '7d': 0, '30d': 0, 'older': 0}
     }
-    
+
     now = datetime.now()
-    
+
     try:
         all_files = list(logs_dir.glob('*.log*'))
-        
+
         for log_file in all_files:
             file_stat = log_file.stat()
             file_age = now - datetime.fromtimestamp(file_stat.st_mtime)
-            
+
             stats['total_size'] += file_stat.st_size
-            
+
             if log_file.suffix == '.log':
                 stats['total_log_files'] += 1
             elif log_file.suffix == '.gz':
                 stats['total_compressed_files'] += 1
-            
+
             # Track oldest and newest files
             if stats['oldest_file'] is None or file_stat.st_mtime < stats['oldest_file']['mtime']:
                 stats['oldest_file'] = {'name': str(log_file), 'mtime': file_stat.st_mtime}
-            
+
             if stats['newest_file'] is None or file_stat.st_mtime > stats['newest_file']['mtime']:
                 stats['newest_file'] = {'name': str(log_file), 'mtime': file_stat.st_mtime}
-            
+
             # Categorize by age
             if file_age.days <= 1:
                 stats['files_by_age']['1d'] += 1
@@ -952,11 +952,11 @@ def get_log_statistics(logs_dir: Path = None) -> Dict[str, Any]:
                 stats['files_by_age']['30d'] += 1
             else:
                 stats['files_by_age']['older'] += 1
-        
+
         stats['status'] = 'success'
-        
+
     except Exception as e:
         stats['status'] = 'error'
         stats['message'] = f"Error getting log statistics: {e}"
-    
-    return stats 
+
+    return stats

@@ -16,7 +16,7 @@ from .prefect_integration import (
 
 __all__ = [
     'Alert',
-    'AlertSeverity', 
+    'AlertSeverity',
     'AlertCategory',
     'AlertStatus',
     'EmailService',

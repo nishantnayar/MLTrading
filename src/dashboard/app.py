@@ -16,8 +16,8 @@ sys.path.insert(0, str(project_root))
 # Import configuration and components
 from src.utils.logging_config import get_ui_logger
 from src.dashboard.config import (
-    DASHBOARD_CONFIG, 
-    EXTERNAL_STYLESHEETS, 
+    DASHBOARD_CONFIG,
+    EXTERNAL_STYLESHEETS,
     NAV_ITEMS,
     CARD_STYLE
 )
@@ -54,14 +54,14 @@ def create_navigation():
         nav_links.append(
             dbc.NavItem(
                 dbc.NavLink(
-                    item["label"], 
-                    href="#", 
-                    id=item["id"], 
+                    item["label"],
+                    href="#",
+                    id=item["id"],
                     className="text-white"
                 )
             )
         )
-    
+
     return dbc.Navbar(
         dbc.Container([
             dbc.NavbarBrand([
@@ -82,7 +82,7 @@ def create_header():
     return dbc.Row([
         dbc.Col([
             html.Div([
-                html.H1("ML Trading Dashboard", className="text-center mb-2 text-gradient", 
+                html.H1("ML Trading Dashboard", className="text-center mb-2 text-gradient",
                         style={"font-weight": "700", "letter-spacing": "-0.025em"}),
                 html.Div([
                     html.I(className="fas fa-user-circle me-2 text-primary"),
@@ -111,15 +111,15 @@ def create_footer():
 app.layout = dbc.Container([
     # Location component for navigation
     dcc.Location(id='url', refresh=False),
-    
+
     # Interval to trigger initial callbacks and periodic updates
     dcc.Interval(
-        id="initial-interval", 
+        id="initial-interval",
         interval=60000,  # 1 minute for timestamp updates
-        n_intervals=0, 
+        n_intervals=0,
         disabled=False
     ),
-    
+
     # Pipeline status interval for real-time updates
     dcc.Interval(
         id="pipeline-status-interval",
@@ -127,27 +127,27 @@ app.layout = dbc.Container([
         n_intervals=0,
         disabled=False
     ),
-    
+
     # Navigation Bar
     create_navigation(),
-    
+
     # Header
     create_header(),
-    
+
     # Notification areas for pipeline status
     html.Div(id="trigger-pipeline-notification"),
     html.Div(id="pipeline-status-alert"),
-    
+
     # Main Content Area
     dbc.Row([
         dbc.Col([
             html.Div(id="page-content")
         ])
     ], className="mb-3"),
-    
+
     # Footer
     create_footer()
-    
+
 ], fluid=True)
 
 
@@ -165,13 +165,13 @@ app.layout = dbc.Container([
 def display_page(pathname, nav_dashboard, nav_trading, nav_tests, nav_help, nav_logs):
     """Display different pages based on navigation"""
     ctx = callback_context
-    
+
     if not ctx.triggered:
         # Default to dashboard
         return create_dashboard_content()
-    
+
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    
+
     if button_id == "nav-trading" or pathname == "/trading":
         return create_trading_dashboard()
     elif button_id == "nav-tests" or pathname == "/tests":
@@ -226,6 +226,6 @@ if __name__ == '__main__':
     logger.info("Starting ML Trading Dashboard...")
     app.run(
         debug=DASHBOARD_CONFIG['debug'],
-        host=DASHBOARD_CONFIG['host'], 
+        host=DASHBOARD_CONFIG['host'],
         port=DASHBOARD_CONFIG['port']
     )

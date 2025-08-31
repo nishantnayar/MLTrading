@@ -23,7 +23,7 @@ logger = get_ui_logger("trading_callbacks")
 
 def register_trading_callbacks(app):
     """Register all trading-related callbacks"""
-    
+
     @app.callback(
         [Output("trading-connection-status", "children"),
          Output("trading-connection-status", "color")],
@@ -34,11 +34,11 @@ def register_trading_callbacks(app):
         try:
             alpaca = get_alpaca_service()
             status = alpaca.get_connection_status()
-            
+
             if status['connected']:
                 mode = status['mode'].upper()
                 account_id = status['account_info']['account_id'][:8] if status['account_info'] else 'Unknown'
-                
+
                 return (
                     f"✅ Connected to Alpaca ({mode} MODE) - Account: {account_id}...",
                     "success"
@@ -48,14 +48,14 @@ def register_trading_callbacks(app):
                     "❌ Not connected to Alpaca - Check your API credentials in config/config.yaml",
                     "danger"
                 )
-                
+
         except Exception as e:
             logger.error(f"Error checking connection status: {e}")
             return (
                 f"⚠️ Connection error: {str(e)}",
                 "warning"
             )
-    
+
     @app.callback(
         Output("account-info-display", "children"),
         [Input("refresh-account-btn", "n_clicks"),
@@ -67,11 +67,11 @@ def register_trading_callbacks(app):
             alpaca = get_alpaca_service()
             account_info = alpaca.get_account_info()
             return create_account_info_display(account_info)
-            
+
         except Exception as e:
             logger.error(f"Error updating account info: {e}")
             return html.P(f"Error loading account info: {e}", className="text-danger")
-    
+
     @app.callback(
         Output("positions-table", "children"),
         [Input("refresh-positions-btn", "n_clicks"),
@@ -83,11 +83,11 @@ def register_trading_callbacks(app):
             alpaca = get_alpaca_service()
             positions = alpaca.get_positions()
             return create_positions_table(positions)
-            
+
         except Exception as e:
             logger.error(f"Error updating positions: {e}")
             return html.P(f"Error loading positions: {e}", className="text-danger")
-    
+
     @app.callback(
         Output("orders-table", "children"),
         [Input("refresh-orders-btn", "n_clicks"),
@@ -99,11 +99,11 @@ def register_trading_callbacks(app):
             alpaca = get_alpaca_service()
             orders = alpaca.get_orders(status='all', limit=20)
             return create_orders_table(orders)
-            
+
         except Exception as e:
             logger.error(f"Error updating orders: {e}")
             return html.P(f"Error loading orders: {e}", className="text-danger")
-    
+
     @app.callback(
         [Output("order-confirmation-modal", "is_open"),
          Output("order-confirmation-body", "children")],
@@ -119,37 +119,37 @@ def register_trading_callbacks(app):
                            symbol, quantity, is_open):
         """Handle trading order modal"""
         ctx = callback_context
-        
+
         if not ctx.triggered:
             return False, ""
-        
+
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-        
+
         # Close modal
         if trigger_id in ["cancel-order-modal", "confirm-order-modal"]:
             return False, ""
-        
+
         # Open modal for buy/sell
         if trigger_id in ["buy-btn", "sell-btn"]:
             # Validate inputs
             if not symbol or not quantity:
                 return False, ""
-            
+
             try:
                 quantity = int(quantity)
                 if quantity <= 0:
                     return False, ""
             except ValueError:
                 return False, ""
-            
+
             side = "buy" if trigger_id == "buy-btn" else "sell"
             side_display = "BUY" if side == "buy" else "SELL"
             color = "success" if side == "buy" else "danger"
-            
+
             # Get current price (simplified - you might want to get real quote)
             alpaca = get_alpaca_service()
             account_info = alpaca.get_account_info()
-            
+
             modal_body = [
                 html.H5(f"{side_display} Order Confirmation", className=f"text-{color}"),
                 html.Hr(),
@@ -166,11 +166,11 @@ def register_trading_callbacks(app):
                     f"${account_info.get('cash', 0):,.2f}" if account_info else "Unknown"
                 ], className="text-muted")
             ]
-            
+
             return True, modal_body
-        
+
         return False, ""
-    
+
     @app.callback(
         Output("trading-log", "children"),
         [Input("confirm-order-modal", "n_clicks")],
@@ -183,38 +183,38 @@ def register_trading_callbacks(app):
         """Execute the confirmed trade order"""
         if not confirm_clicks:
             return current_log or []
-        
+
         try:
             ctx = callback_context
             if not ctx.triggered:
                 return current_log or []
-            
+
             # Determine buy/sell from the previous trigger (stored in component state)
             # For now, we'll need to track this differently
             # This is a simplified version - you might want to store the order details in a Store
-            
+
             # Get the side from the last button clicked (you might need to adjust this)
             side = "buy"  # Default to buy for now - this needs better implementation
-            
+
             alpaca = get_alpaca_service()
-            
+
             # Validate inputs again
             if not symbol or not quantity:
                 error_msg = format_trading_log_message("❌ Invalid order parameters", "error")
                 return (current_log or []) + [error_msg]
-            
+
             quantity = int(quantity)
-            
+
             # Submit order
             order_result = alpaca.submit_order(
                 symbol=symbol.upper(),
                 qty=quantity,
                 side=side
             )
-            
+
             # Update log
             log_messages = current_log or []
-            
+
             if order_result:
                 success_msg = format_trading_log_message(
                     f"✅ Order submitted: {side.upper()} {quantity} {symbol.upper()} (ID: {order_result['id'][:8]}...)",
@@ -227,15 +227,15 @@ def register_trading_callbacks(app):
                     "error"
                 )
                 log_messages.append(error_msg)
-            
+
             # Keep only last 20 log messages
             return log_messages[-20:]
-            
+
         except Exception as e:
             logger.error(f"Error executing trade: {e}")
             error_msg = format_trading_log_message(f"❌ Trade execution error: {e}", "error")
             return (current_log or []) + [error_msg]
-    
+
     @app.callback(
         [Output("trade-symbol-input", "value"),
          Output("trade-quantity-input", "value")],

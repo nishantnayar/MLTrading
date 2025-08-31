@@ -16,7 +16,7 @@ logger = get_ui_logger("trading_layout")
 
 def create_trading_dashboard() -> html.Div:
     """Create the main trading dashboard"""
-    
+
     return html.Div(id="trading-dashboard", children=[
         # Connection Status Header
         dbc.Alert(
@@ -25,7 +25,7 @@ def create_trading_dashboard() -> html.Div:
             color="info",
             className="mb-4"
         ),
-        
+
         # Trading Controls Row
         dbc.Row([
             # Account Info Card
@@ -44,7 +44,7 @@ def create_trading_dashboard() -> html.Div:
                     ])
                 ], style=CARD_STYLE)
             ], width=6),
-            
+
             # Quick Trade Card
             dbc.Col([
                 dbc.Card([
@@ -69,7 +69,7 @@ def create_trading_dashboard() -> html.Div:
                                 )
                             ], width=6)
                         ], className="mb-3"),
-                        
+
                         dbc.Row([
                             dbc.Col([
                                 dbc.Button(
@@ -92,7 +92,7 @@ def create_trading_dashboard() -> html.Div:
                 ], style=CARD_STYLE)
             ], width=6)
         ], className="mb-4"),
-        
+
         # Positions and Orders Row
         dbc.Row([
             # Current Positions
@@ -114,7 +114,7 @@ def create_trading_dashboard() -> html.Div:
                 ], style=CARD_STYLE)
             ], width=12)
         ], className="mb-4"),
-        
+
         # Recent Orders
         dbc.Row([
             dbc.Col([
@@ -122,7 +122,7 @@ def create_trading_dashboard() -> html.Div:
                     dbc.CardHeader([
                         "📋 Recent Orders",
                         dbc.Button(
-                            "🔄", 
+                            "🔄",
                             id="refresh-orders-btn",
                             color="outline-primary",
                             size="sm",
@@ -135,7 +135,7 @@ def create_trading_dashboard() -> html.Div:
                 ], style=CARD_STYLE)
             ], width=12)
         ], className="mb-4"),
-        
+
         # Trading Activity Log
         dbc.Row([
             dbc.Col([
@@ -156,7 +156,7 @@ def create_trading_dashboard() -> html.Div:
                 ], style=CARD_STYLE)
             ], width=12)
         ]),
-        
+
         # Hidden components for data storage
         dcc.Store(id="trading-data-store"),
         dcc.Interval(
@@ -164,7 +164,7 @@ def create_trading_dashboard() -> html.Div:
             interval=5000,  # Update every 5 seconds
             n_intervals=0
         ),
-        
+
         # Modal for order confirmation
         dbc.Modal([
             dbc.ModalHeader("Confirm Order"),
@@ -174,7 +174,7 @@ def create_trading_dashboard() -> html.Div:
                 dbc.Button("Confirm Order", id="confirm-order-modal", color="primary")
             ])
         ], id="order-confirmation-modal", is_open=False)
-        
+
     ])
 
 
@@ -182,7 +182,7 @@ def create_account_info_display(account_info: dict) -> html.Div:
     """Create account information display"""
     if not account_info:
         return html.P("Unable to load account information", className="text-muted")
-    
+
     return html.Div([
         dbc.Row([
             dbc.Col([
@@ -194,7 +194,7 @@ def create_account_info_display(account_info: dict) -> html.Div:
                 html.H4(f"${account_info.get('buying_power', 0):,.2f}", className="text-success")
             ], width=6)
         ], className="mb-3"),
-        
+
         dbc.Row([
             dbc.Col([
                 html.H6("Cash", className="text-muted mb-1"),
@@ -205,7 +205,7 @@ def create_account_info_display(account_info: dict) -> html.Div:
                 html.H5(f"{account_info.get('day_trade_count', 0)}")
             ], width=6)
         ]),
-        
+
         # Account status badges
         html.Div([
             dbc.Badge(
@@ -225,7 +225,7 @@ def create_positions_table(positions: list) -> html.Div:
     """Create positions table"""
     if not positions:
         return html.P("No current positions", className="text-muted text-center")
-    
+
     # Prepare data for dash_table
     columns = [
         {"name": "Symbol", "id": "symbol"},
@@ -235,7 +235,7 @@ def create_positions_table(positions: list) -> html.Div:
         {"name": "P&L", "id": "unrealized_pl", "type": "numeric", "format": {"specifier": "$.2f"}},
         {"name": "P&L %", "id": "unrealized_plpc", "type": "numeric", "format": {"specifier": ".2%"}}
     ]
-    
+
     return dash_table.DataTable(
         data=positions,
         columns=columns,
@@ -263,7 +263,7 @@ def create_orders_table(orders: list) -> html.Div:
     """Create orders table"""
     if not orders:
         return html.P("No recent orders", className="text-muted text-center")
-    
+
     # Prepare data for dash_table
     columns = [
         {"name": "Symbol", "id": "symbol"},
@@ -274,7 +274,7 @@ def create_orders_table(orders: list) -> html.Div:
         {"name": "Filled Price", "id": "filled_avg_price", "type": "numeric", "format": {"specifier": "$.2f"}},
         {"name": "Submitted", "id": "submitted_at"}
     ]
-    
+
     # Format datetime for display
     for order in orders:
         if order.get('submitted_at'):
@@ -283,7 +283,7 @@ def create_orders_table(orders: list) -> html.Div:
                 order['submitted_at'] = dt.strftime('%m/%d %H:%M')
             except:
                 pass
-    
+
     return dash_table.DataTable(
         data=orders[:10],  # Show last 10 orders
         columns=columns,
@@ -309,16 +309,16 @@ def create_orders_table(orders: list) -> html.Div:
 
 def format_trading_log_message(message: str, level: str = "info") -> html.Div:
     """Format a trading log message"""
-    
+
     color_map = {
         "info": "text-info",
-        "success": "text-success", 
+        "success": "text-success",
         "warning": "text-warning",
         "error": "text-danger"
     }
-    
+
     timestamp = datetime.now().strftime("%H:%M:%S")
-    
+
     return html.Div([
         html.Span(f"[{timestamp}] ", className="text-muted"),
         html.Span(message, className=color_map.get(level, "text-dark"))

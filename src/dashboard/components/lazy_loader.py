@@ -17,14 +17,14 @@ logger = get_ui_logger("lazy_loader")
 
 class LazyComponent:
     """Base class for lazy-loaded components."""
-    
+
     def __init__(self, component_id: str, loader_func: Callable, loading_text: str = "Loading..."):
         self.component_id = component_id
         self.loader_func = loader_func
         self.loading_text = loading_text
         self.is_loaded = False
         self.cached_content = None
-    
+
     def create_placeholder(self) -> html.Div:
         """Create placeholder component that triggers lazy loading."""
         return html.Div([
@@ -46,7 +46,7 @@ class LazyComponent:
                 ])
             ], className="h-100")
         ], id=f"{self.component_id}-container")
-    
+
     def register_callback(self, app: dash.Dash):
         """Register callback for lazy loading."""
         @app.callback(
@@ -59,20 +59,20 @@ class LazyComponent:
             if self.cached_content is not None:
                 logger.debug(f"Returning cached content for {self.component_id}")
                 return self.cached_content
-            
+
             try:
                 start_time = time.time()
                 logger.info(f"Lazy loading component: {self.component_id}")
-                
+
                 content = self.loader_func()
                 self.cached_content = content
                 self.is_loaded = True
-                
+
                 load_time = time.time() - start_time
                 logger.info(f"Lazy loaded {self.component_id} in {load_time:.2f}s")
-                
+
                 return content
-                
+
             except Exception as e:
                 logger.error(f"Error lazy loading {self.component_id}: {e}")
                 return dbc.Alert([
@@ -83,53 +83,53 @@ class LazyComponent:
 
 class LazyAnalyticsComponents:
     """Factory for creating lazy-loaded analytics components."""
-    
+
     @staticmethod
     def create_performance_analysis() -> LazyComponent:
         """Create lazy-loaded performance analysis component."""
         def load_performance_analysis():
             from ..layouts.analytics_components import create_performance_analysis_layout
             return create_performance_analysis_layout()
-        
+
         return LazyComponent(
             "performance-analysis",
             load_performance_analysis,
             "Loading performance analysis..."
         )
-    
+
     @staticmethod
     def create_correlation_matrix() -> LazyComponent:
         """Create lazy-loaded correlation matrix component."""
         def load_correlation_matrix():
             from ..layouts.analytics_components import create_correlation_matrix_layout
             return create_correlation_matrix_layout()
-        
+
         return LazyComponent(
             "correlation-matrix",
             load_correlation_matrix,
             "Loading correlation analysis..."
         )
-    
+
     @staticmethod
     def create_volatility_analysis() -> LazyComponent:
         """Create lazy-loaded volatility analysis component."""
         def load_volatility_analysis():
             from ..layouts.analytics_components import create_volatility_analysis_layout
             return create_volatility_analysis_layout()
-        
+
         return LazyComponent(
             "volatility-analysis",
             load_volatility_analysis,
             "Loading volatility analysis..."
         )
-    
+
     @staticmethod
     def create_risk_metrics() -> LazyComponent:
         """Create lazy-loaded risk metrics component."""
         def load_risk_metrics():
             from ..layouts.analytics_components import create_risk_metrics_layout
             return create_risk_metrics_layout()
-        
+
         return LazyComponent(
             "risk-metrics",
             load_risk_metrics,
@@ -139,12 +139,12 @@ class LazyAnalyticsComponents:
 
 class LazyTabContainer:
     """Container for organizing lazy-loaded components in tabs."""
-    
+
     def __init__(self, container_id: str):
         self.container_id = container_id
         self.tabs = {}
         self.lazy_components = {}
-    
+
     def add_tab(self, tab_id: str, tab_label: str, lazy_component: LazyComponent):
         """Add a lazy-loaded tab."""
         self.tabs[tab_id] = {
@@ -152,11 +152,11 @@ class LazyTabContainer:
             'component': lazy_component
         }
         self.lazy_components[tab_id] = lazy_component
-    
+
     def create_tab_container(self) -> dbc.Tabs:
         """Create tabbed container with lazy-loaded content."""
         tab_items = []
-        
+
         for tab_id, tab_info in self.tabs.items():
             tab_items.append(
                 dbc.Tab(
@@ -165,19 +165,19 @@ class LazyTabContainer:
                     tab_id=tab_id
                 )
             )
-        
+
         return dbc.Tabs(
             tab_items,
             id=f"{self.container_id}-tabs",
             active_tab=list(self.tabs.keys())[0] if self.tabs else None
         )
-    
+
     def register_callbacks(self, app: dash.Dash):
         """Register all lazy loading callbacks."""
         # Register individual component callbacks
         for component in self.lazy_components.values():
             component.register_callback(app)
-        
+
         # Register tab activation callback
         @app.callback(
             [Output(f"{comp.component_id}-trigger", "children") for comp in self.lazy_components.values()],
@@ -188,7 +188,7 @@ class LazyTabContainer:
             """Trigger loading of active tab content."""
             if not active_tab or active_tab not in self.lazy_components:
                 return [dash.no_update] * len(self.lazy_components)
-            
+
             # Only trigger the active tab
             outputs = []
             for tab_id, component in self.lazy_components.items():
@@ -197,7 +197,7 @@ class LazyTabContainer:
                     logger.info(f"Triggering lazy load for tab: {tab_id}")
                 else:
                     outputs.append(dash.no_update)
-            
+
             return outputs
 
 
@@ -221,52 +221,52 @@ def create_intersection_observer_script() -> html.Script:
             threshold: 0.1,
             rootMargin: '50px'
         });
-        
+
         // Observe all lazy components
         document.querySelectorAll('[id$="-container"]').forEach(el => {
-            if (el.id.includes('lazy-') || el.id.includes('performance-') || 
-                el.id.includes('correlation-') || el.id.includes('volatility-') || 
+            if (el.id.includes('lazy-') || el.id.includes('performance-') ||
+                el.id.includes('correlation-') || el.id.includes('volatility-') ||
                 el.id.includes('risk-')) {
                 observer.observe(el);
             }
         });
     });
     """
-    
+
     return html.Script(js_code)
 
 
 def create_optimized_analytics_dashboard() -> html.Div:
     """Create an optimized analytics dashboard with lazy loading."""
-    
+
     # Create lazy tab container
     analytics_tabs = LazyTabContainer("analytics")
-    
+
     # Add lazy-loaded analytics components
     analytics_tabs.add_tab(
         "performance",
         "Performance Analysis",
         LazyAnalyticsComponents.create_performance_analysis()
     )
-    
+
     analytics_tabs.add_tab(
         "correlation",
         "Correlation Matrix",
         LazyAnalyticsComponents.create_correlation_matrix()
     )
-    
+
     analytics_tabs.add_tab(
         "volatility",
         "Volatility Analysis",
         LazyAnalyticsComponents.create_volatility_analysis()
     )
-    
+
     analytics_tabs.add_tab(
         "risk",
         "Risk Metrics",
         LazyAnalyticsComponents.create_risk_metrics()
     )
-    
+
     return html.Div([
         dbc.Row([
             dbc.Col([

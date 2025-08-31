@@ -9,7 +9,7 @@ from .models import Alert, AlertSeverity, AlertCategory
 
 class AlertFactory:
     """Factory class for creating standardized alerts."""
-    
+
     @staticmethod
     def create_trading_error_alert(
         error_message: str,
@@ -27,7 +27,7 @@ class AlertFactory:
             component=component,
             metadata=metadata or {}
         )
-    
+
     @staticmethod
     def create_order_failure_alert(
         symbol: str,
@@ -42,7 +42,7 @@ class AlertFactory:
             'symbol': symbol,
             'order_type': order_type
         })
-        
+
         return Alert(
             title=f"Order Failure: {order_type} {symbol}",
             message=f"Failed to execute {order_type} order for {symbol}: {error_message}",
@@ -52,7 +52,7 @@ class AlertFactory:
             component=component,
             metadata=metadata
         )
-    
+
     @staticmethod
     def create_data_pipeline_error_alert(
         pipeline_name: str,
@@ -70,7 +70,7 @@ class AlertFactory:
             component=component,
             metadata=metadata or {}
         )
-    
+
     @staticmethod
     def create_database_connection_alert(
         error_message: str,
@@ -87,7 +87,7 @@ class AlertFactory:
             component=component,
             metadata=metadata or {}
         )
-    
+
     @staticmethod
     def create_api_error_alert(
         api_name: str,
@@ -105,7 +105,7 @@ class AlertFactory:
             component=component,
             metadata=metadata or {}
         )
-    
+
     @staticmethod
     def create_circuit_breaker_alert(
         service_name: str,
@@ -122,7 +122,7 @@ class AlertFactory:
             component=component,
             metadata=metadata or {}
         )
-    
+
     @staticmethod
     def create_system_startup_alert(
         component: str,
@@ -140,7 +140,7 @@ class AlertFactory:
             component=component,
             metadata=metadata or {}
         )
-    
+
     @staticmethod
     def create_system_shutdown_alert(
         component: str,
@@ -157,7 +157,7 @@ class AlertFactory:
             component=component,
             metadata=metadata or {}
         )
-    
+
     @staticmethod
     def create_performance_alert(
         metric_name: str,
@@ -173,7 +173,7 @@ class AlertFactory:
             'current_value': current_value,
             'threshold': threshold
         })
-        
+
         return Alert(
             title=f"Performance Alert: {metric_name}",
             message=f"{metric_name} has exceeded threshold: {current_value} > {threshold}",
@@ -183,7 +183,7 @@ class AlertFactory:
             component=component,
             metadata=metadata
         )
-    
+
     @staticmethod
     def create_security_alert(
         title: str,
@@ -201,7 +201,7 @@ class AlertFactory:
             component=component,
             metadata=metadata or {}
         )
-    
+
     @staticmethod
     def create_feature_engineering_alert(
         pipeline_name: str,
@@ -220,7 +220,7 @@ class AlertFactory:
             component=component,
             metadata=metadata or {}
         )
-    
+
     @staticmethod
     def create_data_freshness_alert(
         data_source: str,
@@ -231,7 +231,7 @@ class AlertFactory:
     ) -> Alert:
         """Create a data freshness alert."""
         hours_old = (datetime.now(timezone.utc) - last_update).total_seconds() / 3600
-        
+
         metadata = metadata or {}
         metadata.update({
             'data_source': data_source,
@@ -239,7 +239,7 @@ class AlertFactory:
             'hours_old': round(hours_old, 1),
             'threshold_hours': threshold_hours
         })
-        
+
         return Alert(
             title=f"Stale Data Alert: {data_source}",
             message=f"Data from {data_source} is {hours_old:.1f} hours old (threshold: {threshold_hours}h)",

@@ -31,17 +31,17 @@ logger = get_ui_logger("prefect_service")
 
 class PrefectService:
     """Service for interacting with Prefect API"""
-    
+
     def __init__(self, api_url: Optional[str] = None):
         """Initialize Prefect service"""
         self.api_url = api_url or os.getenv('PREFECT_API_URL', 'http://localhost:4200/api')
         self.client = httpx.Client(base_url=self.api_url, timeout=10.0)
         self._connected = False
         self.config = get_deployment_config()
-        
+
         # Test connection on initialization
         self._test_connection()
-    
+
     def _test_connection(self) -> bool:
         """Test connection to Prefect API"""
         try:
@@ -58,62 +58,62 @@ class PrefectService:
             logger.warning(f"Cannot connect to Prefect API: {e}")
             self._connected = False
             return False
-    
+
     def is_connected(self) -> bool:
         """Check if connected to Prefect API"""
         return self._connected
-    
+
     def get_deployments(self, name_filter: Optional[str] = None) -> List[Dict]:
         """Get deployments, optionally filtered by name"""
         if not self._connected:
             return []
-        
+
         try:
             params = {}
             if name_filter:
                 params['name'] = {'like_': f'%{name_filter}%'}
-            
+
             response = self.client.post('/deployments/filter', json=params)
             response.raise_for_status()
-            
+
             deployments = response.json()
             logger.debug(f"Retrieved {len(deployments)} deployments")
             return deployments
-            
+
         except Exception as e:
             logger.error(f"Error getting deployments: {e}")
             return []
-    
-    def get_flow_runs(self, deployment_name: Optional[str] = None, 
+
+    def get_flow_runs(self, deployment_name: Optional[str] = None,
                       limit: int = 10, state_type: Optional[str] = None) -> List[Dict]:
         """Get recent flow runs"""
         if not self._connected:
             return []
-        
+
         try:
             # Build filter
             filters = {
                 'limit': limit,
                 'sort': 'START_TIME_DESC'
             }
-            
+
             if deployment_name:
                 filters['deployments'] = {'name': {'any_': [deployment_name]}}
-            
+
             if state_type:
                 filters['flow_runs'] = {'state': {'type': {'any_': [state_type]}}}
-            
+
             response = self.client.post('/flow_runs/filter', json=filters)
             response.raise_for_status()
-            
+
             flow_runs = response.json()
             logger.debug(f"Retrieved {len(flow_runs)} flow runs")
             return flow_runs
-            
+
         except Exception as e:
             logger.error(f"Error getting flow runs: {e}")
             return []
-    
+
     def get_deployment_status(self, deployment_name: str) -> Dict:
         """Get comprehensive status for a specific deployment"""
         if not self._connected:
@@ -126,12 +126,12 @@ class PrefectService:
                 'success_rate': 0.0,
                 'config': None
             }
-        
+
         try:
             # Get deployment info
             deployments = self.get_deployments(deployment_name)
             deployment = next((d for d in deployments if d['name'] == deployment_name), None)
-            
+
             if not deployment:
                 logger.warning(f"Deployment '{deployment_name}' not found")
                 return {
@@ -144,13 +144,13 @@ class PrefectService:
                     'error': f"Deployment '{deployment_name}' not found",
                     'config': self.config.get_deployment(deployment_name)
                 }
-            
+
             # Get recent flow runs for this deployment
             recent_runs = self.get_flow_runs(deployment_name=deployment_name, limit=20)
-            
+
             # Get last run
             last_run = recent_runs[0] if recent_runs else None
-            
+
             # Calculate success rate
             if recent_runs:
                 completed_runs = [r for r in recent_runs if r.get('state', {}).get('type') in ['COMPLETED', 'FAILED', 'CANCELLED']]
@@ -158,13 +158,13 @@ class PrefectService:
                 success_rate = (len(successful_runs) / len(completed_runs)) * 100 if completed_runs else 0.0
             else:
                 success_rate = 0.0
-            
+
             # Get next scheduled run using configuration
             next_run = self.config.calculate_next_run(deployment_name)
-            
+
             # Get deployment config
             deployment_config = self.config.get_deployment(deployment_name)
-            
+
             return {
                 'connected': True,
                 'deployment': deployment,
@@ -174,7 +174,7 @@ class PrefectService:
                 'success_rate': success_rate,
                 'config': deployment_config
             }
-            
+
         except Exception as e:
             logger.error(f"Error getting deployment status for '{deployment_name}': {e}")
             return {
@@ -187,19 +187,19 @@ class PrefectService:
                 'error': str(e),
                 'config': None
             }
-    
+
     def get_multiple_deployment_status(self, deployment_names: Optional[List[str]] = None) -> Dict[str, Dict]:
         """Get status for multiple deployments"""
         if deployment_names is None:
             # Get primary deployments from config
             deployment_names = self.config.get_primary_deployments()
-        
+
         results = {}
         for name in deployment_names:
             results[name] = self.get_deployment_status(name)
-        
+
         return results
-    
+
     def get_configured_deployments(self) -> Dict[str, Any]:
         """Get all configured deployments with their configs"""
         return {
@@ -209,21 +209,21 @@ class PrefectService:
             }
             for name, config in self.config.get_all_deployments().items()
         }
-    
+
     def _calculate_next_run(self, deployment: Dict) -> Optional[datetime]:
         """Calculate next scheduled run time (simplified)"""
         try:
             schedule = deployment.get('schedule')
             if not schedule:
                 return None
-            
+
             # This is a simplified implementation
             # In reality, you'd need to parse the cron expression properly
             cron = schedule.get('cron')
             if cron and 'cron' in schedule:
                 # For the yahoo deployment: "0 9-16 * * 1-5" (hourly 9-4 EST, Mon-Fri)
                 now = datetime.now()
-                
+
                 # Simple logic: if it's a weekday and before 4 PM, next run is next hour at :00
                 if now.weekday() < 5:  # Monday = 0, Friday = 4
                     if 9 <= now.hour < 16:  # During market hours
@@ -242,46 +242,46 @@ class PrefectService:
                         days_until_monday = 1
                     next_monday = now + timedelta(days=days_until_monday)
                     return next_monday.replace(hour=9, minute=0, second=0, microsecond=0)
-            
+
             return None
-            
+
         except Exception as e:
             logger.error(f"Error calculating next run: {e}")
             return None
-    
+
     def trigger_flow_run(self, deployment_name: str, parameters: Optional[Dict] = None) -> Optional[Dict]:
         """Manually trigger a flow run"""
         if not self._connected:
             return None
-        
+
         try:
             # Get deployment ID
             deployments = self.get_deployments(deployment_name)
             deployment = next((d for d in deployments if d['name'] == deployment_name), None)
-            
+
             if not deployment:
                 logger.error(f"Deployment '{deployment_name}' not found")
                 return None
-            
+
             deployment_id = deployment['id']
-            
+
             # Create flow run
             flow_run_data = {
                 'deployment_id': deployment_id,
                 'parameters': parameters or {}
             }
-            
+
             response = self.client.post('/deployments/{}/create_flow_run', json=flow_run_data)
             response.raise_for_status()
-            
+
             flow_run = response.json()
             logger.info(f"Triggered flow run: {flow_run.get('id', 'unknown')}")
             return flow_run
-            
+
         except Exception as e:
             logger.error(f"Error triggering flow run for '{deployment_name}': {e}")
             return None
-    
+
     def get_data_freshness_metrics(self, deployment_name: Optional[str] = None) -> Dict:
         """Get data freshness metrics for a deployment"""
         if deployment_name is None:
@@ -290,27 +290,27 @@ class PrefectService:
             if not primary_deployments:
                 return {'status': 'no_deployments', 'color': 'secondary'}
             deployment_name = primary_deployments[0]
-        
+
         try:
             # Get the most recent successful runs for the deployment
             recent_runs = self.get_flow_runs(deployment_name=deployment_name, limit=5)
             successful_runs = [r for r in recent_runs if r.get('state', {}).get('type') == 'COMPLETED']
-            
+
             if successful_runs:
                 last_successful = successful_runs[0]
                 end_time = last_successful.get('end_time')
-                
+
                 if end_time:
                     # Parse the timestamp
                     if isinstance(end_time, str):
                         last_update = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
                     else:
                         last_update = end_time
-                    
+
                     # Calculate freshness
                     now = datetime.now().astimezone()
                     time_since_update = now - last_update.astimezone()
-                    
+
                     # Determine freshness status
                     if time_since_update.total_seconds() < 3600:  # Less than 1 hour
                         status = 'fresh'
@@ -321,7 +321,7 @@ class PrefectService:
                     else:
                         status = 'stale'
                         color = 'danger'
-                    
+
                     return {
                         'last_update': last_update,
                         'time_since_update': time_since_update,
@@ -329,7 +329,7 @@ class PrefectService:
                         'color': color,
                         'last_successful_run': last_successful
                     }
-            
+
             # No successful runs found
             return {
                 'last_update': None,
@@ -338,7 +338,7 @@ class PrefectService:
                 'color': 'secondary',
                 'last_successful_run': None
             }
-            
+
         except Exception as e:
             logger.error(f"Error getting data freshness metrics: {e}")
             return {
@@ -348,35 +348,35 @@ class PrefectService:
                 'color': 'danger',
                 'error': str(e)
             }
-    
+
     def get_system_health(self) -> Dict:
         """Get overall system health metrics"""
         try:
             # Get configured deployments to focus health metrics
             configured_deployments = list(self.config.get_all_deployments().keys())
-            
+
             # Get recent flow runs for configured deployments only
             all_runs = []
             for deployment_name in configured_deployments:
                 deployment_runs = self.get_flow_runs(deployment_name=deployment_name, limit=20)
                 all_runs.extend(deployment_runs)
-            
+
             # If no configured deployments have runs, fall back to all runs
             if not all_runs:
                 all_runs = self.get_flow_runs(limit=50)
-            
+
             recent_runs = all_runs[:50]  # Limit to most recent 50
-            
+
             # Categorize by status
             completed = len([r for r in recent_runs if r.get('state', {}).get('type') == 'COMPLETED'])
             failed = len([r for r in recent_runs if r.get('state', {}).get('type') == 'FAILED'])
             running = len([r for r in recent_runs if r.get('state', {}).get('type') == 'RUNNING'])
             scheduled = len([r for r in recent_runs if r.get('state', {}).get('type') == 'SCHEDULED'])
-            
+
             # Calculate health score
             total_completed_or_failed = completed + failed
             success_rate = (completed / total_completed_or_failed * 100) if total_completed_or_failed > 0 else 100
-            
+
             # Determine health status
             if success_rate >= 95:
                 health_status = 'excellent'
@@ -390,7 +390,7 @@ class PrefectService:
             else:
                 health_status = 'poor'
                 health_color = 'danger'
-            
+
             return {
                 'connected': True,
                 'success_rate': success_rate,
@@ -404,7 +404,7 @@ class PrefectService:
                     'total': len(recent_runs)
                 }
             }
-            
+
         except Exception as e:
             logger.error(f"Error getting system health: {e}")
             return {
@@ -421,7 +421,7 @@ class PrefectService:
                     'total': 0
                 }
             }
-    
+
     def __del__(self):
         """Clean up HTTP client"""
         try:

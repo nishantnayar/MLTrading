@@ -21,7 +21,7 @@ class MarketDataRequest(BaseModel):
     start_date: datetime = Field(..., description="Start date for data range")
     end_date: datetime = Field(..., description="End date for data range")
     source: DataSource = Field(default=DataSource.YAHOO, description="Data source")
-    
+
     @field_validator('symbol', mode='before')
     @classmethod
     def validate_symbol(cls, v):
@@ -31,11 +31,11 @@ class MarketDataRequest(BaseModel):
             # This maintains backward compatibility with existing tests
             if not v:
                 return v  # Return empty string as-is
-            
+
             # Basic validation - ensure it's a string
             return v.strip().upper()
         return v
-    
+
     @field_validator('start_date', 'end_date', mode='before')
     @classmethod
     def validate_date_format(cls, v):
@@ -44,7 +44,7 @@ class MarketDataRequest(BaseModel):
             # Quick check for obviously invalid formats
             if v in ['invalid-date', 'null', 'undefined', '']:
                 raise ValueError(f"Invalid date format: {v}")
-            
+
             # Try to parse with common formats for better performance
             try:
                 # Try ISO format first (most common)
@@ -62,7 +62,7 @@ class MarketDataRequest(BaseModel):
             except (ValueError, TypeError):
                 raise ValueError(f"Invalid date format: {v}")
         return v
-    
+
     @field_validator('end_date')
     @classmethod
     def validate_date_range(cls, v, info):
@@ -70,7 +70,7 @@ class MarketDataRequest(BaseModel):
         if 'start_date' in info.data and v <= info.data['start_date']:
             raise ValueError("end_date must be after start_date")
         return v
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -98,7 +98,7 @@ class MarketDataResponse(BaseModel):
 class StockInfoRequest(BaseModel):
     """Request schema for stock information."""
     symbol: str = Field(..., description="Stock symbol")
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -126,7 +126,7 @@ class StockInfoResponse(BaseModel):
 class SymbolsRequest(BaseModel):
     """Request schema for getting available symbols."""
     source: DataSource = Field(default=DataSource.YAHOO, description="Data source")
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -147,7 +147,7 @@ class DateRangeRequest(BaseModel):
     """Request schema for getting data date range."""
     symbol: str = Field(..., description="Stock symbol")
     source: DataSource = Field(default=DataSource.YAHOO, description="Data source")
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -170,7 +170,7 @@ class DateRangeResponse(BaseModel):
 class SectorRequest(BaseModel):
     """Request schema for sector-based queries."""
     sector: str = Field(..., description="Sector name")
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -183,7 +183,7 @@ class SectorRequest(BaseModel):
 class IndustryRequest(BaseModel):
     """Request schema for industry-based queries."""
     industry: str = Field(..., description="Industry name")
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -211,7 +211,7 @@ class PredictionRequest(BaseModel):
     prediction_model_id: Optional[int] = Field(None, description="Model ID")
     start_date: Optional[datetime] = Field(None, description="Start date for predictions")
     end_date: Optional[datetime] = Field(None, description="End date for predictions")
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -241,7 +241,7 @@ class OrderRequest(BaseModel):
     strategy_name: Optional[str] = Field(None, description="Strategy name")
     start_date: Optional[datetime] = Field(None, description="Start date")
     end_date: Optional[datetime] = Field(None, description="End date")
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -274,4 +274,4 @@ class ErrorResponse(BaseModel):
     """Error response schema."""
     error: str
     detail: Optional[str] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow) 
+    timestamp: datetime = Field(default_factory=datetime.utcnow)

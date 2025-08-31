@@ -8,7 +8,7 @@ from .base_service import BaseDashboardService
 
 __all__ = [
     'MarketDataService',
-    'SymbolService', 
+    'SymbolService',
     'CoreMarketDataService',
     'AnalyticsService',
     'BaseDashboardService'

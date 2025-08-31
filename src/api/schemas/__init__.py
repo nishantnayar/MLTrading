@@ -1,1 +1,1 @@
-# Data schemas for ML Trading API 
+# Data schemas for ML Trading API

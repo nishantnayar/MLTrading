@@ -3,14 +3,15 @@ Data extraction API routes for ML Trading System.
 Provides reusable endpoints for accessing market data, stock information, and other data.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query
-from typing import List, Optional
-from datetime import datetime, timedelta
+import sys
 import logging
+from pathlib import Path
+from datetime import datetime
+from typing import List, Optional
+
+from fastapi import APIRouter, HTTPException, Depends, Query
 
 # Add the project root to Python path
-import sys
-from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -18,8 +19,8 @@ from src.data.storage.database import get_db_manager
 from src.api.schemas.data import (
     MarketDataRequest, MarketDataResponse, StockInfoRequest, StockInfoResponse,
     SymbolsRequest, SymbolsResponse, DateRangeRequest, DateRangeResponse,
-    SectorRequest, IndustryRequest, SectorsResponse, IndustriesResponse,
-    PredictionRequest, PredictionResponse, OrderRequest, OrderResponse,
+    SectorsResponse, IndustriesResponse,
+    PredictionResponse, OrderResponse,
     ErrorResponse, DataSource
 )
 
@@ -48,7 +49,7 @@ async def get_market_data(
 ):
     """
     Get market data for a symbol within a date range.
-    
+
     - **symbol**: Stock symbol (e.g., AAPL, MSFT)
     - **start_date**: Start date for data range
     - **end_date**: End date for data range
@@ -60,9 +61,9 @@ async def get_market_data(
         if not symbol or len(symbol) > 10 or not symbol.replace('.', '').replace('-', '').isalpha():
             logger.warning(f"Rejecting invalid symbol: {request.symbol}")
             return []
-        
+
         logger.info(f"Fetching market data for {symbol} from {request.start_date} to {request.end_date}")
-        
+
         # Get data from database
         df = db.get_market_data(
             symbol=symbol,
@@ -70,10 +71,10 @@ async def get_market_data(
             end_date=request.end_date,
             source=request.source.value
         )
-        
+
         if df.empty:
             return []
-        
+
         # Convert DataFrame to list of dictionaries
         data = []
         for _, row in df.iterrows():
@@ -87,10 +88,10 @@ async def get_market_data(
                 volume=int(row['volume']),
                 source=row['source']
             ))
-        
+
         logger.info(f"Retrieved {len(data)} market data records for {request.symbol}")
         return data
-        
+
     except Exception as e:
         logger.error(f"Error fetching market data: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch market data: {str(e)}")
@@ -104,7 +105,7 @@ async def get_latest_market_data(
 ):
     """
     Get the latest market data for a symbol.
-    
+
     - **symbol**: Stock symbol
     - **source**: Data source (yahoo, alpaca, iex)
     """
@@ -114,14 +115,14 @@ async def get_latest_market_data(
         if not symbol or len(symbol) > 10 or not symbol.replace('.', '').replace('-', '').isalpha():
             logger.warning(f"Rejecting invalid symbol: {symbol}")
             raise HTTPException(status_code=400, detail=f"Invalid symbol format: {symbol}")
-        
+
         logger.info(f"Fetching latest market data for {symbol}")
-        
+
         data = db.get_latest_market_data(symbol=symbol, source=source.value)
-        
+
         if not data:
             raise HTTPException(status_code=404, detail=f"No data found for symbol {symbol}")
-        
+
         return MarketDataResponse(
             symbol=data['symbol'],
             timestamp=data['timestamp'],
@@ -132,7 +133,7 @@ async def get_latest_market_data(
             volume=int(data['volume']),
             source=data['source']
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -147,19 +148,19 @@ async def get_stock_info(
 ):
     """
     Get stock information for a symbol.
-    
+
     - **symbol**: Stock symbol
     """
     try:
         logger.info(f"Fetching stock info for {request.symbol}")
-        
+
         data = db.get_stock_info(symbol=request.symbol)
-        
+
         if not data:
             raise HTTPException(status_code=404, detail=f"No stock info found for symbol {request.symbol}")
-        
+
         return StockInfoResponse(**data)
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -174,20 +175,20 @@ async def get_symbols(
 ):
     """
     Get list of available symbols with market data.
-    
+
     - **source**: Data source (yahoo, alpaca, iex)
     """
     try:
         logger.info(f"Fetching symbols for source {request.source.value}")
-        
+
         symbols = db.get_symbols_with_data(source=request.source.value)
-        
+
         return SymbolsResponse(
             symbols=symbols,
             count=len(symbols),
             source=request.source.value
         )
-        
+
     except Exception as e:
         logger.error(f"Error fetching symbols: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch symbols: {str(e)}")
@@ -200,20 +201,20 @@ async def get_date_range(
 ):
     """
     Get the date range of available data for a symbol.
-    
+
     - **symbol**: Stock symbol
     - **source**: Data source (yahoo, alpaca, iex)
     """
     try:
         logger.info(f"Fetching date range for {request.symbol}")
-        
+
         start_date, end_date = db.get_data_date_range(
             symbol=request.symbol,
             source=request.source.value
         )
-        
+
         has_data = start_date is not None and end_date is not None
-        
+
         return DateRangeResponse(
             symbol=request.symbol,
             start_date=start_date,
@@ -221,7 +222,7 @@ async def get_date_range(
             source=request.source.value,
             has_data=has_data
         )
-        
+
     except Exception as e:
         logger.error(f"Error fetching date range: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch date range: {str(e)}")
@@ -234,14 +235,14 @@ async def get_sectors(db=Depends(get_db)):
     """
     try:
         logger.info("Fetching all sectors")
-        
+
         sectors = db.get_all_sectors()
-        
+
         return SectorsResponse(
             sectors=sectors,
             count=len(sectors)
         )
-        
+
     except Exception as e:
         logger.error(f"Error fetching sectors: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch sectors: {str(e)}")
@@ -254,14 +255,14 @@ async def get_industries(db=Depends(get_db)):
     """
     try:
         logger.info("Fetching all industries")
-        
+
         industries = db.get_all_industries()
-        
+
         return IndustriesResponse(
             industries=industries,
             count=len(industries)
         )
-        
+
     except Exception as e:
         logger.error(f"Error fetching industries: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch industries: {str(e)}")
@@ -274,16 +275,16 @@ async def get_stocks_by_sector(
 ):
     """
     Get all symbols in a specific sector.
-    
+
     - **sector**: Sector name
     """
     try:
         logger.info(f"Fetching stocks for sector: {sector}")
-        
+
         symbols = db.get_stocks_by_sector(sector=sector)
-        
+
         return symbols
-        
+
     except Exception as e:
         logger.error(f"Error fetching stocks by sector: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch stocks by sector: {str(e)}")
@@ -296,16 +297,16 @@ async def get_stocks_by_industry(
 ):
     """
     Get all symbols in a specific industry.
-    
+
     - **industry**: Industry name
     """
     try:
         logger.info(f"Fetching stocks for industry: {industry}")
-        
+
         symbols = db.get_stocks_by_industry(industry=industry)
-        
+
         return symbols
-        
+
     except Exception as e:
         logger.error(f"Error fetching stocks by industry: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch stocks by industry: {str(e)}")
@@ -321,7 +322,7 @@ async def get_predictions(
 ):
     """
     Get model predictions for a symbol.
-    
+
     - **symbol**: Stock symbol
     - **model_id**: Optional model ID filter
     - **start_date**: Optional start date filter
@@ -329,12 +330,12 @@ async def get_predictions(
     """
     try:
         logger.info(f"Fetching predictions for {symbol}")
-        
+
         # This would need to be implemented in the database manager
         # For now, return empty list as placeholder
         logger.warning("Predictions endpoint not yet implemented in database manager")
         return []
-        
+
     except Exception as e:
         logger.error(f"Error fetching predictions: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch predictions: {str(e)}")
@@ -351,7 +352,7 @@ async def get_orders(
 ):
     """
     Get orders with optional filters.
-    
+
     - **symbol**: Optional stock symbol filter
     - **status**: Optional order status filter
     - **strategy_name**: Optional strategy name filter
@@ -360,12 +361,12 @@ async def get_orders(
     """
     try:
         logger.info("Fetching orders with filters")
-        
+
         # This would need to be implemented in the database manager
         # For now, return empty list as placeholder
         logger.warning("Orders endpoint not yet implemented in database manager")
         return []
-        
+
     except Exception as e:
         logger.error(f"Error fetching orders: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch orders: {str(e)}")
@@ -378,12 +379,12 @@ async def get_data_summary(db=Depends(get_db)):
     """
     try:
         logger.info("Fetching data summary")
-        
+
         # Get basic statistics
         symbols = db.get_symbols_with_data()
         sectors = db.get_all_sectors()
         industries = db.get_all_industries()
-        
+
         summary = {
             "total_symbols": len(symbols),
             "total_sectors": len(sectors),
@@ -392,9 +393,9 @@ async def get_data_summary(db=Depends(get_db)):
             "industries": industries[:10],  # Show first 10 industries
             "sample_symbols": symbols[:10] if symbols else []  # Show first 10 symbols
         }
-        
+
         return summary
-        
+
     except Exception as e:
         logger.error(f"Error fetching data summary: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch data summary: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Failed to fetch data summary: {str(e)}")
