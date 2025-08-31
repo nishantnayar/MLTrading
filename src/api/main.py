@@ -1,5 +1,3 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 import sys
 import time
 from pathlib import Path
@@ -8,8 +6,11 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.utils.logging_config import get_ui_logger, log_request
-from src.api.routes import data
+from fastapi import FastAPI, Request  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+
+from src.utils.logging_config import get_ui_logger, log_request  # noqa: E402
+from src.api.routes import data  # noqa: E402
 
 # Initialize logger
 logger = get_ui_logger("api")

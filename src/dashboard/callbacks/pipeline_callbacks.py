@@ -12,7 +12,6 @@ import traceback
 from ..components.pipeline_status import (
     create_pipeline_status_card,
     create_data_freshness_indicator,
-    create_pipeline_run_table,
     create_system_health_summary,
     create_multi_deployment_status_card
 )
@@ -142,12 +141,12 @@ def register_pipeline_callbacks(app):
                         "No deployments configured"
                     ], className="mb-0")
                 ],
-                header="No Deployments",
-                id="pipeline-trigger-error-toast",
-                is_open=True,
-                dismissable=True,
-                duration=5000,
-                style={"position": "fixed", "top": 66, "right": 10, "width": 350}
+                    header="No Deployments",
+                    id="pipeline-trigger-error-toast",
+                    is_open=True,
+                    dismissable=True,
+                    duration=5000,
+                    style={"position": "fixed", "top": 66, "right": 10, "width": 350}
                 )
 
             # Trigger the flow run for the primary deployment
@@ -158,17 +157,17 @@ def register_pipeline_callbacks(app):
                 return dbc.Toast([
                     html.P([
                         html.I(className="fas fa-check-circle me-2 text-success"),
-                        f"Pipeline run triggered successfully!"
+                        "Pipeline run triggered successfully!"
                     ], className="mb-0"),
                     html.Small(f"Run ID: {flow_run.get('id', 'Unknown')[:8]}...", className="text-muted")
                 ],
-                header="Pipeline Triggered",
-                id="pipeline-trigger-toast",
-                is_open=True,
-                dismissable=True,
-                duration=5000,
-                style={"position": "fixed", "top": 66, "right": 10, "width": 350}
-            )
+                    header="Pipeline Triggered",
+                    id="pipeline-trigger-toast",
+                    is_open=True,
+                    dismissable=True,
+                    duration=5000,
+                    style={"position": "fixed", "top": 66, "right": 10, "width": 350}
+                )
             else:
                 return dbc.Toast([
                     html.P([
@@ -176,13 +175,13 @@ def register_pipeline_callbacks(app):
                         "Failed to trigger pipeline run"
                     ], className="mb-0")
                 ],
-                header="Pipeline Trigger Failed",
-                id="pipeline-trigger-error-toast",
-                is_open=True,
-                dismissable=True,
-                duration=5000,
-                style={"position": "fixed", "top": 66, "right": 10, "width": 350}
-            )
+                    header="Pipeline Trigger Failed",
+                    id="pipeline-trigger-error-toast",
+                    is_open=True,
+                    dismissable=True,
+                    duration=5000,
+                    style={"position": "fixed", "top": 66, "right": 10, "width": 350}
+                )
 
         except Exception as e:
             logger.error(f"Error triggering pipeline: {e}")
@@ -193,13 +192,13 @@ def register_pipeline_callbacks(app):
                     f"Error triggering pipeline: {str(e)}"
                 ], className="mb-0")
             ],
-            header="Pipeline Error",
-            id="pipeline-trigger-error-toast",
-            is_open=True,
-            dismissable=True,
-            duration=7000,
-            style={"position": "fixed", "top": 66, "right": 10, "width": 350}
-        )
+                header="Pipeline Error",
+                id="pipeline-trigger-error-toast",
+                is_open=True,
+                dismissable=True,
+                duration=7000,
+                style={"position": "fixed", "top": 66, "right": 10, "width": 350}
+            )
 
     @app.callback(
         Output("pipeline-status-alert", "children"),

@@ -14,24 +14,34 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import configuration and components
-from src.utils.logging_config import get_ui_logger
-from src.dashboard.config import (
+from src.utils.logging_config import get_ui_logger  # noqa: E402
+from src.dashboard.config import (  # noqa: E402
     DASHBOARD_CONFIG,
     EXTERNAL_STYLESHEETS,
-    NAV_ITEMS,
-    CARD_STYLE
+    NAV_ITEMS
 )
-from src.dashboard.layouts.dashboard_layout import create_dashboard_content
-from src.dashboard.layouts.help_layout import create_help_layout
-from src.dashboard.layouts.tests_layout import create_tests_layout
-from src.dashboard.layouts.trading_layout import create_trading_dashboard
-from src.dashboard.layouts.logs_layout import create_logs_layout, register_logs_callbacks
-from src.dashboard.callbacks import register_chart_callbacks, register_overview_callbacks, register_comparison_callbacks, register_pipeline_callbacks
-from src.dashboard.callbacks.interactive_chart_callbacks import register_interactive_chart_callbacks
-from src.dashboard.callbacks.trading_callbacks import register_trading_callbacks
-from src.dashboard.callbacks.detailed_analysis_callbacks import register_detailed_analysis_callbacks
-from src.dashboard.callbacks.symbol_sync_callbacks import register_symbol_sync_callbacks
-from src.dashboard.utils.date_formatters import get_current_timestamp
+from src.dashboard.layouts.dashboard_layout import create_dashboard_content  # noqa: E402
+from src.dashboard.layouts.help_layout import create_help_layout  # noqa: E402
+from src.dashboard.layouts.tests_layout import create_tests_layout  # noqa: E402
+from src.dashboard.layouts.trading_layout import create_trading_dashboard  # noqa: E402
+from src.dashboard.layouts.logs_layout import (  # noqa: E402
+    create_logs_layout, register_logs_callbacks
+)
+from src.dashboard.callbacks import (  # noqa: E402
+    register_chart_callbacks, register_overview_callbacks,
+    register_comparison_callbacks, register_pipeline_callbacks
+)
+from src.dashboard.callbacks.interactive_chart_callbacks import (  # noqa: E402
+    register_interactive_chart_callbacks
+)
+from src.dashboard.callbacks.trading_callbacks import register_trading_callbacks  # noqa: E402
+from src.dashboard.callbacks.detailed_analysis_callbacks import (  # noqa: E402
+    register_detailed_analysis_callbacks
+)
+from src.dashboard.callbacks.symbol_sync_callbacks import (  # noqa: E402
+    register_symbol_sync_callbacks
+)
+from src.dashboard.utils.date_formatters import get_current_timestamp  # noqa: E402
 
 # Initialize logger
 logger = get_ui_logger("dashboard")

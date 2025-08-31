@@ -57,7 +57,7 @@ class DataService:
             raise
 
     def get_market_data(self, symbol: str, start_date: datetime,
-                       end_date: datetime, source: str = "yahoo") -> pd.DataFrame:
+                        end_date: datetime, source: str = "yahoo") -> pd.DataFrame:
         """
         Get market data for a symbol within date range.
 
@@ -271,7 +271,6 @@ def get_data_service(base_url: str = None) -> DataService:
 
     if base_url is None:
         # Try to detect the running API server
-        import socket
         import requests
 
         def find_api_port():

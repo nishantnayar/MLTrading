@@ -6,7 +6,7 @@ using Pydantic for type safety and environment variable integration.
 """
 
 import os
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, List, Optional
 from pathlib import Path
 from pydantic import BaseModel, Field, validator
 from pydantic_settings import BaseSettings
@@ -386,7 +386,8 @@ class Settings(BaseSettings):
 
     def get_database_url(self) -> str:
         """Get database connection URL"""
-        return f"postgresql://{self.database.user}:{self.database.password}@{self.database.host}:{self.database.port}/{self.database.name}"
+        return (f"postgresql://{self.database.user}:{self.database.password}@"
+                f"{self.database.host}:{self.database.port}/{self.database.name}")
 
     def get_alpaca_credentials(self) -> Dict[str, str]:
         """Get Alpaca credentials based on trading mode"""
@@ -431,6 +432,7 @@ class Settings(BaseSettings):
 
 # Global settings instance
 _settings_instance = None
+
 
 def get_settings() -> Settings:
     """

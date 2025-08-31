@@ -233,12 +233,13 @@ def register_overview_callbacks(app):
                     second=0,
                     microsecond=0
                 )
-                market_close = now.replace(
-                    hour=MARKET_HOURS['close_hour'],
-                    minute=MARKET_HOURS['close_minute'],
-                    second=0,
-                    microsecond=0
-                )
+                # market_close is calculated but not used in current logic
+                # market_close = now.replace(
+                #     hour=MARKET_HOURS['close_hour'],
+                #     minute=MARKET_HOURS['close_minute'],
+                #     second=0,
+                #     microsecond=0
+                # )
 
                 # If it's weekend, next open is Monday
                 if now.weekday() >= 5:  # Saturday = 5, Sunday = 6
@@ -383,22 +384,25 @@ def register_overview_callbacks(app):
             industry_data = symbol_service.get_industry_distribution(selected_sector)
 
             if not industry_data or not industry_data.get('industries'):
-                return create_empty_chart(f"No Industries Found in {selected_sector}"), selected_sector, {"display": "inline-block", "font-size": "0.7em"}
+                return (create_empty_chart(f"No Industries Found in {selected_sector}"),
+                        selected_sector,
+                        {"display": "inline-block", "font-size": "0.7em"})
 
             chart_data = {
                 'categories': industry_data['industries'],
                 'counts': industry_data['counts']
             }
 
-            return create_horizontal_bar_chart(
+            return (create_horizontal_bar_chart(
                 chart_data,
                 f"Industries in {selected_sector}",
                 color=CHART_COLORS['info']
-            ), selected_sector, {"display": "inline-block", "font-size": "0.7em"}
+            ), selected_sector, {"display": "inline-block", "font-size": "0.7em"})
 
         except Exception as e:
             logger.error(f"Error updating industry distribution chart: {e}")
-            return create_empty_chart("Error Loading Industry Data"), "Error", {"display": "inline-block", "font-size": "0.7em"}
+            return (create_empty_chart("Error Loading Industry Data"), 
+                    "Error", {"display": "inline-block", "font-size": "0.7em"})
 
     @app.callback(
         Output("top-volume-chart", "figure"),
@@ -601,7 +605,7 @@ def register_overview_callbacks(app):
 
             clicked_point = clicked_data['points'][0]
             category = clicked_point['y']  # The category name (sector, symbol, etc.)
-            value = clicked_point['x']     # The value
+            # value = clicked_point['x']     # The value (unused in current logic)
 
             filtered_symbols = []
             filter_type = ""
@@ -649,15 +653,15 @@ def register_overview_callbacks(app):
                         html.P(company_name, className="card-text small text-muted mb-2"),
                         html.Div([
                             dbc.Button("Analyze",
-                                     id={"type": "analyze-symbol-btn", "index": symbol},
-                                     size="sm",
-                                     color="primary",
-                                     className="btn-sm me-1"),
+                                       id={"type": "analyze-symbol-btn", "index": symbol},
+                                       size="sm",
+                                       color="primary",
+                                       className="btn-sm me-1"),
                             dbc.Button("Compare",
-                                     id={"type": "compare-symbol-btn", "index": symbol},
-                                     size="sm",
-                                     color="outline-info",
-                                     className="btn-sm")
+                                       id={"type": "compare-symbol-btn", "index": symbol},
+                                       size="sm",
+                                       color="outline-info",
+                                       className="btn-sm")
                         ])
                     ])
                 ], className="h-100")

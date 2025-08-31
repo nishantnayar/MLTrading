@@ -8,15 +8,14 @@ Provides validation and compatibility checking.
 import os
 import yaml
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any
 try:
-    from .settings import get_settings, Settings
+    from .settings import get_settings
 except ImportError:
     # Handle running as script
     import sys
-    from pathlib import Path
     sys.path.append(str(Path(__file__).parent.parent.parent))
-    from src.config.settings import get_settings, Settings
+    from src.config.settings import get_settings
 
 
 def validate_legacy_configs() -> Dict[str, Any]:
@@ -178,7 +177,7 @@ def generate_migration_report() -> str:
     report.append("## Unified Configuration System")
     if unified_results['status'] == 'success':
         unified = unified_results['unified_config']
-        report.append(f"[PASS] System loaded successfully")
+        report.append("[PASS] System loaded successfully")
         report.append(f"[PASS] Database configured: {unified['database_configured']}")
         report.append(f"[PASS] Trading mode: {unified['trading_mode']}")
         report.append(f"[PASS] Strategies loaded: {unified['strategies_count']}")
