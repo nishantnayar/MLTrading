@@ -31,8 +31,6 @@ def register_overview_callbacks(app):
          Input("refresh-overview-btn", "n_clicks")],
         prevent_initial_call=False
     )
-
-
     def update_market_overview_chart(refresh_clicks, overview_refresh_clicks):
         """Update market overview chart with real data"""
         try:
@@ -88,8 +86,6 @@ def register_overview_callbacks(app):
          Input("refresh-overview-btn", "n_clicks")],
         prevent_initial_call=False
     )
-
-
     def update_top_performers(refresh_clicks, overview_refresh_clicks):
         """Update top performers list with real data"""
         try:
@@ -120,8 +116,6 @@ def register_overview_callbacks(app):
          Input("refresh-overview-btn", "n_clicks")],
         prevent_initial_call=False
     )
-
-
     def update_recent_activity(refresh_clicks, overview_refresh_clicks):
         """Update recent activity list with real data"""
         try:
@@ -156,8 +150,6 @@ def register_overview_callbacks(app):
          Input("refresh-overview-btn", "n_clicks")],
         prevent_initial_call=False
     )
-
-
     def update_summary_stats(refresh_clicks, overview_refresh_clicks):
         """Update summary statistics with real data"""
         try:
@@ -185,8 +177,6 @@ def register_overview_callbacks(app):
         [Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
-
-
     def update_time_and_market_info(refresh_clicks):
         """Update current time and market hours information"""
         try:
@@ -312,8 +302,6 @@ def register_overview_callbacks(app):
         [Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
-
-
     def update_database_stats(refresh_clicks):
         """Update database statistics"""
         try:
@@ -337,8 +325,6 @@ def register_overview_callbacks(app):
          Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
-
-
     def update_sector_distribution_chart(overview_refresh, stats_refresh):
         """Update sector distribution bar chart"""
         try:
@@ -376,8 +362,6 @@ def register_overview_callbacks(app):
          Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
-
-
     def update_industry_distribution_chart(sector_click, default_sector, overview_refresh, stats_refresh):
         """Update industry distribution chart based on selected sector"""
         try:
@@ -416,7 +400,7 @@ def register_overview_callbacks(app):
 
         except Exception as e:
             logger.error(f"Error updating industry distribution chart: {e}")
-            return (create_empty_chart("Error Loading Industry Data"), 
+            return (create_empty_chart("Error Loading Industry Data"),
                     "Error", {"display": "inline-block", "font-size": "0.7em"})
 
     @app.callback(
@@ -425,8 +409,6 @@ def register_overview_callbacks(app):
          Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
-
-
     def update_top_volume_chart(overview_refresh, stats_refresh):
         """Update top symbols by volume bar chart"""
         try:
@@ -460,7 +442,7 @@ def register_overview_callbacks(app):
 
             chart_data = {
                 'categories': list(sorted_symbols[:10]),  # Top 10
-                'counts': [vol/1000000 for vol in sorted_volumes[:10]]  # Convert to millions
+                'counts': [vol / 1000000 for vol in sorted_volumes[:10]]  # Convert to millions
             }
 
             return create_horizontal_bar_chart(
@@ -479,8 +461,6 @@ def register_overview_callbacks(app):
          Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
-
-
     def update_price_performance_chart(overview_refresh, stats_refresh):
         """Update 7-day price performance bar chart"""
         try:
@@ -532,8 +512,6 @@ def register_overview_callbacks(app):
          Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
-
-
     def update_market_activity_chart(overview_refresh, stats_refresh):
         """Update market activity summary bar chart"""
         try:
@@ -590,8 +568,6 @@ def register_overview_callbacks(app):
          Input("refresh-stats-btn", "n_clicks")],
         prevent_initial_call=False
     )
-
-
     def update_last_updated_timestamp(overview_refresh, stats_refresh):
         """Update the last updated timestamp"""
         from datetime import datetime
@@ -609,15 +585,13 @@ def register_overview_callbacks(app):
          Input("market-activity-chart", "clickData")],
         prevent_initial_call=True
     )
-
-
     def update_filtered_symbols(sector_click, industry_click, volume_click, performance_click, activity_click):
         """Update filtered symbols based on bar chart clicks"""
         try:
             ctx = callback_context
             if not ctx.triggered:
                 return (html.P("Click on any bar in the charts above to filter symbols by that category.",
-                              className="text-muted text-center m-4"), [], "", {"display": "none"})
+                               className="text-muted text-center m-4"), [], "", {"display": "none"})
 
             triggered_chart = ctx.triggered[0]['prop_id'].split('.')[0]
             clicked_data = ctx.triggered[0]['value']
@@ -626,7 +600,8 @@ def register_overview_callbacks(app):
             logger.info(f"Bar chart clicked - Chart: {triggered_chart}, Data: {clicked_data}")
 
             if not clicked_data or 'points' not in clicked_data:
-                return (html.P("No data selected. Try clicking on a bar.", className="text-muted"), [], "", {"display": "none"})
+                return (html.P("No data selected. Try clicking on a bar.", className="text-muted"), [], "",
+                        {"display": "none"})
 
             clicked_point = clicked_data['points'][0]
             category = clicked_point['y']  # The category name (sector, symbol, etc.)
@@ -711,5 +686,5 @@ def register_overview_callbacks(app):
 
         except Exception as e:
             logger.error(f"Error filtering symbols: {e}")
-            return (html.P("Error filtering symbols. Please try again.", className="text-danger"), [], "", {"display": "none"})
-
+            return (html.P("Error filtering symbols. Please try again.", className="text-danger"), [], "",
+                    {"display": "none"})

@@ -24,7 +24,6 @@ class DatabaseLogHandler(logging.Handler):
     Custom logging handler that writes logs to PostgreSQL database
     """
 
-
     def __init__(self, db_manager: DatabaseManager = None,
                  table_name: str = "system_logs",
                  max_queue_size: int = 2000,
@@ -63,7 +62,6 @@ class DatabaseLogHandler(logging.Handler):
             'write_errors': 0,
             'last_write': None
         }
-
 
     def emit(self, record):
         """
@@ -117,7 +115,6 @@ class DatabaseLogHandler(logging.Handler):
             # Don't raise exceptions from logging handlers
             self.handleError(record)
 
-
     def _extract_metadata(self, record) -> Dict[str, Any]:
         """
         Extract metadata from log record
@@ -133,9 +130,9 @@ class DatabaseLogHandler(logging.Handler):
         # Add extra fields
         for key, value in record.__dict__.items():
             if key not in ['name', 'msg', 'args', 'levelname', 'levelno', 'pathname',
-                          'filename', 'module', 'lineno', 'funcName', 'created',
-                          'msecs', 'relativeCreated', 'thread', 'threadName',
-                          'processName', 'process', 'exc_info', 'exc_text', 'stack_info']:
+                           'filename', 'module', 'lineno', 'funcName', 'created',
+                           'msecs', 'relativeCreated', 'thread', 'threadName',
+                           'processName', 'process', 'exc_info', 'exc_text', 'stack_info']:
                 try:
                     # Ensure value is JSON serializable
                     json.dumps(value)
@@ -152,7 +149,6 @@ class DatabaseLogHandler(logging.Handler):
             pass
 
         return metadata
-
 
     def _log_writer(self):
         """
@@ -174,7 +170,7 @@ class DatabaseLogHandler(logging.Handler):
 
                 # Write batch if we have logs or enough time has passed
                 if batch and (len(batch) >= self.batch_size or
-                             time.time() - last_flush >= self.flush_interval):
+                              time.time() - last_flush >= self.flush_interval):
                     self._write_batch(batch)
                     batch.clear()
                     last_flush = time.time()
@@ -184,7 +180,6 @@ class DatabaseLogHandler(logging.Handler):
                 # Clear batch to avoid infinite error loop
                 batch.clear()
                 time.sleep(1)  # Brief pause before retrying
-
 
     def _write_batch(self, batch: List[Dict[str, Any]]):
         """
@@ -790,4 +785,3 @@ def get_error_logger() -> ErrorLogger:
     if _error_logger is None:
         _error_logger = ErrorLogger()
     return _error_logger
-

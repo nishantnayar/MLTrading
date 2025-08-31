@@ -27,8 +27,8 @@ def create_empty_chart(title="No Data Available"):
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             annotations=[{
                 'text': 'No data available',
-                'xre': 'paper',
-                'yre': 'paper',
+                'xref': 'paper',
+                'yref': 'paper',
                 'showarrow': False,
                 'font': {'size': 14}
             }],
@@ -55,8 +55,8 @@ def create_loading_chart(message="Loading market data..."):
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             annotations=[{
                 'text': f'<i class="fas fa-spinner fa-spin"></i> {message}',
-                'xre': 'paper',
-                'yre': 'paper',
+                'xref': 'paper',
+                'yref': 'paper',
                 'showarrow': False,
                 'font': {'size': 16, 'color': CHART_COLORS['primary']},
                 'x': 0.5,
@@ -113,8 +113,8 @@ def create_error_chart(error_type="unknown", details="", symbol=""):
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             annotations=[{
                 'text': annotation_text,
-                'xre': 'paper',
-                'yre': 'paper',
+                'xref': 'paper',
+                'yref': 'paper',
                 'showarrow': False,
                 'font': {'size': 14, 'color': style['color']},
                 'x': 0.5,

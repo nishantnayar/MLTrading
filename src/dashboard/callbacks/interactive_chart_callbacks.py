@@ -29,8 +29,6 @@ def register_interactive_chart_callbacks(app):
         [State("advanced-chart-controls", "is_open")],
         prevent_initial_call=True
     )
-
-
     def toggle_advanced_controls(n_clicks, is_open):
         """Toggle the advanced chart controls collapse."""
         if n_clicks:
@@ -50,8 +48,6 @@ def register_interactive_chart_callbacks(app):
          Input("chart-type-bar", "n_clicks")],
         prevent_initial_call=True
     )
-
-
     def update_chart_type(*clicks):
         """Handle chart type button clicks."""
         ctx = callback_context
@@ -80,8 +76,6 @@ def register_interactive_chart_callbacks(app):
         [State("overlay-indicators-store", "data")],
         prevent_initial_call=True
     )
-
-
     def toggle_overlay_indicators(sma_clicks, ema_clicks, bb_clicks, current_indicators):
         """Toggle overlay indicators on/off."""
         ctx = callback_context
@@ -118,8 +112,6 @@ def register_interactive_chart_callbacks(app):
         [State("oscillator-indicators-store", "data")],
         prevent_initial_call=True
     )
-
-
     def toggle_rsi_indicator(rsi_clicks, current_oscillators):
         """Toggle RSI indicator on/off."""
         if not rsi_clicks:
@@ -148,8 +140,6 @@ def register_interactive_chart_callbacks(app):
         [State("volume-display-store", "data")],
         prevent_initial_call=True
     )
-
-
     def update_volume_display(*clicks):
         """Handle volume display button clicks."""
         ctx = callback_context
@@ -171,10 +161,10 @@ def register_interactive_chart_callbacks(app):
             new_mode = volume_modes.get(trigger_id, 'bars_ma')
 
         return (new_mode,
-                new_mode != 'hide',      # hide outline
-                new_mode != 'bars',      # bars outline
-                new_mode != 'bars_ma',   # bars_ma outline
-                new_mode == 'hide')      # toggle outline
+                new_mode != 'hide',  # hide outline
+                new_mode != 'bars',  # bars outline
+                new_mode != 'bars_ma',  # bars_ma outline
+                new_mode == 'hide')  # toggle outline
 
     # NEW: Dynamic advanced indicator callbacks
     # This creates callbacks for all available indicators dynamically
@@ -196,8 +186,6 @@ def register_interactive_chart_callbacks(app):
             [State("overlay-indicators-store", "data")],
             prevent_initial_call=True
         )
-
-
         def toggle_advanced_overlay_indicators(*args):
             """Handle advanced overlay indicator toggles."""
             ctx = callback_context
@@ -238,8 +226,6 @@ def register_interactive_chart_callbacks(app):
             [State("oscillator-indicators-store", "data")],
             prevent_initial_call=True
         )
-
-
         def toggle_advanced_oscillator_indicators(*args):
             """Handle advanced oscillator indicator toggles."""
             ctx = callback_context
@@ -276,8 +262,6 @@ def register_interactive_chart_callbacks(app):
          Input("filtered-symbols-store", "data")],
         prevent_initial_call=False
     )
-
-
     def update_symbol_options(search_value, filtered_symbols):
         """Update symbol dropdown options based on search query and filtered symbols."""
         try:
@@ -290,8 +274,8 @@ def register_interactive_chart_callbacks(app):
                 # If user is searching, filter the already filtered symbols
                 if search_value and len(search_value) >= 1:
                     symbols = [s for s in symbols
-                             if search_value.upper() in s['symbol'].upper() or
-                                search_value.upper() in s.get('company_name', '').upper()]
+                               if search_value.upper() in s['symbol'].upper() or
+                               search_value.upper() in s.get('company_name', '').upper()]
 
             elif not search_value or len(search_value) < 1:
                 # Return top 10 symbols by default
@@ -334,9 +318,8 @@ def register_interactive_chart_callbacks(app):
         ],
         prevent_initial_call=False
     )
-
-
-    def update_interactive_chart(symbol, chart_type, overlay_indicators, oscillator_indicators, volume_display, refresh_clicks):
+    def update_interactive_chart(symbol, chart_type, overlay_indicators, oscillator_indicators, volume_display,
+                                 refresh_clicks):
         """Update interactive chart with technical indicators."""
         try:
             # Use selected symbol or default to ADBE
@@ -383,7 +366,6 @@ def register_interactive_chart_callbacks(app):
                 color_by_price=color_by_price
             )
 
-
             logger.info(f"Updated interactive chart for {symbol} with {len(chart_indicators)} indicators")
             return fig
 
@@ -400,8 +382,6 @@ def register_interactive_chart_callbacks(app):
         ],
         prevent_initial_call=True
     )
-
-
     def update_technical_analysis_summary(symbol, overlay_indicators, oscillator_indicators):
         """Update technical analysis summary."""
         try:
@@ -438,7 +418,7 @@ def register_interactive_chart_callbacks(app):
                         dbc.CardBody([
                             html.H6("30D Change", className="text-muted mb-1"),
                             html.H5(f"{price_change:+.2f}%",
-                                   className="text-success" if price_change >= 0 else "text-danger")
+                                    className="text-success" if price_change >= 0 else "text-danger")
                         ])
                     ])
                 ], width=2),  # Reduced from 3 to 2 to make room for volume
@@ -467,14 +447,13 @@ def register_interactive_chart_callbacks(app):
 
                 # Format volume in millions/billions
 
-
                 def format_volume(vol):
                     if vol >= 1e9:
-                        return f"{vol/1e9:.1f}B"
+                        return f"{vol / 1e9:.1f}B"
                     elif vol >= 1e6:
-                        return f"{vol/1e6:.1f}M"
+                        return f"{vol / 1e6:.1f}M"
                     elif vol >= 1e3:
-                        return f"{vol/1e3:.1f}K"
+                        return f"{vol / 1e3:.1f}K"
                     else:
                         return f"{vol:.0f}"
 
@@ -513,4 +492,3 @@ def register_interactive_chart_callbacks(app):
         except Exception as e:
             logger.error(f"Error updating technical analysis summary: {e}")
             return html.P(f"Error loading analysis: {str(e)}", className="text-danger text-center")
-

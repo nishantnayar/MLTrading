@@ -660,8 +660,8 @@ class InteractiveChartBuilder:
             yaxis={'visible': False},
             annotations=[{
                 'text': message,
-                'xre': 'paper',
-                'yre': 'paper',
+                'xref': 'paper',
+                'yref': 'paper',
                 'showarrow': False,
                 'font': {'size': 16, 'color': '#666666'},
                 'x': 0.5,

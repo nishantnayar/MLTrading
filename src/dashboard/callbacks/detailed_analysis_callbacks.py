@@ -833,8 +833,8 @@ def create_empty_chart(message):
                 'text': message,
                 'x': 0.5,
                 'y': 0.5,
-                'xre': 'paper',
-                'yre': 'paper',
+                'xref': 'paper',
+                'yref': 'paper',
                 'showarrow': False,
                 'font': {'size': 16, 'color': 'gray'}
             }]

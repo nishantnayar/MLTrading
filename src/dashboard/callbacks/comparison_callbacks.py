@@ -28,8 +28,6 @@ def register_comparison_callbacks(app):
         [Input("filtered-symbols-store", "data")],
         prevent_initial_call=False
     )
-
-
     def update_comparison_symbol_options(filtered_symbols):
         """Update comparison symbol dropdown options"""
         try:
@@ -75,8 +73,6 @@ def register_comparison_callbacks(app):
          State("comparison-symbol-3", "value")],
         prevent_initial_call=True
     )
-
-
     def update_comparison_results(compare_clicks, clear_clicks, symbol1, symbol2, symbol3):
         """Update comparison results based on selected symbols"""
         try:
@@ -348,8 +344,12 @@ def create_metrics_comparison_table(symbols):
                 html.Tr([
                     html.Td(row['Symbol'], className="fw-bold"),
                     html.Td(row['Current Price']),
-                    html.Td(row['Change ($)'], className="text-success" if "$" in str(row['Change ($)']) and float(row['Change ($)'].replace('$', '')) > 0 else "text-danger" if "$" in str(row['Change ($)']) else ""),
-                    html.Td(row['Change (%)'], className="text-success" if "%" in str(row['Change (%)']) and float(row['Change (%)'].replace('%', '')) > 0 else "text-danger" if "%" in str(row['Change (%)']) else ""),
+                    html.Td(row['Change ($)'], className="text-success" if "$" in str(row['Change ($)']) and float(
+                        row['Change ($)'].replace('$', '')) > 0 else "text-danger" if "$" in str(
+                        row['Change ($)']) else ""),
+                    html.Td(row['Change (%)'], className="text-success" if "%" in str(row['Change (%)']) and float(
+                        row['Change (%)'].replace('%', '')) > 0 else "text-danger" if "%" in str(
+                        row['Change (%)']) else ""),
                     html.Td(row['Avg Volume (7d)']),
                     html.Td(row['Data Points'])
                 ]) for row in metrics_data
@@ -361,4 +361,3 @@ def create_metrics_comparison_table(symbols):
     except Exception as e:
         logger.error(f"Error creating metrics table: {e}")
         return html.P("Error loading metrics comparison", className="text-danger")
-

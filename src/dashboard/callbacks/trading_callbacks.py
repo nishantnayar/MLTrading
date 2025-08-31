@@ -26,8 +26,6 @@ def register_trading_callbacks(app):
          Output("trading-connection-status", "color")],
         [Input("trading-data-interval", "n_intervals")]
     )
-
-
     def update_connection_status(n_intervals):
         """Update Alpaca connection status"""
         try:
@@ -60,8 +58,6 @@ def register_trading_callbacks(app):
         [Input("refresh-account-btn", "n_clicks"),
          Input("trading-data-interval", "n_intervals")]
     )
-
-
     def update_account_info(refresh_clicks, n_intervals):
         """Update account information display"""
         try:
@@ -78,8 +74,6 @@ def register_trading_callbacks(app):
         [Input("refresh-positions-btn", "n_clicks"),
          Input("trading-data-interval", "n_intervals")]
     )
-
-
     def update_positions_table(refresh_clicks, n_intervals):
         """Update positions table"""
         try:
@@ -96,8 +90,6 @@ def register_trading_callbacks(app):
         [Input("refresh-orders-btn", "n_clicks"),
          Input("trading-data-interval", "n_intervals")]
     )
-
-
     def update_orders_table(refresh_clicks, n_intervals):
         """Update orders table"""
         try:
@@ -120,10 +112,8 @@ def register_trading_callbacks(app):
          State("trade-quantity-input", "value"),
          State("order-confirmation-modal", "is_open")]
     )
-
-
     def handle_trading_modal(buy_clicks, sell_clicks, cancel_clicks, confirm_clicks,
-                           symbol, quantity, is_open):
+                             symbol, quantity, is_open):
         """Handle trading order modal"""
         ctx = callback_context
 
@@ -186,8 +176,6 @@ def register_trading_callbacks(app):
          State("trading-log", "children")],
         prevent_initial_call=True
     )
-
-
     def execute_trade_order(confirm_clicks, symbol, quantity, current_log):
         """Execute the confirmed trade order"""
         if not confirm_clicks:
@@ -251,11 +239,8 @@ def register_trading_callbacks(app):
         [Input("confirm-order-modal", "n_clicks")],
         prevent_initial_call=True
     )
-
-
     def clear_trade_inputs(confirm_clicks):
         """Clear trade input fields after order submission"""
         if confirm_clicks:
             return "", ""
         return dash.no_update, dash.no_update
-
