@@ -62,7 +62,7 @@ class MarketDataService(BaseDashboardService):
                 df = df.sort_values('timestamp')
 
                 # Log data before cleaning
-                # original_count = len(df)  # Currently unused
+                original_count = len(df)
 
                 # Only remove rows where essential OHLC data is missing
                 # Keep rows with missing volume or other non-essential data
@@ -101,7 +101,7 @@ class MarketDataService(BaseDashboardService):
 
             if not df.empty:
                 # Log data before cleaning
-                # original_count = len(df)  # Currently unused
+                original_count = len(df)
 
                 # Convert timestamp column
                 df['timestamp'] = pd.to_datetime(df['timestamp'])
@@ -159,7 +159,7 @@ class MarketDataService(BaseDashboardService):
                 df['timestamp'] = pd.to_datetime(df['timestamp'])
 
                 # Log data before cleaning
-                # original_count = len(df)  # Currently unused
+                original_count = len(df)
 
                 # Convert numeric columns and log any conversion issues
                 numeric_columns = ['open', 'high', 'low', 'close', 'volume']

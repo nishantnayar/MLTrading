@@ -202,7 +202,7 @@ def alert_on_failure(
                 return func(*args, **kwargs)
 
             func_name = func.__name__
-            # start_time = datetime.now(timezone.utc)  # Currently unused
+            start_time = datetime.now(timezone.utc)
 
             try:
                 result = func(*args, **kwargs)
@@ -298,7 +298,7 @@ def alert_on_long_runtime(
         def wrapper(*args, **kwargs):
             alert_manager = get_alert_manager()
             func_name = func.__name__
-            # start_time = datetime.now(timezone.utc)  # Currently unused
+            start_time = datetime.now(timezone.utc)
 
             try:
                 result = func(*args, **kwargs)

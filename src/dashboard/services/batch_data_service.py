@@ -79,7 +79,7 @@ class BatchDataService(BaseDashboardService):
                     df = pd.DataFrame(data)
                     # Ensure proper data types
                     numeric_columns = ['open', 'high', 'low', 'close', 'volume']
-                    # original_count = len(df)  # Currently unused
+                    original_count = len(df)
                     for col in numeric_columns:
                         if col in df.columns:
                             df[col] = pd.to_numeric(df[col], errors='coerce')

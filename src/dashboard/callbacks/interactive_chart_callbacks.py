@@ -20,7 +20,7 @@ def register_interactive_chart_callbacks(app):
 
     chart_builder = InteractiveChartBuilder()
     market_service = MarketDataService()
-    # indicator_service = TechnicalIndicatorService()  # Currently unused
+    indicator_service = TechnicalIndicatorService()
 
     # NEW: Toggle advanced controls
     @app.callback(
@@ -89,7 +89,7 @@ def register_interactive_chart_callbacks(app):
             return current_indicators or ['sma', 'ema'], False, False, True
 
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-        # indicators = set(current_indicators or ['sma', 'ema'])  # Currently unused
+        indicators = set(current_indicators or ['sma', 'ema'])
 
         indicator_map = {
             'indicator-sma-btn': 'sma',
@@ -179,7 +179,7 @@ def register_interactive_chart_callbacks(app):
     # NEW: Dynamic advanced indicator callbacks
     # This creates callbacks for all available indicators dynamically
     indicator_service_temp = TechnicalIndicatorService()
-    # chart_config = indicator_service_temp.get_indicator_config()  # Currently unused
+    chart_config = indicator_service_temp.get_indicator_config()
 
     # Get overlay indicators
     overlay_indicators = [key for key, config in chart_config.items() if config.get('type') == 'overlay']

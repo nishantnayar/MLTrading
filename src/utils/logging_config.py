@@ -623,7 +623,7 @@ def log_operation(operation_name: str, logger: logging.Logger = None,
         logger = get_combined_logger("mltrading.operation")
 
     correlation_id = get_correlation_id()
-    # start_time = time.time()  # Currently unused
+    start_time = time.time()
 
     # Sanitize metadata
     clean_metadata = {k: sanitize_log_message(str(v)) for k, v in metadata.items()}

@@ -295,7 +295,7 @@ class ResilientDatabaseLogger:
 
     def flush(self):
         """Force flush pending logs"""
-        # start_time = time.time()  # Currently unused
+        start_time = time.time()
         while not self.log_queue.empty() and time.time() - start_time < 5:
             time.sleep(0.1)
 
@@ -506,7 +506,7 @@ def cleanup_resilient_loggers():
 def resilient_log_performance(operation_name: str, component: str = None, **metadata):
     """Context manager for resilient performance logging"""
     perf_logger = get_resilient_performance_logger()
-    # start_time = time.time()  # Currently unused
+    start_time = time.time()
 
     try:
         yield

@@ -237,7 +237,7 @@ class DatabaseLogHandler(logging.Handler):
         Flush any pending log records
         """
         # Signal the writer thread to flush
-        # start_time = time.time()  # Currently unused
+        start_time = time.time()
         while not self.log_queue.empty() and time.time() - start_time < 5:
             time.sleep(0.1)
 
@@ -723,7 +723,7 @@ def log_performance_to_db(operation_name: str, component: str = None, **metadata
         **metadata: Additional metadata
     """
     perf_logger = PerformanceLogger()
-    # start_time = time.time()  # Currently unused
+    start_time = time.time()
 
     try:
         yield

@@ -52,7 +52,7 @@ class SequentialTaskRunner:
 
         for i, item in enumerate(items):
             try:
-                # start_time = time.time()  # Currently unused
+                start_time = time.time()
 
                 # Process item
                 result = await self._run_task(func, item)

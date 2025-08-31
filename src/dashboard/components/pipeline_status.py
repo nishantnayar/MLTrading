@@ -354,7 +354,7 @@ def create_pipeline_run_table(runs: List[Dict]) -> html.Div:
         state_name = state.get('name', 'Unknown')
 
         # Format timestamps
-        # start_time = run.get('start_time', '')  # Currently unused
+        start_time = run.get('start_time', '')
         end_time = run.get('end_time', '')
         duration = 'N/A'
 
@@ -370,7 +370,7 @@ def create_pipeline_run_table(runs: List[Dict]) -> html.Div:
                 duration = f"{minutes}m {seconds}s"
 
                 # Format start time
-                # start_time = start_dt.strftime('%Y-%m-%d %H:%M')  # Currently unused
+                start_time = start_dt.strftime('%Y-%m-%d %H:%M')
         except Exception:
             pass
 

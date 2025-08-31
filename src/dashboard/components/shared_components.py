@@ -27,7 +27,7 @@ def create_chart_card(chart_id, height=DEFAULT_CHART_HEIGHT, config=None):
     Returns:
         dbc.Card: Chart card component
     """
-    # chart_config = config or {'displayModeBar': True, 'displaylogo': False}  # Currently unused
+    chart_config = config or {'displayModeBar': True, 'displaylogo': False}
 
     return dbc.Card([
         dbc.CardBody([

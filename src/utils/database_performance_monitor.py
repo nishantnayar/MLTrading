@@ -78,7 +78,7 @@ class DatabasePerformanceMonitor:
         with monitor.monitor_query("SELECT * FROM feature_engineered_data WHERE symbol = %s", ("AAPL",)):
             result = execute_query(...)
         """
-        # start_time = time.time()  # Currently unused
+        start_time = time.time()
         query_hash = str(hash(sql.strip()[:100]))
 
         try:
@@ -385,7 +385,7 @@ class DatabasePerformanceMonitor:
                     }
 
                     for test_name, sql in test_queries.items():
-                        # start_time = time.time()  # Currently unused
+                        start_time = time.time()
                         try:
                             cur.execute(sql)
                             cur.fetchall()  # Ensure all data is fetched

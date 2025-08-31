@@ -90,7 +90,7 @@ def fetch_stock_info(symbol: str) -> Dict[str, Any]:
     """
     with log_operation(f"fetch_stock_info_{symbol}", logger, symbol=symbol, data_source='yahoo'):
         try:
-            # start_time = time.time()  # Currently unused
+            start_time = time.time()
             ticker = yf.Ticker(symbol)
             info = ticker.info
             duration_ms = (time.time() - start_time) * 1000
@@ -172,7 +172,7 @@ def fetch_yahoo_data(symbol: str, period: str = '2y', interval: str = '1h') -> p
     """Fetch data from Yahoo Finance."""
     with log_operation(f"fetch_yahoo_data_{symbol}", logger, symbol=symbol, period=period, interval=interval):
         try:
-            # start_time = time.time()  # Currently unused
+            start_time = time.time()
             ticker = yf.Ticker(symbol)
 
             # Try to fetch data with the requested interval
@@ -403,7 +403,7 @@ def extract_and_load_data(symbols: List[str], period: str = '3d', interval: str 
                 # Fetch stock information first
                 try:
                     with log_operation(f"store_stock_info_{symbol}", logger, symbol=symbol):
-                        # start_time = time.time()  # Currently unused
+                        start_time = time.time()
                         stock_info = fetch_stock_info(symbol)
                         db_manager.insert_stock_info(stock_info)
                         duration_ms = (time.time() - start_time) * 1000
@@ -448,7 +448,7 @@ def extract_and_load_data(symbols: List[str], period: str = '3d', interval: str 
                     try:
                         with log_operation(f"store_market_data_{symbol}", logger,
                                          symbol=symbol, record_count=len(data_list)):
-                            # start_time = time.time()  # Currently unused
+                            start_time = time.time()
                             # Insert data into database
                             db_manager.insert_market_data(data_list)
                             duration_ms = (time.time() - start_time) * 1000
