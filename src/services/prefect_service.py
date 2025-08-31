@@ -314,9 +314,9 @@ class PrefectService:
                 if end_time:
                     # Parse the timestamp
                     if isinstance(end_time, str):
-                        # last_update = datetime.fromisoformat(end_time.replace('Z', '+00:00'))  # Currently unused
+                        last_update = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
                     else:
-                        # last_update = end_time  # Currently unused
+                        last_update = end_time
 
                     # Calculate freshness
                     now = datetime.now().astimezone()

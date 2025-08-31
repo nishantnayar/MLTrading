@@ -353,7 +353,7 @@ class OptimizedFeatureDataService(BaseDashboardService):
 
     def invalidate_symbol_cache(self, symbol: str):
         """Invalidate all cached data for a symbol (useful after data updates)"""
-        # cache_keys = [  # Currently unused
+        cache_keys = [
             f"core_features_{symbol}_30",
             f"technical_features_{symbol}_30",
             f"advanced_features_{symbol}_30"
