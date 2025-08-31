@@ -360,7 +360,7 @@ class DatabaseLogManager:
         Returns:
             Performance summary
         """
-        # start_time = datetime.now(timezone.utc) - timedelta(hours=hours)  # Currently unused
+        start_time = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         try:
             with self.db_manager.get_connection() as conn:

@@ -487,7 +487,7 @@ class CustomPairsTradingStrategy(BaseStrategy):
             if not signal.metadata or 'pair_name' not in signal.metadata:
                 return 0
 
-            # pair_name = signal.metadata['pair_name']  # Currently unused
+            pair_name = signal.metadata['pair_name']
             hedge_ratio = signal.metadata.get('hedge_ratio', 1.0)
 
             # Find the pair configuration
@@ -521,7 +521,7 @@ class CustomPairsTradingStrategy(BaseStrategy):
             super().update_position(symbol, fill_data)
 
             # Check if this is part of a pair trade
-            # pair_name = fill_data.get('pair_name')  # Currently unused
+            pair_name = fill_data.get('pair_name')
             if pair_name and pair_name not in self.active_trades:
                 # This could be the first leg of a pair trade
                 # In practice, you'd want more sophisticated order management

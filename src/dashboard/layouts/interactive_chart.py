@@ -674,7 +674,7 @@ class InteractiveChartBuilder:
 
 def create_chart_controls() -> html.Div:
     """Create interactive chart control panel."""
-    # indicator_service = TechnicalIndicatorService()  # Currently unused
+    indicator_service = TechnicalIndicatorService()
     chart_config = indicator_service.get_indicator_config()
 
     # Organize indicators by type
@@ -851,7 +851,7 @@ def create_chart_controls() -> html.Div:
 
 def create_indicator_info_panel() -> html.Div:
     """Create indicator information panel."""
-    # indicator_service = TechnicalIndicatorService()  # Currently unused
+    indicator_service = TechnicalIndicatorService()
     chart_config = indicator_service.get_indicator_config()
 
     indicator_cards = []

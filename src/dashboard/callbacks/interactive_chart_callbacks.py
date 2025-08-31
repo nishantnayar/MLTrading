@@ -369,6 +369,7 @@ def register_interactive_chart_callbacks(app):
             color_by_price = True  # Always color by price for better visuals
 
             # Use indicators or default
+            indicators = (overlay_indicators or []) + (oscillator_indicators or [])
             chart_indicators = indicators or []
 
             # Create advanced chart

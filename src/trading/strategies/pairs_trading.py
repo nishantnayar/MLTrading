@@ -669,7 +669,7 @@ class PairsTradingStrategy(BaseStrategy):
 
             # Check if this fill completes a pairs trade entry
             pair_trade = fill_data.get('pair_trade')
-            # pair_name = fill_data.get('pair_name')  # Currently unused
+            pair_name = fill_data.get('pair_name')
 
             if pair_trade and pair_name:
                 # Find the corresponding pair
