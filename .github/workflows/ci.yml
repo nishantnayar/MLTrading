@@ -49,7 +49,7 @@ jobs:
     - name: Test with pytest
       run: |
         # Run core unit tests that are stable
-        pytest tests/unit/dashboard/ tests/unit/indicators/ tests/test_callback_regression.py -v \
+        pytest tests/unit/dashboard/ tests/unit/indicators/ tests/regression/test_callback_regression.py -v \
           --cov=src --cov-report=term-missing --cov-report=xml
         
         # Run additional stable tests  

@@ -328,7 +328,9 @@ class AlpacaService:
             next_trading_day = None
             
             for day in calendar:
-                if day.date >= today:
+                # Handle both pandas Timestamp and datetime.date objects
+                day_date = day.date.date() if hasattr(day.date, 'date') else day.date
+                if day_date >= today:
                     next_trading_day = day
                     break
             
@@ -345,7 +347,9 @@ class AlpacaService:
             # If market is closed and it's after market close, find next trading day
             # Check if market is closed and we need to find next trading day
             market_open_time = next_trading_day.open.time() if hasattr(next_trading_day.open, 'time') else next_trading_day.open
-            if not clock.is_open and not (next_trading_day.date == today and current_time.time() < market_open_time):
+            # Handle both pandas Timestamp and datetime.date objects for next_trading_day.date
+            next_trading_day_date = next_trading_day.date.date() if hasattr(next_trading_day.date, 'date') else next_trading_day.date
+            if not clock.is_open and not (next_trading_day_date == today and current_time.time() < market_open_time):
                 # Market is closed, find next trading day
                 found_next = False
                 for day in calendar[1:]:  # Skip today

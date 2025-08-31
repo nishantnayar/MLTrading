@@ -50,10 +50,19 @@ A comprehensive machine learning-based trading system with **professional-grade 
 - **Lazy Loading**: Heavy analysis components load on-demand
 - **Memory Efficient**: 60% reduction in initial memory usage
 
+### 📧 **Alert System**
+- **Email Notifications**: Yahoo Mail integration with app password support
+- **Multi-Level Severity**: Critical, High, Medium, Low, Info alert levels
+- **Rate Limiting**: Prevents alert spam with configurable hourly/daily limits
+- **Circuit Breaker**: Resilient email service with automatic failure recovery
+- **Prefect Integration**: Context-aware alerts for workflows, tasks, and system events
+- **Alert Categories**: Trading errors, system health, data pipeline, security alerts
+
 ## 📚 Documentation
 
 ### 📖 Complete Guides
-- **[📚 Main Documentation](docs/DOCUMENTATION.md)** - Complete system documentation and setup guide
+- **[📚 Main Documentation](docs/index.md)** - Complete system documentation and setup guide
+- **[📧 Alert System Guide](docs/alerts/index.md)** - Comprehensive alert system documentation with Prefect integration
 - **[📚 Technical API Guide](docs/TECHNICAL_API_GUIDE.md)** - API documentation and service architecture  
 - **[🏗️ Trading System Architecture](docs/TRADING_SYSTEM_ARCHITECTURE.md)** - Complete trading engine and pairs strategy implementation
 - **[🚀 Implementation Guide](docs/IMPLEMENTATION_GUIDE.md)** - Performance optimizations and chart features
@@ -74,6 +83,8 @@ A comprehensive machine learning-based trading system with **professional-grade 
 - ✅ **Multi-Deployment Support**: Configuration-driven deployment monitoring
 - ✅ **Dashboard System Health**: Real-time pipeline status with intelligent health metrics
 - ✅ **Repository Organization**: Clean directory structure with consolidated run commands
+- ✅ **Alert System**: Comprehensive email notification system with Yahoo Mail integration
+- ✅ **Prefect Alert Integration**: Context-aware alerts for workflow monitoring and error reporting
 - 🔄 **ML Pipeline**: Feature engineering in development
 - 🔄 **Live Trading**: Alpaca integration in progress
 
@@ -103,23 +114,46 @@ A comprehensive machine learning-based trading system with **professional-grade 
    pip install alpaca-trade-api==3.1.1
    ```
 
-3. **Set up database**:
+3. **Configure environment**:
+   ```bash
+   # Copy environment template
+   cp .env.example .env
+   
+   # Edit .env file with your settings:
+   # - Database credentials
+   # - Email alert configuration (Yahoo Mail)
+   # - API keys (if using)
+   ```
+
+4. **Set up database**:
    ```bash
    # PostgreSQL credentials:
    # Host: localhost, Port: 5432
-   # Database: mltrading, User: postgres, Password: nishant
+   # Database: mltrading, User: postgres, Password: your_password
    
    # Create tables:
    psql -h localhost -U postgres -d mltrading -f src/data/storage/create_tables.sql
    ```
 
-4. **Load market data**:
+5. **Load market data**:
    ```bash
    # Extract historical data from Yahoo Finance
    python run.py collector
    ```
 
-5. **Run the application**:
+6. **Test alert system** (optional):
+   ```bash
+   # Test basic alert functionality
+   python -m pytest tests/alerts/test_alert_system.py -v
+   
+   # Test email sending (requires Yahoo Mail setup)  
+   python -m pytest tests/alerts/test_email_alert.py -v
+   
+   # Or run all alert tests
+   python -m pytest tests/alerts/ -v
+   ```
+
+7. **Run the application**:
    ```bash
    python run.py ui
    ```
@@ -354,6 +388,50 @@ python scripts/run_tests.py --type integration # Integration tests
 
 ## ⚙️ Configuration
 
+### Alert System Setup
+
+#### Yahoo Mail Configuration
+1. **Enable 2-factor authentication** on your Yahoo account
+2. **Generate app password**: Account Security → App passwords → Mail
+3. **Configure environment variables**:
+   ```bash
+   # .env file
+   EMAIL_SENDER=your_email@yahoo.com
+   EMAIL_PASSWORD=your_16_character_app_password
+   ALERT_RECIPIENT_EMAIL=your_email@yahoo.com
+   ```
+
+#### Alert Configuration
+```yaml
+# config/config.yaml
+email_alerts:
+  enabled: true
+  smtp_server: "smtp.mail.yahoo.com"
+  smtp_port: 587
+  use_tls: true
+
+alerts:
+  enabled: true
+  min_severity: "MEDIUM"  # CRITICAL, HIGH, MEDIUM, LOW, INFO
+  rate_limiting:
+    enabled: true
+    max_alerts_per_hour: 10
+    max_alerts_per_day: 50
+  alert_categories:
+    trading_errors:
+      enabled: true
+      severity: "HIGH"
+    system_health:
+      enabled: true
+      severity: "MEDIUM"
+    data_pipeline:
+      enabled: true
+      severity: "MEDIUM"
+    security:
+      enabled: true
+      severity: "CRITICAL"
+```
+
 ### Database Settings
 ```python
 # PostgreSQL Connection (src/data/storage/database.py)
@@ -362,7 +440,7 @@ DatabaseManager(
     port=5432,
     database='mltrading',
     user='postgres', 
-    password='nishant'
+    password='your_password'
 )
 ```
 

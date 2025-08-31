@@ -18,6 +18,8 @@ nav:
     - Quick Start: guides/quickstart.md
     - Configuration: guides/configuration.md
     - Deployment: deployment/deployments.md
+  - Alert System:
+    - Overview: alerts/index.md
   - Architecture:
     - System Overview: architecture/SYSTEM_ARCHITECTURE.md
     - Connection Pool Solution: architecture/CONNECTION_POOL_SOLUTION.md
@@ -26,6 +28,13 @@ nav:
     - Deployment Testing: deployment/TESTING-DEPLOYMENTS.md
   - Troubleshooting:
     - Connection Issues: troubleshooting/TROUBLESHOOTING-CONNECTION-ISSUES.md
+    - Database Issues: database/DATABASE_TROUBLESHOOTING.md
+  - Database:
+    - Schema Overview: database/DATABASE_SCHEMA.md
+    - Entity Relationships: database/ENTITY_RELATIONSHIPS.md
+    - Operations Guide: database/DATABASE_OPERATIONS.md
+    - Performance Optimization: database/FEATURE_TABLE_OPTIMIZATION.md
+    - Troubleshooting: database/DATABASE_TROUBLESHOOTING.md
   - API Reference: 
     - API Documentation: api/index.md
   - About: about.md
@@ -51,7 +60,11 @@ markdown_extensions:
       anchor_linenums: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - toc:
       permalink: true
 

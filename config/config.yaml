@@ -214,3 +214,37 @@ retry_settings:
     base_delay: 0.5
     max_delay: 10.0
     jitter: true
+
+# Email Alert Configuration
+email_alerts:
+  enabled: true
+  smtp_server: "smtp.mail.yahoo.com"
+  smtp_port: 587
+  sender_email: ""  # Set via EMAIL_SENDER environment variable
+  sender_password: ""  # Set via EMAIL_PASSWORD environment variable (use app password for Yahoo)
+  recipient_email: ""  # Set via ALERT_RECIPIENT_EMAIL environment variable
+  use_tls: true
+  timeout: 30
+  
+# Alert Configuration
+alerts:
+  enabled: true
+  # Alert severity levels: CRITICAL, HIGH, MEDIUM, LOW, INFO
+  min_severity: "MEDIUM"  # Only send alerts at this level or higher
+  rate_limiting:
+    enabled: true
+    max_alerts_per_hour: 10
+    max_alerts_per_day: 50
+  alert_categories:
+    trading_errors:
+      enabled: true
+      severity: "HIGH"
+    system_health:
+      enabled: true
+      severity: "MEDIUM"
+    data_pipeline:
+      enabled: true
+      severity: "MEDIUM"
+    security:
+      enabled: true
+      severity: "CRITICAL"

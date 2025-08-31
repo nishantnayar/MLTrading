@@ -77,7 +77,7 @@ def run_automated_tests():
         # Run pytest with timeout and optimization settings
         result = subprocess.run([
             sys.executable, "-m", "pytest",
-            "tests/test_dashboard_regression.py",
+            "tests/regression/test_dashboard_regression.py",
             "-v", "--tb=short",
             "--timeout=120",  # 2 minute timeout per test
             "--disable-warnings",
