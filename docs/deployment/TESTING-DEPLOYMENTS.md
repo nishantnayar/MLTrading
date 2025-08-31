@@ -153,10 +153,10 @@ def test_database_readiness():
 ```python
 # Test feature engineering system readiness
 def test_feature_engineering_components():
-    from src.data.processors.feature_engineering import FeatureEngineerPhase1And2
+    from src.data.processors.feature_engineering import TradingFeatureEngine
     
     # Test instantiation
-    engineer = FeatureEngineerPhase1And2()
+    engineer = TradingFeatureEngine()
     
     # Test database connection through feature engineering
     conn = engineer.db_manager.get_connection()
@@ -330,7 +330,7 @@ test_stages:
 
 - [ ] **Function Import Test**: All deployment functions import successfully
 - [ ] **Database Connectivity**: Database connection and essential tables verified
-- [ ] **Feature Engineering Ready**: FeatureEngineerPhase1And2 instantiates correctly
+- [ ] **Feature Engineering Ready**: TradingFeatureEngine instantiates correctly
 - [ ] **Subprocess Isolation**: Process isolation working correctly
 - [ ] **Configuration Valid**: All YAML configuration files are valid
 - [ ] **Test Deployment Success**: Test deployment completes with 100% success

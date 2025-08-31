@@ -117,7 +117,7 @@ def calculate_features_for_symbol(symbol: str, initial_run: bool = False) -> Dic
         logger.info(f"Calculating Phase 1+2 features for {symbol} - {run_type} RUN")
         
         engine = TradingFeatureEngine()
-        success = engineer.process_symbol_phase1_and_phase2(symbol, initial_run=initial_run)
+        success = engine.process_symbol_phase1_and_phase2(symbol, initial_run=initial_run)
         
         return {
             'symbol': symbol,

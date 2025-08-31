@@ -21,14 +21,24 @@ Get up and running with MLTrading in minutes.
    pip install -r requirements.txt
    ```
 
-3. **Configure database**:
+3. **Configure system**:
+   Create `.env` file with your database credentials:
    ```bash
-   # Set your PostgreSQL connection details
-   export DB_HOST=localhost
-   export DB_PORT=5432
-   export DB_NAME=mltrading
-   export DB_USER=your_user
-   export DB_PASSWORD=your_password
+   # Database password (required)
+   DB_PASSWORD=your_password
+   
+   # Alpaca API keys (optional, for trading features)
+   ALPACA_PAPER_API_KEY=your_paper_key
+   ALPACA_PAPER_SECRET_KEY=your_paper_secret
+   ```
+   
+   Edit `config/config.yaml` if you need to change default settings:
+   ```yaml
+   database:
+     host: localhost
+     port: 5432
+     name: mltrading
+     user: postgres
    ```
 
 4. **Initialize database**:

@@ -59,6 +59,20 @@ Complete developer reference for the ML Trading System with interactive examples
 
 ## System Configuration
 
+### Unified Settings
+::: config.settings
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
+
+### Deployment Configuration
+::: utils.deployment_config
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
+
 ### Logging System
 ::: utils.logging_config
     options:
@@ -66,15 +80,14 @@ Complete developer reference for the ML Trading System with interactive examples
       show_source: true
       heading_level: 3
 
-### Database Configuration
-::: utils.connection_config
+### Enhanced Error Handling
+::: utils.circuit_breaker
     options:
       show_root_heading: true
       show_source: true
       heading_level: 3
 
-### Production Logging
-::: utils.production_logging
+::: utils.retry_decorators
     options:
       show_root_heading: true
       show_source: true
