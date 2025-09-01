@@ -20,8 +20,6 @@ trading_logger = get_trading_logger()
 
 
 @dataclass
-
-
 class TradingPair:
     """Represents a trading pair with its statistical properties"""
     symbol_a: str
@@ -35,11 +33,8 @@ class TradingPair:
     last_updated: datetime
 
     @property
-
-
     def pair_name(self) -> str:
         return f"{self.symbol_a}_{self.symbol_b}"
-
 
     def is_valid(self, min_correlation: float = 0.7, max_pvalue: float = 0.05) -> bool:
         """Check if pair meets statistical criteria"""
@@ -49,8 +44,6 @@ class TradingPair:
 
 
 @dataclass
-
-
 class PairPosition:
     """Represents an active pairs trade position"""
     pair: TradingPair
@@ -79,14 +72,13 @@ class PairsTradingStrategy(BaseStrategy):
     - Risk management with stop losses and position limits
     """
 
-
     def __init__(self,
                  symbols: List[str],
                  lookback_period: int = 252,  # 1 year for correlation
                  min_correlation: float = 0.75,
                  max_cointegration_pvalue: float = 0.05,
                  entry_threshold: float = 2.0,  # Z-score for entry
-                 exit_threshold: float = 0.5,   # Z-score for exit
+                 exit_threshold: float = 0.5,  # Z-score for exit
                  stop_loss_threshold: float = 3.0,  # Z-score for stop loss
                  max_pairs: int = 5,
                  rebalance_frequency_days: int = 30,
@@ -144,14 +136,12 @@ class PairsTradingStrategy(BaseStrategy):
 
         logger.info(f"Pairs trading strategy initialized with {len(symbols)} symbols")
 
-
     def initialize(self, **kwargs):
         """Initialize the pairs trading strategy"""
         super().initialize(**kwargs)
 
         # Initial pair selection will happen on first signal generation
         self.logger.info("Pairs trading strategy ready for pair selection")
-
 
     def _calculate_correlation_matrix(self, price_data: Dict[str, pd.Series]) -> pd.DataFrame:
         """Calculate correlation matrix for all symbols"""
@@ -175,7 +165,6 @@ class PairsTradingStrategy(BaseStrategy):
         except Exception as e:
             self.logger.error(f"Error calculating correlation matrix: {e}")
             return pd.DataFrame()
-
 
     def _test_cointegration(self, series_a: pd.Series, series_b: pd.Series) -> Tuple[float, float, float]:
         """
@@ -216,7 +205,6 @@ class PairsTradingStrategy(BaseStrategy):
             self.logger.error(f"Error in cointegration test: {e}")
             return 1.0, 1.0, float('inf')
 
-
     def _calculate_half_life(self, spread: pd.Series) -> float:
         """Calculate the half-life of mean reversion for a spread"""
         try:
@@ -254,7 +242,6 @@ class PairsTradingStrategy(BaseStrategy):
             self.logger.error(f"Error calculating half-life: {e}")
             return float('inf')
 
-
     def _select_trading_pairs(self, market_data: Dict[str, pd.DataFrame]) -> List[TradingPair]:
         """
         Select the best trading pairs based on statistical criteria
@@ -288,7 +275,7 @@ class PairsTradingStrategy(BaseStrategy):
                 symbols = list(price_data.keys())
 
                 for i, symbol_a in enumerate(symbols):
-                    for j, symbol_b in enumerate(symbols[i+1:], i+1):
+                    for j, symbol_b in enumerate(symbols[i + 1:], i + 1):
                         correlation = correlation_matrix.loc[symbol_a, symbol_b]
 
                         # Skip if correlation is too low
@@ -352,7 +339,6 @@ class PairsTradingStrategy(BaseStrategy):
             self.logger.error(f"Error selecting trading pairs: {e}")
             return []
 
-
     def _calculate_spread_zscore(self, pair: TradingPair, current_price_a: float, current_price_b: float) -> float:
         """Calculate the current Z-score of the spread"""
         try:
@@ -362,7 +348,6 @@ class PairsTradingStrategy(BaseStrategy):
         except Exception as e:
             self.logger.error(f"Error calculating spread Z-score for {pair.pair_name}: {e}")
             return 0.0
-
 
     def generate_signals(self, market_data: Dict[str, pd.DataFrame]) -> List[StrategySignal]:
         """
@@ -380,8 +365,7 @@ class PairsTradingStrategy(BaseStrategy):
             # Check if we need to update pair selection
             current_date = datetime.now(timezone.utc)
             if (self.last_pair_selection_date is None or
-                (current_date - self.last_pair_selection_date).days >= self.rebalance_frequency_days):
-
+                    (current_date - self.last_pair_selection_date).days >= self.rebalance_frequency_days):
                 self.logger.info("Updating pair selection")
                 self.available_pairs = self._select_trading_pairs(market_data)
                 self.last_pair_selection_date = current_date
@@ -424,9 +408,8 @@ class PairsTradingStrategy(BaseStrategy):
 
         return signals
 
-
     def _check_entry_signals(self, pair: TradingPair, z_score: float,
-                           price_a: float, price_b: float) -> List[StrategySignal]:
+                             price_a: float, price_b: float) -> List[StrategySignal]:
         """Check for entry signals on a pair"""
         signals = []
 
@@ -507,9 +490,8 @@ class PairsTradingStrategy(BaseStrategy):
 
         return signals
 
-
     def _check_exit_signals(self, position: PairPosition, z_score: float,
-                          price_a: float, price_b: float) -> List[StrategySignal]:
+                            price_a: float, price_b: float) -> List[StrategySignal]:
         """Check for exit signals on an active position"""
         signals = []
 
@@ -608,13 +590,12 @@ class PairsTradingStrategy(BaseStrategy):
                     ))
 
                 self.logger.info(f"Exit signal: Close {position.pair.pair_name} position "
-                               f"(reason: {exit_reason}, Z-score: {z_score:.2f})")
+                                 f"(reason: {exit_reason}, Z-score: {z_score:.2f})")
 
         except Exception as e:
             self.logger.error(f"Error checking exit signals for position: {e}")
 
         return signals
-
 
     def calculate_position_size(self, signal: StrategySignal, available_capital: float) -> int:
         """
@@ -661,7 +642,6 @@ class PairsTradingStrategy(BaseStrategy):
             self.logger.error(f"Error calculating position size for pairs trade: {e}")
             return 0
 
-
     def update_position(self, symbol: str, fill_data: Dict[str, Any]):
         """Update pairs position after order fill"""
         try:
@@ -683,7 +663,6 @@ class PairsTradingStrategy(BaseStrategy):
 
         except Exception as e:
             self.logger.error(f"Error updating pairs position: {e}")
-
 
     def get_pairs_status(self) -> Dict[str, Any]:
         """Get detailed status of pairs trading strategy"""
@@ -713,4 +692,3 @@ class PairsTradingStrategy(BaseStrategy):
                 for pos in self.active_pairs.values()
             ]
         }
-

@@ -26,9 +26,9 @@ class ConnectionConfig:
     MAX_POOL_SIZE = 1  # Single connection per process - most conservative
 
     # Alternative configurations based on workload
-    SEQUENTIAL_POOL_SIZE = 1    # For sequential processing
-    BATCH_POOL_SIZE = 2         # For small batch processing
-    CONCURRENT_POOL_SIZE = 3    # Only for non-connection intensive tasks
+    SEQUENTIAL_POOL_SIZE = 1  # For sequential processing
+    BATCH_POOL_SIZE = 2  # For small batch processing
+    CONCURRENT_POOL_SIZE = 3  # Only for non-connection intensive tasks
 
     # Connection timeout and retry settings
     CONNECTION_TIMEOUT = 30  # seconds
@@ -36,8 +36,6 @@ class ConnectionConfig:
     POOL_RETRY_DELAY = 0.5  # seconds
 
     @classmethod
-
-
     def get_pool_config(cls) -> Dict[str, Any]:
         """Get connection pool configuration"""
         return {
@@ -47,8 +45,6 @@ class ConnectionConfig:
         }
 
     @classmethod
-
-
     def get_connection_params(cls) -> Dict[str, Any]:
         """Get database connection parameters from unified settings"""
         try:
@@ -69,8 +65,6 @@ class ConnectionConfig:
             return cls._get_legacy_connection_params()
 
     @classmethod
-
-
     def _get_legacy_connection_params(cls) -> Dict[str, Any]:
         """Legacy connection parameters from environment variables"""
         return {
@@ -85,8 +79,6 @@ class ConnectionConfig:
         }
 
     @classmethod
-
-
     def log_configuration(cls):
         """Log current connection configuration"""
         import logging
@@ -115,4 +107,3 @@ def get_safe_db_config():
         **ConnectionConfig.get_connection_params(),
         **ConnectionConfig.get_pool_config()
     }
-

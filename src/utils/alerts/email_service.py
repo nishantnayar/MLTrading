@@ -15,7 +15,6 @@ from ..circuit_breaker import CircuitBreaker, CircuitBreakerConfig, CircuitState
 class EmailService:
     """Service for sending email alerts."""
 
-
     def __init__(self, config: Dict[str, Any]):
         """Initialize email service with configuration."""
         self.config = config
@@ -42,7 +41,6 @@ class EmailService:
 
         self._validate_config()
 
-
     def _validate_config(self) -> None:
         """Validate email configuration."""
         if not self.enabled:
@@ -64,17 +62,15 @@ class EmailService:
             )
             self.enabled = False
 
-
     def is_available(self) -> bool:
         """Check if email service is available and properly configured."""
         return (
-            self.enabled and
-            bool(self.sender_email) and
-            bool(self.sender_password) and
-            bool(self.recipient_email) and
-            self.circuit_breaker.state != CircuitState.OPEN
+                self.enabled and
+                bool(self.sender_email) and
+                bool(self.sender_password) and
+                bool(self.recipient_email) and
+                self.circuit_breaker.state != CircuitState.OPEN
         )
-
 
     def send_alert(self, alert: Alert) -> bool:
         """
@@ -98,7 +94,6 @@ class EmailService:
         except Exception as e:
             self.logger.error(f"Failed to send email alert: {e}")
             return False
-
 
     def _send_email(self, alert: Alert) -> bool:
         """
@@ -149,7 +144,6 @@ class EmailService:
             self.logger.error(f"Unexpected error sending email: {e}")
             raise
 
-
     def test_connection(self) -> bool:
         """
         Test email service connection and authentication.
@@ -182,7 +176,6 @@ class EmailService:
             self.logger.error(f"Email service test failed: {e}")
             return False
 
-
     def get_status(self) -> Dict[str, Any]:
         """
         Get current status of email service.
@@ -200,4 +193,3 @@ class EmailService:
             'smtp_server': self.smtp_server,
             'smtp_port': self.smtp_port
         }
-

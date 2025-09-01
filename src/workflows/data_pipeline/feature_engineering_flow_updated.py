@@ -27,12 +27,14 @@ from src.data.storage.database import get_db_manager
 # Market hours configuration
 MARKET_TIMEZONE = pytz.timezone('America/New_York')
 
+
 def generate_feature_flow_run_name() -> str:
     """Generate a user-friendly name for the feature engineering flow run"""
     now = datetime.now(MARKET_TIMEZONE)
     date_str = now.strftime("%Y-%m-%d")
     time_str = now.strftime("%H%M")
     return f"features-{date_str}-{time_str}EST"
+
 
 @task(retries=2, retry_delay_seconds=30)
 def initialize_feature_tables() -> bool:
@@ -52,6 +54,7 @@ def initialize_feature_tables() -> bool:
     except Exception as e:
         logger.error(f"Failed to verify feature tables: {e}")
         return False
+
 
 @task(retries=2, retry_delay_seconds=60)
 def get_symbols_needing_features() -> List[str]:

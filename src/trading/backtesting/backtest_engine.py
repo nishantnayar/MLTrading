@@ -18,8 +18,6 @@ logger = get_combined_logger("mltrading.backtesting")
 
 
 @dataclass
-
-
 class Trade:
     """Represents a completed trade"""
     symbol: str
@@ -35,8 +33,6 @@ class Trade:
 
 
 @dataclass
-
-
 class BacktestResult:
     """Results from a backtest run"""
     strategy_name: str
@@ -70,7 +66,6 @@ class BacktestResult:
     trades: List[Trade]
     equity_curve: pd.Series
     drawdown_curve: pd.Series
-
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
@@ -106,7 +101,6 @@ class BacktestEngine:
     comprehensive performance metrics
     """
 
-
     def __init__(self,
                  initial_capital: float = 100000.0,
                  commission: float = 1.0,
@@ -128,11 +122,10 @@ class BacktestEngine:
 
         logger.info(f"BacktestEngine initialized with ${initial_capital:,.2f} capital")
 
-
     def load_historical_data(self,
-                           symbols: List[str],
-                           start_date: datetime,
-                           end_date: datetime) -> Dict[str, pd.DataFrame]:
+                             symbols: List[str],
+                             start_date: datetime,
+                             end_date: datetime) -> Dict[str, pd.DataFrame]:
         """
         Load historical data for backtesting
 
@@ -481,4 +474,3 @@ class BacktestEngine:
             equity_curve=equity_series,
             drawdown_curve=drawdown
         )
-

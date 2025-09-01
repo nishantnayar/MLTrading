@@ -19,11 +19,9 @@ class ConcurrentSafeRotatingFileHandler(logging.handlers.RotatingFileHandler):
     Prevents PermissionError during log rotation in multi-process environments.
     """
 
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._rotation_lock = threading.Lock()
-
 
     def doRollover(self):
         """
@@ -50,7 +48,6 @@ class ProcessSafeFileHandler(logging.FileHandler):
     File handler that creates process-specific log files to avoid conflicts.
     """
 
-
     def __init__(self, filename, mode='a', encoding=None, delay=False):
         # Add process ID to filename to avoid conflicts
         base_path = Path(filename)
@@ -59,10 +56,10 @@ class ProcessSafeFileHandler(logging.FileHandler):
 
 
 def setup_concurrent_safe_logger(name: str,
-                                log_file: Optional[str] = None,
-                                level: str = "INFO",
-                                use_rotation: bool = True,
-                                use_process_specific: bool = False) -> logging.Logger:
+                                 log_file: Optional[str] = None,
+                                 level: str = "INFO",
+                                 use_rotation: bool = True,
+                                 use_process_specific: bool = False) -> logging.Logger:
     """
     Set up a logger that safely handles concurrent access.
 
@@ -113,7 +110,7 @@ def setup_concurrent_safe_logger(name: str,
         # Use concurrent-safe rotation
         combined_handler = ConcurrentSafeRotatingFileHandler(
             logs_dir / "mltrading_combined.log",
-            maxBytes=50*1024*1024,  # 50MB
+            maxBytes=50 * 1024 * 1024,  # 50MB
             backupCount=3
         )
     else:
@@ -133,7 +130,7 @@ def setup_concurrent_safe_logger(name: str,
         elif use_rotation:
             file_handler = ConcurrentSafeRotatingFileHandler(
                 logs_dir / log_file,
-                maxBytes=10*1024*1024,  # 10MB
+                maxBytes=10 * 1024 * 1024,  # 10MB
                 backupCount=5
             )
         else:
@@ -217,4 +214,3 @@ def patch_existing_logging():
 
             # Close old handler
             old_handler.close()
-

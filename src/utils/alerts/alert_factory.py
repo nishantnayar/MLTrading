@@ -11,13 +11,11 @@ class AlertFactory:
     """Factory class for creating standardized alerts."""
 
     @staticmethod
-
-
     def create_trading_error_alert(
-        error_message: str,
-        component: str,
-        error_type: str = "Trading Error",
-        metadata: Optional[Dict[str, Any]] = None
+            error_message: str,
+            component: str,
+            error_type: str = "Trading Error",
+            metadata: Optional[Dict[str, Any]] = None
     ) -> Alert:
         """Create a trading error alert."""
         return Alert(
@@ -31,14 +29,12 @@ class AlertFactory:
         )
 
     @staticmethod
-
-
     def create_order_failure_alert(
-        symbol: str,
-        order_type: str,
-        error_message: str,
-        component: str = "TradingSystem",
-        metadata: Optional[Dict[str, Any]] = None
+            symbol: str,
+            order_type: str,
+            error_message: str,
+            component: str = "TradingSystem",
+            metadata: Optional[Dict[str, Any]] = None
     ) -> Alert:
         """Create an order failure alert."""
         metadata = metadata or {}
@@ -58,13 +54,11 @@ class AlertFactory:
         )
 
     @staticmethod
-
-
     def create_data_pipeline_error_alert(
-        pipeline_name: str,
-        error_message: str,
-        component: str,
-        metadata: Optional[Dict[str, Any]] = None
+            pipeline_name: str,
+            error_message: str,
+            component: str,
+            metadata: Optional[Dict[str, Any]] = None
     ) -> Alert:
         """Create a data pipeline error alert."""
         return Alert(
@@ -78,12 +72,10 @@ class AlertFactory:
         )
 
     @staticmethod
-
-
     def create_database_connection_alert(
-        error_message: str,
-        component: str = "Database",
-        metadata: Optional[Dict[str, Any]] = None
+            error_message: str,
+            component: str = "Database",
+            metadata: Optional[Dict[str, Any]] = None
     ) -> Alert:
         """Create a database connection error alert."""
         return Alert(
@@ -97,13 +89,11 @@ class AlertFactory:
         )
 
     @staticmethod
-
-
     def create_api_error_alert(
-        api_name: str,
-        error_message: str,
-        component: str,
-        metadata: Optional[Dict[str, Any]] = None
+            api_name: str,
+            error_message: str,
+            component: str,
+            metadata: Optional[Dict[str, Any]] = None
     ) -> Alert:
         """Create an API error alert."""
         return Alert(
@@ -117,12 +107,10 @@ class AlertFactory:
         )
 
     @staticmethod
-
-
     def create_circuit_breaker_alert(
-        service_name: str,
-        component: str,
-        metadata: Optional[Dict[str, Any]] = None
+            service_name: str,
+            component: str,
+            metadata: Optional[Dict[str, Any]] = None
     ) -> Alert:
         """Create a circuit breaker alert."""
         return Alert(
@@ -136,12 +124,10 @@ class AlertFactory:
         )
 
     @staticmethod
-
-
     def create_system_startup_alert(
-        component: str,
-        version: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+            component: str,
+            version: Optional[str] = None,
+            metadata: Optional[Dict[str, Any]] = None
     ) -> Alert:
         """Create a system startup alert."""
         version_text = f" (v{version})" if version else ""
@@ -156,12 +142,10 @@ class AlertFactory:
         )
 
     @staticmethod
-
-
     def create_system_shutdown_alert(
-        component: str,
-        reason: str = "Normal shutdown",
-        metadata: Optional[Dict[str, Any]] = None
+            component: str,
+            reason: str = "Normal shutdown",
+            metadata: Optional[Dict[str, Any]] = None
     ) -> Alert:
         """Create a system shutdown alert."""
         return Alert(
@@ -175,14 +159,12 @@ class AlertFactory:
         )
 
     @staticmethod
-
-
     def create_performance_alert(
-        metric_name: str,
-        current_value: float,
-        threshold: float,
-        component: str,
-        metadata: Optional[Dict[str, Any]] = None
+            metric_name: str,
+            current_value: float,
+            threshold: float,
+            component: str,
+            metadata: Optional[Dict[str, Any]] = None
     ) -> Alert:
         """Create a performance threshold alert."""
         metadata = metadata or {}
@@ -203,13 +185,11 @@ class AlertFactory:
         )
 
     @staticmethod
-
-
     def create_security_alert(
-        title: str,
-        message: str,
-        component: str,
-        metadata: Optional[Dict[str, Any]] = None
+            title: str,
+            message: str,
+            component: str,
+            metadata: Optional[Dict[str, Any]] = None
     ) -> Alert:
         """Create a security alert."""
         return Alert(
@@ -223,14 +203,12 @@ class AlertFactory:
         )
 
     @staticmethod
-
-
     def create_feature_engineering_alert(
-        pipeline_name: str,
-        message: str,
-        severity: AlertSeverity = AlertSeverity.MEDIUM,
-        component: str = "FeatureEngineering",
-        metadata: Optional[Dict[str, Any]] = None
+            pipeline_name: str,
+            message: str,
+            severity: AlertSeverity = AlertSeverity.MEDIUM,
+            component: str = "FeatureEngineering",
+            metadata: Optional[Dict[str, Any]] = None
     ) -> Alert:
         """Create a feature engineering pipeline alert."""
         return Alert(
@@ -244,14 +222,12 @@ class AlertFactory:
         )
 
     @staticmethod
-
-
     def create_data_freshness_alert(
-        data_source: str,
-        last_update: datetime,
-        threshold_hours: int,
-        component: str = "DataMonitor",
-        metadata: Optional[Dict[str, Any]] = None
+            data_source: str,
+            last_update: datetime,
+            threshold_hours: int,
+            component: str = "DataMonitor",
+            metadata: Optional[Dict[str, Any]] = None
     ) -> Alert:
         """Create a data freshness alert."""
         hours_old = (datetime.now(timezone.utc) - last_update).total_seconds() / 3600
@@ -273,4 +249,3 @@ class AlertFactory:
             component=component,
             metadata=metadata
         )
-

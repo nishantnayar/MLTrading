@@ -20,14 +20,12 @@ from .logging_config import get_correlation_id, sanitize_log_message
 
 
 class CircuitState(Enum):
-    CLOSED = "closed"      # Normal operation
-    OPEN = "open"          # Circuit is open, blocking database writes
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Circuit is open, blocking database writes
     HALF_OPEN = "half_open"  # Testing if service is back
 
 
 @dataclass
-
-
 class CircuitBreakerStats:
     failure_count: int = 0
     success_count: int = 0
@@ -39,13 +37,11 @@ class CircuitBreakerStats:
 class DatabaseCircuitBreaker:
     """Circuit breaker for database operations to prevent pool exhaustion"""
 
-
     def __init__(self, failure_threshold: int = 5, recovery_timeout: float = 60.0):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.stats = CircuitBreakerStats()
         self._lock = threading.Lock()
-
 
     def can_execute(self) -> bool:
         """Check if database operation can proceed"""
@@ -61,7 +57,6 @@ class DatabaseCircuitBreaker:
             else:  # HALF_OPEN
                 return True
 
-
     def record_success(self):
         """Record successful database operation"""
         with self._lock:
@@ -73,7 +68,6 @@ class DatabaseCircuitBreaker:
                 self.stats.state = CircuitState.CLOSED
                 self.stats.failure_count = 0
 
-
     def record_failure(self):
         """Record failed database operation"""
         with self._lock:
@@ -82,7 +76,6 @@ class DatabaseCircuitBreaker:
 
             if self.stats.failure_count >= self.failure_threshold:
                 self.stats.state = CircuitState.OPEN
-
 
     def get_stats(self) -> Dict[str, Any]:
         """Get circuit breaker statistics"""
@@ -100,7 +93,6 @@ class ResilientDatabaseLogger:
     """
     Database logger with connection pool protection and graceful degradation
     """
-
 
     def __init__(self, table_name: str, batch_size: int = 100,
                  flush_interval: float = 10.0, max_queue_size: int = 5000):
@@ -133,7 +125,6 @@ class ResilientDatabaseLogger:
         self._db_connection = None
         self._connection_lock = threading.Lock()
 
-
     def _get_dedicated_connection(self):
         """Get or create dedicated database connection for logging"""
         with self._connection_lock:
@@ -147,7 +138,6 @@ class ResilientDatabaseLogger:
                     self.circuit_breaker.record_failure()
                     raise e
             return self._db_connection
-
 
     def log_async(self, data: Dict[str, Any]):
         """Add log entry to queue for asynchronous processing"""
@@ -163,7 +153,6 @@ class ResilientDatabaseLogger:
         except Exception:
             # Queue is full, drop the log
             self.stats['logs_dropped'] += 1
-
 
     def _database_writer(self):
         """Background thread that writes logs to database in batches"""
@@ -183,7 +172,7 @@ class ResilientDatabaseLogger:
 
                 # Write batch if we have logs or enough time has passed
                 if batch and (len(batch) >= self.batch_size or
-                             time.time() - last_flush >= self.flush_interval):
+                              time.time() - last_flush >= self.flush_interval):
 
                     if self.circuit_breaker.can_execute():
                         self._write_batch_to_database(batch)
@@ -200,7 +189,6 @@ class ResilientDatabaseLogger:
                 batch.clear()
                 self.stats['database_errors'] += 1
                 time.sleep(1)  # Brief pause before retrying
-
 
     def _write_batch_to_database(self, batch: List[Dict[str, Any]]):
         """Write batch to database with circuit breaker protection"""
@@ -234,7 +222,6 @@ class ResilientDatabaseLogger:
                     pass
                 self._db_connection = None
 
-
     def _write_batch_to_fallback(self, batch: List[Dict[str, Any]]):
         """Write batch to fallback file when database is unavailable"""
         try:
@@ -252,7 +239,6 @@ class ResilientDatabaseLogger:
         except Exception as e:
             # Last resort: drop the logs silently
             self.stats['logs_dropped'] += len(batch)
-
 
     def _get_insert_sql(self) -> str:
         """Get SQL insert statement based on table name"""
@@ -517,4 +503,3 @@ def resilient_log_performance(operation_name: str, component: str = None, **meta
         perf_logger.log_performance(operation_name, duration_ms, 'error', component,
                                    error=str(e), **metadata)
         raise
-

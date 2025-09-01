@@ -15,8 +15,6 @@ class AlertSeverity(Enum):
     INFO = "INFO"
 
     @property
-
-
     def priority(self) -> int:
         """Return numeric priority for comparison."""
         return {
@@ -27,12 +25,10 @@ class AlertSeverity(Enum):
             AlertSeverity.INFO: 1
         }[self]
 
-
     def __ge__(self, other) -> bool:
         if not isinstance(other, AlertSeverity):
             return NotImplemented
         return self.priority >= other.priority
-
 
     def __gt__(self, other) -> bool:
         if not isinstance(other, AlertSeverity):
@@ -50,8 +46,6 @@ class AlertCategory(Enum):
 
 
 @dataclass
-
-
 class Alert:
     """Alert data structure."""
     title: str
@@ -62,7 +56,6 @@ class Alert:
     component: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
 
-
     def __post_init__(self):
         """Validate alert data after initialization."""
         if not self.title or not self.title.strip():
@@ -72,11 +65,9 @@ class Alert:
         if self.metadata is None:
             self.metadata = {}
 
-
     def to_email_subject(self) -> str:
         """Generate email subject line for this alert."""
         return f"[{self.severity.value}] MLTrading Alert: {self.title}"
-
 
     def to_email_body(self) -> str:
         """Generate email body for this alert."""
@@ -125,4 +116,3 @@ class AlertStatus(Enum):
     FAILED = "failed"
     RATE_LIMITED = "rate_limited"
     FILTERED = "filtered"
-

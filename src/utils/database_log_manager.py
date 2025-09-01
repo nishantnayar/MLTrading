@@ -17,10 +17,8 @@ logger = get_combined_logger("mltrading.database_log_manager", enable_database_l
 class DatabaseLogManager:
     """Manager for database-stored logs"""
 
-
     def __init__(self, db_manager: DatabaseManager = None):
         self.db_manager = db_manager or DatabaseManager()
-
 
     def get_log_statistics(self) -> Dict[str, Any]:
         """
@@ -472,4 +470,3 @@ def get_database_log_manager() -> DatabaseLogManager:
     if _db_log_manager is None:
         _db_log_manager = DatabaseLogManager()
     return _db_log_manager
-

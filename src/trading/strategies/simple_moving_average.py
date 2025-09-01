@@ -19,7 +19,6 @@ class SimpleMovingAverageStrategy(BaseStrategy):
     Generates sell signals when short MA crosses below long MA
     """
 
-
     def __init__(self,
                  symbols: List[str],
                  short_window: int = 10,
@@ -55,7 +54,6 @@ class SimpleMovingAverageStrategy(BaseStrategy):
         # Strategy state tracking
         self.previous_signals: Dict[str, SignalType] = {}
 
-
     def _update_indicators(self, symbol: str, data: pd.DataFrame):
         """Update SMA-specific indicators"""
         super()._update_indicators(symbol, data)
@@ -81,7 +79,6 @@ class SimpleMovingAverageStrategy(BaseStrategy):
             # Signal strength based on MA separation
             ma_separation = np.abs(sma_short - sma_long) / sma_long
             self.indicators[symbol]['signal_strength'] = np.clip(ma_separation * 10, 0.1, 1.0)
-
 
     def generate_signals(self, market_data: Dict[str, pd.DataFrame]) -> List[StrategySignal]:
         """
@@ -128,9 +125,8 @@ class SimpleMovingAverageStrategy(BaseStrategy):
                     # 2. Signal strength is above threshold
                     # 3. It's different from previous signal
                     if (signal_type and
-                        latest_strength >= self.min_signal_strength and
-                        self.previous_signals.get(symbol) != signal_type):
-
+                            latest_strength >= self.min_signal_strength and
+                            self.previous_signals.get(symbol) != signal_type):
                         signal = StrategySignal(
                             symbol=symbol,
                             signal_type=signal_type,
@@ -157,7 +153,6 @@ class SimpleMovingAverageStrategy(BaseStrategy):
             self.logger.error(f"Error generating SMA signals: {e}")
 
         return signals
-
 
     def calculate_position_size(self, signal: StrategySignal, available_capital: float) -> int:
         """
@@ -224,7 +219,6 @@ class MomentumStrategy(BaseStrategy):
     Sells when price is below moving average or RSI is overbought
     """
 
-
     def __init__(self,
                  symbols: List[str],
                  lookback_period: int = 20,
@@ -260,7 +254,6 @@ class MomentumStrategy(BaseStrategy):
         self.rsi_period = rsi_period
         self.rsi_oversold = rsi_oversold
         self.rsi_overbought = rsi_overbought
-
 
     def generate_signals(self, market_data: Dict[str, pd.DataFrame]) -> List[StrategySignal]:
         """Generate momentum-based trading signals"""
@@ -298,8 +291,8 @@ class MomentumStrategy(BaseStrategy):
 
                 # Buy conditions: price above SMA and RSI oversold
                 if (current_price > latest_sma and
-                    latest_rsi < self.rsi_oversold and
-                    symbol not in self.positions):
+                        latest_rsi < self.rsi_oversold and
+                        symbol not in self.positions):
 
                     signal_type = SignalType.BUY
                     # Strength based on how oversold and price above MA
@@ -332,14 +325,13 @@ class MomentumStrategy(BaseStrategy):
                     signals.append(signal)
                     self.logger.info(
                         f"Generated {signal_type.value} signal for {symbol} "
-                        f"(RSI: {latest_rsi:.1f}, Price vs SMA: {((current_price/latest_sma-1)*100):+.1f}%)"
+                        f"(RSI: {latest_rsi:.1f}, Price vs SMA: {((current_price / latest_sma - 1) * 100):+.1f}%)"
                     )
 
         except Exception as e:
             self.logger.error(f"Error generating momentum signals: {e}")
 
         return signals
-
 
     def calculate_position_size(self, signal: StrategySignal, available_capital: float) -> int:
         """Calculate position size for momentum strategy"""
@@ -370,4 +362,3 @@ class MomentumStrategy(BaseStrategy):
         except Exception as e:
             self.logger.error(f"Error calculating position size: {e}")
             return 0
-

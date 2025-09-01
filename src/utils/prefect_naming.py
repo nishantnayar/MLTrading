@@ -9,9 +9,9 @@ import pytz
 
 
 def generate_friendly_flow_name(
-    flow_type: str,
-    context: Optional[str] = None,
-    timezone: str = "America/New_York"
+        flow_type: str,
+        context: Optional[str] = None,
+        timezone: str = "America/New_York"
 ) -> str:
     """
     Generate a user-friendly flow run name
@@ -41,8 +41,8 @@ def generate_friendly_flow_name(
 
 
 def generate_market_context_name(
-    flow_type: str = "yahoo-data",
-    timezone: str = "America/New_York"
+        flow_type: str = "yahoo-data",
+        timezone: str = "America/New_York"
 ) -> str:
     """
     Generate a flow name with market context
@@ -82,9 +82,9 @@ def generate_market_context_name(
 
 
 def generate_manual_trigger_name(
-    flow_type: str,
-    user_context: Optional[str] = None,
-    timezone: str = "America/New_York"
+        flow_type: str,
+        user_context: Optional[str] = None,
+        timezone: str = "America/New_York"
 ) -> str:
     """
     Generate a name for manually triggered flows
@@ -108,6 +108,7 @@ def generate_manual_trigger_name(
     context = "-".join(context_parts)
     return generate_friendly_flow_name(flow_type, context, timezone)
 
+
 # Predefined naming functions for common flows
 
 
@@ -125,6 +126,7 @@ def portfolio_analysis_name() -> str:
     """Generate name for portfolio analysis"""
     return generate_friendly_flow_name("portfolio-analysis", "daily")
 
+
 # Example usage and testing
 if __name__ == "__main__":
     print("=== Prefect Flow Naming Examples ===")
@@ -136,4 +138,3 @@ if __name__ == "__main__":
     print(f"Testing run: {generate_manual_trigger_name('yahoo-data', 'testing')}")
     print(f"Backfill run: {generate_manual_trigger_name('yahoo-data', 'backfill 2025-01')}")
     print(f"User research: {generate_manual_trigger_name('portfolio-analysis', 'user research')}")
-

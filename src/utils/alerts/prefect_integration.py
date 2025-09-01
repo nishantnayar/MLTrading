@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 try:
     from prefect import get_run_context, get_run_logger
     from prefect.context import FlowRunContext, TaskRunContext
+
     PREFECT_AVAILABLE = True
 except ImportError:
     PREFECT_AVAILABLE = False
@@ -25,13 +26,11 @@ from .alert_factory import AlertFactory
 class PrefectAlertManager:
     """Alert manager with Prefect context awareness."""
 
-
     def __init__(self, config: Dict[str, Any]):
         """Initialize Prefect-aware alert manager."""
         self.alert_manager = AlertManager(config)
         self.logger = logging.getLogger(__name__)
         self._prefect_available = PREFECT_AVAILABLE
-
 
     def _get_prefect_context(self) -> Dict[str, Any]:
         """Get current Prefect context information."""
@@ -64,15 +63,14 @@ class PrefectAlertManager:
             self.logger.debug(f"Could not get Prefect context: {e}")
             return {}
 
-
     def send_alert(
-        self,
-        title: str,
-        message: str,
-        severity: AlertSeverity,
-        category: AlertCategory = AlertCategory.GENERAL,
-        component: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+            self,
+            title: str,
+            message: str,
+            severity: AlertSeverity,
+            category: AlertCategory = AlertCategory.GENERAL,
+            component: Optional[str] = None,
+            metadata: Optional[Dict[str, Any]] = None
     ):
         """Send alert with Prefect context information."""
         # Merge Prefect context with provided metadata
@@ -95,7 +93,6 @@ class PrefectAlertManager:
             metadata=combined_metadata
         )
 
-
     def send_flow_start_alert(self, flow_name: str, metadata: Optional[Dict[str, Any]] = None):
         """Send flow start notification."""
         return self.send_alert(
@@ -106,8 +103,8 @@ class PrefectAlertManager:
             metadata=metadata
         )
 
-
-    def send_flow_success_alert(self, flow_name: str, duration: Optional[float] = None, metadata: Optional[Dict[str, Any]] = None):
+    def send_flow_success_alert(self, flow_name: str, duration: Optional[float] = None,
+                                metadata: Optional[Dict[str, Any]] = None):
         """Send flow success notification."""
         duration_text = f" in {duration:.1f}s" if duration else ""
         return self.send_alert(
@@ -117,7 +114,6 @@ class PrefectAlertManager:
             category=AlertCategory.DATA_PIPELINE,
             metadata=metadata
         )
-
 
     def send_flow_failure_alert(self, flow_name: str, error: Exception, metadata: Optional[Dict[str, Any]] = None):
         """Send flow failure notification."""
@@ -134,7 +130,6 @@ class PrefectAlertManager:
             category=AlertCategory.DATA_PIPELINE,
             metadata=error_metadata
         )
-
 
     def send_task_failure_alert(self, task_name: str, error: Exception, metadata: Optional[Dict[str, Any]] = None):
         """Send task failure notification."""
@@ -153,7 +148,6 @@ class PrefectAlertManager:
         )
 
     # Delegate other methods to the underlying alert manager
-
 
     def __getattr__(self, name):
         """Delegate unknown methods to the underlying AlertManager."""
@@ -177,9 +171,9 @@ def get_alert_manager() -> Optional[PrefectAlertManager]:
 
 
 def alert_on_failure(
-    severity: AlertSeverity = AlertSeverity.MEDIUM,
-    category: AlertCategory = AlertCategory.DATA_PIPELINE,
-    send_success_alert: bool = False
+        severity: AlertSeverity = AlertSeverity.MEDIUM,
+        category: AlertCategory = AlertCategory.DATA_PIPELINE,
+        send_success_alert: bool = False
 ):
     """
     Decorator to automatically send alerts on function failure.
@@ -190,11 +184,8 @@ def alert_on_failure(
         send_success_alert: Whether to send success notifications
     """
 
-
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-
-
         def wrapper(*args, **kwargs):
             alert_manager = get_alert_manager()
             if not alert_manager:
@@ -273,13 +264,14 @@ def alert_on_failure(
                 raise
 
         return wrapper
+
     return decorator
 
 
 def alert_on_long_runtime(
-    threshold_seconds: float = 300,  # 5 minutes
-    severity: AlertSeverity = AlertSeverity.MEDIUM,
-    category: AlertCategory = AlertCategory.SYSTEM_HEALTH
+        threshold_seconds: float = 300,  # 5 minutes
+        severity: AlertSeverity = AlertSeverity.MEDIUM,
+        category: AlertCategory = AlertCategory.SYSTEM_HEALTH
 ):
     """
     Decorator to send alerts when functions take longer than expected.
@@ -290,11 +282,8 @@ def alert_on_long_runtime(
         category: Alert category
     """
 
-
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-
-
         def wrapper(*args, **kwargs):
             alert_manager = get_alert_manager()
             func_name = func.__name__
@@ -340,6 +329,7 @@ def alert_on_long_runtime(
                 raise
 
         return wrapper
+
     return decorator
 
 
@@ -364,4 +354,3 @@ def create_trading_alerts(config: Dict[str, Any]) -> PrefectAlertManager:
     # For example, higher sensitivity for trading errors
 
     return alert_manager
-

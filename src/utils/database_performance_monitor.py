@@ -17,14 +17,13 @@ except ImportError:
     # Handle direct script execution
     import sys
     from pathlib import Path
+
     sys.path.append(str(Path(__file__).parent.parent))
     from data.storage.database import DatabaseManager
     from utils.logging_config import get_ui_logger
 
 
 @dataclass
-
-
 class QueryMetrics:
     """Query performance metrics"""
     query_hash: str
@@ -36,8 +35,6 @@ class QueryMetrics:
 
 
 @dataclass
-
-
 class IndexUsageStats:
     """Index usage statistics"""
     index_name: str
@@ -60,7 +57,6 @@ class DatabasePerformanceMonitor:
     - Automated optimization suggestions
     """
 
-
     def __init__(self):
         self.logger = get_ui_logger("db_performance_monitor")
         self.db_manager = DatabaseManager()
@@ -68,8 +64,6 @@ class DatabasePerformanceMonitor:
         self.slow_query_threshold = 1.0  # seconds
 
     @contextmanager
-
-
     def monitor_query(self, sql: str, parameters: Optional[tuple] = None):
         """
         Context manager to monitor query execution time and performance.
@@ -107,12 +101,10 @@ class DatabasePerformanceMonitor:
             if len(self.query_metrics) > 1000:
                 self.query_metrics = self.query_metrics[-1000:]
 
-
     def get_slow_queries(self, limit: int = 10) -> List[QueryMetrics]:
         """Get the slowest queries from recent history"""
         sorted_queries = sorted(self.query_metrics, key=lambda x: x.execution_time, reverse=True)
         return sorted_queries[:limit]
-
 
     def get_feature_table_stats(self) -> Dict[str, Any]:
         """
@@ -435,4 +427,3 @@ def monitor_db_performance(func):
             return func(*args, **kwargs)
 
     return wrapper
-

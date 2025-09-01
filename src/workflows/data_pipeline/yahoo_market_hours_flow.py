@@ -28,6 +28,7 @@ MARKET_TIMEZONE = pytz.timezone('America/New_York')
 MARKET_OPEN = time(9, 30)  # 9:30 AM EST
 MARKET_CLOSE = time(16, 0)  # 4:00 PM EST
 
+
 def generate_flow_run_name() -> str:
     """
     Generate a user-friendly name for the flow run
@@ -59,6 +60,7 @@ def generate_flow_run_name() -> str:
 
     return f"yahoo-data-{date_str}-{time_str}EST-{status}"
 
+
 @task(retries=3, retry_delay_seconds=60)
 def check_market_hours() -> bool:
     """
@@ -84,6 +86,7 @@ def check_market_hours() -> bool:
     logger.info(f"Weekday: {is_weekday}, Market hours: {is_market_hours}, Market open: {market_open}")
 
     return market_open
+
 
 @task(retries=2, retry_delay_seconds=30)
 def get_active_symbols() -> List[str]:

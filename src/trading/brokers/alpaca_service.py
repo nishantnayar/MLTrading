@@ -17,6 +17,7 @@ load_dotenv()
 try:
     from alpaca_trade_api import REST, Stream
     from alpaca_trade_api.entity import Account, Position, Order
+
     ALPACA_AVAILABLE = True
 except ImportError:
     ALPACA_AVAILABLE = False
@@ -34,7 +35,6 @@ logger = get_ui_logger("alpaca_service")
 class AlpacaService:
     """Service for interacting with Alpaca Markets API"""
 
-
     def __init__(self, config_path: Optional[str] = None):
         """Initialize Alpaca service with configuration"""
         self.config = self._load_config(config_path)
@@ -44,7 +44,6 @@ class AlpacaService:
 
         # Initialize connection
         self.connect()
-
 
     def _load_config(self, config_path: Optional[str] = None) -> Dict:
         """Load Alpaca configuration from unified settings"""
@@ -94,7 +93,6 @@ class AlpacaService:
             except Exception as fallback_error:
                 logger.error(f"Both unified and legacy config loading failed: {fallback_error}")
                 raise
-
 
     def connect(self) -> bool:
         """Establish connection to Alpaca API"""
@@ -151,11 +149,9 @@ class AlpacaService:
             self._connected = False
             return False
 
-
     def is_connected(self) -> bool:
         """Check if connected to Alpaca"""
         return self._connected and self.client is not None
-
 
     def get_account_info(self) -> Optional[Dict]:
         """Get account information"""
@@ -177,7 +173,6 @@ class AlpacaService:
         except Exception as e:
             logger.error(f"Error getting account info: {e}")
             return None
-
 
     def get_positions(self) -> List[Dict]:
         """Get current positions"""
@@ -202,7 +197,6 @@ class AlpacaService:
         except Exception as e:
             logger.error(f"Error getting positions: {e}")
             return []
-
 
     def get_orders(self, status: str = 'all', limit: int = 50) -> List[Dict]:
         """Get recent orders"""
@@ -235,9 +229,8 @@ class AlpacaService:
             logger.error(f"Error getting orders: {e}")
             return []
 
-
     def submit_order(self, symbol: str, qty: int, side: str,
-                    order_type: str = 'market', time_in_force: str = 'day') -> Optional[Dict]:
+                     order_type: str = 'market', time_in_force: str = 'day') -> Optional[Dict]:
         """Submit a trading order"""
         if not self.is_connected():
             logger.error("Not connected to Alpaca")
@@ -277,7 +270,6 @@ class AlpacaService:
             logger.error(f"[ERROR] Error submitting order: {e}")
             return None
 
-
     def cancel_order(self, order_id: str) -> bool:
         """Cancel an order"""
         if not self.is_connected():
@@ -291,9 +283,8 @@ class AlpacaService:
             logger.error(f"[ERROR] Error cancelling order: {e}")
             return False
 
-
     def get_market_data(self, symbol: str, timeframe: str = '1Day',
-                       start: Optional[datetime] = None, end: Optional[datetime] = None) -> pd.DataFrame:
+                        start: Optional[datetime] = None, end: Optional[datetime] = None) -> pd.DataFrame:
         """Get market data for a symbol"""
         if not self.is_connected():
             return pd.DataFrame()
@@ -318,7 +309,6 @@ class AlpacaService:
             logger.error(f"Error getting market data for {symbol}: {e}")
             return pd.DataFrame()
 
-
     def get_market_hours(self) -> Dict:
         """Get market hours and status from Alpaca"""
         if not self.is_connected():
@@ -329,7 +319,8 @@ class AlpacaService:
             clock = self.client.get_clock()
 
             # Get market calendar for today and next trading day
-            calendar = self.client.get_calendar(start=datetime.now().date(), end=(datetime.now() + timedelta(days=7)).date())
+            calendar = self.client.get_calendar(start=datetime.now().date(),
+                                                end=(datetime.now() + timedelta(days=7)).date())
 
             if not calendar:
                 return {}
@@ -357,9 +348,11 @@ class AlpacaService:
 
             # If market is closed and it's after market close, find next trading day
             # Check if market is closed and we need to find next trading day
-            market_open_time = next_trading_day.open.time() if hasattr(next_trading_day.open, 'time') else next_trading_day.open
+            market_open_time = next_trading_day.open.time() if hasattr(next_trading_day.open,
+                                                                       'time') else next_trading_day.open
             # Handle both pandas Timestamp and datetime.date objects for next_trading_day.date
-            next_trading_day_date = next_trading_day.date.date() if hasattr(next_trading_day.date, 'date') else next_trading_day.date
+            next_trading_day_date = next_trading_day.date.date() if hasattr(next_trading_day.date,
+                                                                            'date') else next_trading_day.date
             if not clock.is_open and not (next_trading_day_date == today and current_time.time() < market_open_time):
                 # Market is closed, find next trading day
                 found_next = False
@@ -385,7 +378,6 @@ class AlpacaService:
             logger.error(f"Error getting market hours: {e}")
             return {}
 
-
     def get_connection_status(self) -> Dict:
         """Get detailed connection status"""
         return {
@@ -406,4 +398,3 @@ def get_alpaca_service() -> AlpacaService:
     if alpaca_service is None:
         alpaca_service = AlpacaService()
     return alpaca_service
-
