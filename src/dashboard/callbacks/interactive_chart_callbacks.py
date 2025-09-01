@@ -448,8 +448,44 @@ def _register_technical_analysis_callbacks(app, market_service):
                     "color": volume_color
                 })
 
-            return summary_items
+            # Convert summary items to Dash components
+            return _create_summary_components(summary_items)
 
         except Exception as e:
             logger.error(f"Error updating technical analysis summary: {e}")
             return f"Error loading analysis: {str(e)}"
+
+
+def _create_summary_components(summary_items):
+    """Convert summary item dictionaries to Dash HTML components"""
+    from dash import html
+    import dash_bootstrap_components as dbc
+    
+    if not summary_items:
+        return html.P("No technical analysis data available", className="text-muted")
+    
+    components = []
+    for item in summary_items:
+        # Create a card for each summary item
+        card_content = [
+            html.H6(item["title"], className="card-title text-muted mb-1"),
+            html.H4(item["value"], className=f"card-text text-{item['color']} mb-0")
+        ]
+        
+        # Add change or status if available
+        if "change" in item:
+            card_content.append(
+                html.Small(item["change"], className=f"text-{item['color']}")
+            )
+        elif "status" in item:
+            card_content.append(
+                html.Small(item["status"], className="text-muted")
+            )
+        
+        card = dbc.Card([
+            dbc.CardBody(card_content)
+        ], className="text-center mb-2")
+        
+        components.append(dbc.Col(card, width=12, md=4))
+    
+    return dbc.Row(components)
