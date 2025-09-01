@@ -18,6 +18,7 @@ except ImportError:
     # Fallback for when running directly
     import sys
     from pathlib import Path
+
     project_root = Path(__file__).parent.parent.parent
     sys.path.insert(0, str(project_root))
     from src.utils.logging_config import get_ui_logger
@@ -32,7 +33,6 @@ logger = get_ui_logger("prefect_service")
 class PrefectService:
     """Service for interacting with Prefect API"""
 
-
     def __init__(self, api_url: Optional[str] = None):
         """Initialize Prefect service"""
         self.api_url = api_url or os.getenv('PREFECT_API_URL', 'http://localhost:4200/api')
@@ -42,7 +42,6 @@ class PrefectService:
 
         # Test connection on initialization
         self._test_connection()
-
 
     def _test_connection(self) -> bool:
         """Test connection to Prefect API"""
@@ -61,11 +60,9 @@ class PrefectService:
             self._connected = False
             return False
 
-
     def is_connected(self) -> bool:
         """Check if connected to Prefect API"""
         return self._connected
-
 
     def get_deployments(self, name_filter: Optional[str] = None) -> List[Dict]:
         """Get deployments, optionally filtered by name"""
@@ -87,7 +84,6 @@ class PrefectService:
         except Exception as e:
             logger.error(f"Error getting deployments: {e}")
             return []
-
 
     def get_flow_runs(self, deployment_name: Optional[str] = None,
                       limit: int = 10, state_type: Optional[str] = None) -> List[Dict]:
@@ -118,7 +114,6 @@ class PrefectService:
         except Exception as e:
             logger.error(f"Error getting flow runs: {e}")
             return []
-
 
     def get_deployment_status(self, deployment_name: str) -> Dict:
         """Get comprehensive status for a specific deployment"""
@@ -159,7 +154,8 @@ class PrefectService:
 
             # Calculate success rate
             if recent_runs:
-                completed_runs = [r for r in recent_runs if r.get('state', {}).get('type') in ['COMPLETED', 'FAILED', 'CANCELLED']]
+                completed_runs = [r for r in recent_runs if
+                                  r.get('state', {}).get('type') in ['COMPLETED', 'FAILED', 'CANCELLED']]
                 successful_runs = [r for r in completed_runs if r.get('state', {}).get('type') == 'COMPLETED']
                 success_rate = (len(successful_runs) / len(completed_runs)) * 100 if completed_runs else 0.0
             else:
@@ -194,7 +190,6 @@ class PrefectService:
                 'config': None
             }
 
-
     def get_multiple_deployment_status(self, deployment_names: Optional[List[str]] = None) -> Dict[str, Dict]:
         """Get status for multiple deployments"""
         if deployment_names is None:
@@ -207,7 +202,6 @@ class PrefectService:
 
         return results
 
-
     def get_configured_deployments(self) -> Dict[str, Any]:
         """Get all configured deployments with their configs"""
         return {
@@ -217,7 +211,6 @@ class PrefectService:
             }
             for name, config in self.config.get_all_deployments().items()
         }
-
 
     def _calculate_next_run(self, deployment: Dict) -> Optional[datetime]:
         """Calculate next scheduled run time (simplified)"""
@@ -258,7 +251,6 @@ class PrefectService:
             logger.error(f"Error calculating next run: {e}")
             return None
 
-
     def trigger_flow_run(self, deployment_name: str, parameters: Optional[Dict] = None) -> Optional[Dict]:
         """Manually trigger a flow run"""
         if not self._connected:
@@ -291,7 +283,6 @@ class PrefectService:
         except Exception as e:
             logger.error(f"Error triggering flow run for '{deployment_name}': {e}")
             return None
-
 
     def get_data_freshness_metrics(self, deployment_name: Optional[str] = None) -> Dict:
         """Get data freshness metrics for a deployment"""
@@ -359,7 +350,6 @@ class PrefectService:
                 'color': 'danger',
                 'error': str(e)
             }
-
 
     def get_system_health(self) -> Dict:
         """Get overall system health metrics"""
@@ -434,7 +424,6 @@ class PrefectService:
                 }
             }
 
-
     def __del__(self):
         """Clean up HTTP client"""
         try:
@@ -454,4 +443,3 @@ def get_prefect_service() -> PrefectService:
     if _prefect_service is None:
         _prefect_service = PrefectService()
     return _prefect_service
-

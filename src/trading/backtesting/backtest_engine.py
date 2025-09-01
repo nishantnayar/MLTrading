@@ -171,12 +171,11 @@ class BacktestEngine:
             logger.error(f"Error loading historical data: {e}")
             return {}
 
-
     def run_backtest(self,
-                    strategy: BaseStrategy,
-                    start_date: datetime,
-                    end_date: datetime,
-                    data: Dict[str, pd.DataFrame] = None) -> BacktestResult:
+                     strategy: BaseStrategy,
+                     start_date: datetime,
+                     end_date: datetime,
+                     data: Dict[str, pd.DataFrame] = None) -> BacktestResult:
         """
         Run backtest for a strategy
 
@@ -276,13 +275,12 @@ class BacktestEngine:
             logger.error(f"Error running backtest: {e}")
             raise
 
-
     def _execute_signal(self,
-                       signal: StrategySignal,
-                       capital: float,
-                       positions: Dict[str, Any],
-                       market_data: Dict[str, pd.DataFrame],
-                       timestamp: datetime) -> Optional[Dict[str, Any]]:
+                        signal: StrategySignal,
+                        capital: float,
+                        positions: Dict[str, Any],
+                        market_data: Dict[str, pd.DataFrame],
+                        timestamp: datetime) -> Optional[Dict[str, Any]]:
         """
         Execute a trading signal in the backtest
 
@@ -377,12 +375,11 @@ class BacktestEngine:
             logger.error(f"Error executing signal: {e}")
             return None
 
-
     def _calculate_portfolio_value(self,
-                                 capital: float,
-                                 positions: Dict[str, Any],
-                                 market_data: Dict[str, pd.DataFrame],
-                                 timestamp: datetime) -> float:
+                                  capital: float,
+                                  positions: Dict[str, Any],
+                                  market_data: Dict[str, pd.DataFrame],
+                                  timestamp: datetime) -> float:
         """Calculate total portfolio value"""
         total_value = capital
 
@@ -394,14 +391,13 @@ class BacktestEngine:
 
         return total_value
 
-
     def _calculate_results(self,
-                          strategy: BaseStrategy,
-                          start_date: datetime,
-                          end_date: datetime,
-                          trades: List[Trade],
-                          equity_curve: List[Tuple[datetime, float]],
-                          portfolio_values: List[float]) -> BacktestResult:
+                           strategy: BaseStrategy,
+                           start_date: datetime,
+                           end_date: datetime,
+                           trades: List[Trade],
+                           equity_curve: List[Tuple[datetime, float]],
+                           portfolio_values: List[float]) -> BacktestResult:
         """Calculate comprehensive backtest results"""
 
         # Convert equity curve to pandas Series

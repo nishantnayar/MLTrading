@@ -58,7 +58,6 @@ class DatabaseManager:
         Total records: 15847
     """
 
-
     def __init__(self, host: str = None, port: int = None,
                  database: str = None, user: str = None,
                  password: str = None, min_conn: int = None,
@@ -78,7 +77,6 @@ class DatabaseManager:
         self.pool = None
         self._init_pool()
 
-
     def _init_pool(self):
         """Initialize connection pool with safe limits."""
         try:
@@ -91,7 +89,8 @@ class DatabaseManager:
                 password=self.password,
                 connect_timeout=self.timeout
             )
-            logger.info(f"Database pool initialized with {self.min_conn}-{self.max_conn} connections (timeout: {self.timeout}s)")
+            logger.info(
+                f"Database pool initialized with {self.min_conn}-{self.max_conn} connections (timeout: {self.timeout}s)")
             ConnectionConfig.log_configuration()
         except Exception as e:
             logger.error(f"Failed to initialize database pool: {e}")
@@ -101,8 +100,6 @@ class DatabaseManager:
             logger.warning("Database pool initialization failed, using fallback mode")
 
     @retry_on_database_error(max_attempts=3, delay=0.5)
-
-
     def get_connection(self, timeout=60):
         """Get a connection from the pool with timeout and retry logic."""
         import time
@@ -146,7 +143,6 @@ class DatabaseManager:
                 logger.error(f"Unexpected error getting connection: {e}")
                 raise
 
-
     def return_connection(self, conn):
         """Return a connection to the pool."""
         if conn is None:
@@ -167,8 +163,6 @@ class DatabaseManager:
                 pass
 
     @contextmanager
-
-
     def get_connection_context(self):
         """Context manager for safe connection handling."""
         conn = None
@@ -181,7 +175,6 @@ class DatabaseManager:
         finally:
             if conn is not None:
                 self.return_connection(conn)
-
 
     def check_tables_exist(self) -> bool:
         """Check if all required tables exist in the database."""
@@ -266,7 +259,6 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
-
     def insert_market_data(self, data: List[Dict[str, Any]]):
         """Insert market data in batch."""
         conn = self.get_connection()
@@ -292,7 +284,6 @@ class DatabaseManager:
             raise
         finally:
             self.return_connection(conn)
-
 
     def get_market_data(self, symbol: str, start_date: datetime,
                        end_date: datetime, source: str = 'yahoo') -> pd.DataFrame:
@@ -336,7 +327,6 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
-
     def get_latest_market_data(self, symbol: str, source: str = 'yahoo') -> Optional[Dict]:
         """Get latest market data for a symbol."""
         conn = self.get_connection()
@@ -355,7 +345,6 @@ class DatabaseManager:
             raise
         finally:
             self.return_connection(conn)
-
 
     def insert_order(self, order_data: Dict[str, Any]) -> int:
         """Insert a new order and return the order ID."""
@@ -381,7 +370,6 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
-
     def update_order_status(self, order_id: int, status: str, filled_at: datetime = None):
         """Update order status."""
         conn = self.get_connection()
@@ -405,7 +393,6 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
-
     def insert_prediction(self, prediction_data: Dict[str, Any]):
         """Insert a model prediction."""
         conn = self.get_connection()
@@ -425,7 +412,6 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
-
     def get_symbols_with_data(self, source: str = 'yahoo') -> List[str]:
         """Get list of symbols that have market data."""
         conn = self.get_connection()
@@ -441,7 +427,6 @@ class DatabaseManager:
             raise
         finally:
             self.return_connection(conn)
-
 
     def get_data_date_range(self, symbol: str, source: str = 'yahoo') -> tuple:
         """Get the date range of available data for a symbol."""
@@ -461,7 +446,6 @@ class DatabaseManager:
             raise
         finally:
             self.return_connection(conn)
-
 
     def insert_stock_info(self, stock_data: Dict[str, Any]):
         """Insert or update stock information."""
@@ -493,7 +477,6 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
-
     def get_stock_info(self, symbol: str) -> Optional[Dict]:
         """Get stock information for a symbol."""
         conn = self.get_connection()
@@ -511,7 +494,6 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
-
     def get_stocks_by_sector(self, sector: str) -> List[str]:
         """Get all symbols in a specific sector."""
         conn = self.get_connection()
@@ -527,7 +509,6 @@ class DatabaseManager:
             raise
         finally:
             self.return_connection(conn)
-
 
     def get_stocks_by_industry(self, industry: str) -> List[str]:
         """Get all symbols in a specific industry."""
@@ -545,7 +526,6 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
-
     def get_all_sectors(self) -> List[str]:
         """Get all unique sectors."""
         conn = self.get_connection()
@@ -562,7 +542,6 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
-
     def get_all_industries(self) -> List[str]:
         """Get all unique industries."""
         conn = self.get_connection()
@@ -578,7 +557,6 @@ class DatabaseManager:
             raise
         finally:
             self.return_connection(conn)
-
 
     def get_industries_by_sector(self, sector: str) -> List[str]:
         """Get all unique industries within a specific sector."""
@@ -597,7 +575,6 @@ class DatabaseManager:
             raise
         finally:
             self.return_connection(conn)
-
 
     def get_stocks_by_industry(self, industry: str, sector: str = None) -> List[str]:
         """Get all symbols in a specific industry, optionally filtered by sector."""
@@ -624,7 +601,6 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
-
     def get_earliest_data_date(self, source: str = 'yahoo') -> Optional[datetime]:
         """Get the earliest date in the market_data table."""
         conn = self.get_connection()
@@ -642,7 +618,6 @@ class DatabaseManager:
         finally:
             self.return_connection(conn)
 
-
     def get_latest_data_date(self, source: str = 'yahoo') -> Optional[datetime]:
         """Get the latest date in the market_data table."""
         conn = self.get_connection()
@@ -659,7 +634,6 @@ class DatabaseManager:
             return None
         finally:
             self.return_connection(conn)
-
 
     def close(self):
         """Close the connection pool."""
@@ -691,4 +665,3 @@ def get_db_manager() -> DatabaseManager:
             password=password
         )
     return db_manager
-

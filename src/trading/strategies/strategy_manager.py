@@ -20,8 +20,6 @@ performance_logger = get_performance_logger()
 
 
 @dataclass
-
-
 class StrategyConfig:
     """Configuration for a strategy"""
     strategy_class: type
@@ -42,7 +40,6 @@ class StrategyManager:
     - Risk management coordination
     - Performance monitoring
     """
-
 
     def __init__(self,
                  broker_service: AlpacaService = None,
@@ -80,10 +77,9 @@ class StrategyManager:
 
         logger.info("Strategy Manager initialized")
 
-
     def add_strategy(self,
-                    strategy_name: str,
-                    strategy_config: StrategyConfig) -> bool:
+                     strategy_name: str,
+                     strategy_config: StrategyConfig) -> bool:
         """
         Add a strategy to the manager
 
@@ -129,7 +125,6 @@ class StrategyManager:
             logger.error(f"Failed to add strategy {strategy_name}: {e}")
             return False
 
-
     def remove_strategy(self, strategy_name: str) -> bool:
         """
         Remove a strategy from the manager
@@ -174,7 +169,6 @@ class StrategyManager:
             logger.error(f"Failed to remove strategy {strategy_name}: {e}")
             return False
 
-
     def start_strategy(self, strategy_name: str) -> bool:
         """Start a specific strategy"""
         try:
@@ -195,7 +189,6 @@ class StrategyManager:
             logger.error(f"Failed to start strategy {strategy_name}: {e}")
             return False
 
-
     def stop_strategy(self, strategy_name: str) -> bool:
         """Stop a specific strategy"""
         try:
@@ -212,19 +205,16 @@ class StrategyManager:
             logger.error(f"Failed to stop strategy {strategy_name}: {e}")
             return False
 
-
     def start_all_strategies(self):
         """Start all enabled strategies"""
         for strategy_name, config in self.strategy_configs.items():
             if config.enabled:
                 self.start_strategy(strategy_name)
 
-
     def stop_all_strategies(self):
         """Stop all running strategies"""
         for strategy_name in self.strategies:
             self.stop_strategy(strategy_name)
-
 
     def start_execution(self):
         """Start the strategy execution loop"""
@@ -246,7 +236,6 @@ class StrategyManager:
             strategy="ALL",
             active_strategies=list(self.strategies.keys())
         )
-
 
     def stop_execution(self):
         """Stop the strategy execution loop"""
@@ -270,7 +259,6 @@ class StrategyManager:
             event_type="strategy_manager_stopped",
             strategy="ALL"
         )
-
 
     def _execution_loop(self):
         """Main execution loop for strategy manager"""
@@ -314,7 +302,6 @@ class StrategyManager:
 
         logger.info("Strategy execution loop ended")
 
-
     def _get_market_data(self) -> Dict[str, Any]:
         """
         Get market data for all symbols used by strategies
@@ -337,7 +324,6 @@ class StrategyManager:
         # This could use the Yahoo collector or Alpaca market data
 
         return market_data
-
 
     def _process_signal(self, signal: StrategySignal, strategy_name: str):
         """
@@ -374,11 +360,10 @@ class StrategyManager:
         except Exception as e:
             logger.error(f"Error processing signal from {strategy_name}: {e}")
 
-
     def _execute_signal(self,
-                       signal: StrategySignal,
-                       strategy_name: str,
-                       order_instructions: Dict[str, Any] = None):
+                        signal: StrategySignal,
+                        strategy_name: str,
+                        order_instructions: Dict[str, Any] = None):
         """
         Execute a trading signal by placing orders
 
@@ -396,7 +381,7 @@ class StrategyManager:
             # This would integrate with your Alpaca service
 
             logger.info(f"Would execute {signal.signal_type.value} order for {signal.symbol} "
-                       f"from strategy {strategy_name}")
+                        f"from strategy {strategy_name}")
 
             # Log the signal execution
             trading_logger.log_trading_event(
@@ -421,7 +406,6 @@ class StrategyManager:
         except Exception as e:
             logger.error(f"Error executing signal: {e}")
 
-
     def _check_global_risk_limits(self) -> bool:
         """Check global risk management limits"""
         # Check daily order limit
@@ -437,7 +421,6 @@ class StrategyManager:
 
         return True
 
-
     def _reset_daily_counters(self):
         """Reset daily counters if new day"""
         current_date = datetime.now(timezone.utc).date()
@@ -446,16 +429,13 @@ class StrategyManager:
             self.last_reset_date = current_date
             logger.info("Reset daily counters for new trading day")
 
-
     def add_order_callback(self, callback: Callable):
         """Add callback for order events"""
         self.order_callbacks.append(callback)
 
-
     def add_signal_callback(self, callback: Callable):
         """Add callback for signal events"""
         self.signal_callbacks.append(callback)
-
 
     def get_status(self) -> Dict[str, Any]:
         """Get current manager status"""
@@ -467,12 +447,11 @@ class StrategyManager:
             'is_running': self.is_running,
             'total_strategies': len(self.strategies),
             'active_strategies': len([s for s in self.strategies.values()
-                                    if s.state == StrategyState.RUNNING]),
+                                      if s.state == StrategyState.RUNNING]),
             'daily_orders': self.daily_orders_count,
             'total_positions': sum(len(s.positions) for s in self.strategies.values()),
             'strategies': strategy_statuses
         }
-
 
     def get_performance_summary(self) -> Dict[str, Any]:
         """Get performance summary for all strategies"""
@@ -491,4 +470,3 @@ class StrategyManager:
             'total_trades': total_trades,
             'strategy_performance': strategy_performance
         }
-
