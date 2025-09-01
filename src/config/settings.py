@@ -43,8 +43,6 @@ class TradingConfig(BaseModel):
     max_order_value: float = Field(default=10000.0, gt=0, description="Maximum dollar value per order")
 
     @validator('mode')
-
-
     def validate_mode(cls, v):
         if v not in ['paper', 'live']:
             raise ValueError('Trading mode must be "paper" or "live"')
@@ -197,7 +195,6 @@ class Settings(BaseSettings):
     schedule_types: Dict[str, ScheduleConfig] = Field(default_factory=dict)
     dashboard: Optional[DashboardConfig] = Field(default=None)
 
-
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
@@ -205,12 +202,10 @@ class Settings(BaseSettings):
         case_sensitive = False
         extra = "ignore"  # Ignore extra environment variables
 
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._load_yaml_configs()
         self._load_environment_overrides()
-
 
     def _load_yaml_configs(self):
         """Load configuration from unified config file"""
@@ -278,7 +273,6 @@ class Settings(BaseSettings):
         # Fallback to legacy config files if unified config not available
         print("Loading from legacy configuration files...")
         self._load_legacy_configs()
-
 
     def _load_legacy_configs(self):
         """Load from legacy configuration files (backward compatibility)"""
@@ -366,7 +360,6 @@ class Settings(BaseSettings):
             except Exception as e:
                 print(f"Warning: Could not load alpaca config: {e}")
 
-
     def _load_environment_overrides(self):
         """Load environment variable overrides"""
         # Database environment variables
@@ -391,12 +384,10 @@ class Settings(BaseSettings):
         if os.getenv('ALPACA_LIVE_SECRET_KEY'):
             self.alpaca.live_secret_key = os.getenv('ALPACA_LIVE_SECRET_KEY')
 
-
     def get_database_url(self) -> str:
         """Get database connection URL"""
         return (f"postgresql://{self.database.user}:{self.database.password}@"
                 f"{self.database.host}:{self.database.port}/{self.database.name}")
-
 
     def get_alpaca_credentials(self) -> Dict[str, str]:
         """Get Alpaca credentials based on trading mode"""
@@ -413,11 +404,9 @@ class Settings(BaseSettings):
                 "base_url": self.alpaca.live_base_url
             }
 
-
     def get_enabled_strategies(self) -> Dict[str, StrategyConfig]:
         """Get only enabled strategies"""
         return {name: config for name, config in self.strategies.items() if config.enabled}
-
 
     def validate_configuration(self) -> List[str]:
         """Validate configuration and return list of issues"""
@@ -508,4 +497,3 @@ if __name__ == "__main__":
         print(f"✓ Database: {settings.database.host}:{settings.database.port}")
         print(f"✓ Trading mode: {settings.trading.mode}")
         print(f"✓ Enabled strategies: {len(settings.get_enabled_strategies())}")
-
