@@ -16,12 +16,8 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import dashboard components for testing
-try:
-    from src.dashboard.callbacks.interactive_chart_callbacks import register_interactive_chart_callbacks
-    from src.dashboard.layouts.chart_components import create_volume_summary_card
-except ImportError:
-    # Handle missing imports gracefully for testing
-    pass
+from src.dashboard.callbacks.interactive_chart_callbacks import register_interactive_chart_callbacks
+from src.dashboard.layouts.chart_components import create_volume_summary_card
 
 
 class TestTechnicalAnalysisSummaryLayout:

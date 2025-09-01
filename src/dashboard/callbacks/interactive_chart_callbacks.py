@@ -5,7 +5,7 @@ Breaking down the large register_interactive_chart_callbacks into smaller functi
 
 from dash import Input, Output, State, callback_context
 from ..services.unified_data_service import MarketDataService
-from ..services.technical_analysis import TechnicalIndicatorService
+from ..services.technical_indicators import TechnicalIndicatorService
 from ..layouts.interactive_chart import InteractiveChartBuilder
 from ...utils.logging_config import get_ui_logger
 
