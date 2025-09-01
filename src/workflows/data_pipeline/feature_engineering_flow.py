@@ -3,7 +3,6 @@ Feature Engineering Workflow
 Triggered after Yahoo data collection to calculate technical indicators
 """
 
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -101,6 +100,7 @@ def get_symbols_needing_features() -> List[str]:
         logger.error(f"Failed to get symbols needing features: {e}")
         return []
 
+
 @task(retries=3, retry_delay_seconds=120)
 def calculate_features_for_symbol(symbol: str, initial_run: bool = False) -> Dict[str, Any]:
     """
@@ -136,6 +136,7 @@ def calculate_features_for_symbol(symbol: str, initial_run: bool = False) -> Dic
             'message': str(e)
         }
 
+
 @task
 def generate_feature_summary(results: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
@@ -168,6 +169,7 @@ def generate_feature_summary(results: List[Dict[str, Any]]) -> Dict[str, Any]:
 
     logger.info(f"Feature calculation summary: {summary}")
     return summary
+
 
 @task
 def log_feature_workflow_metrics(summary: Dict[str, Any]) -> None:
@@ -202,7 +204,8 @@ def log_feature_workflow_metrics(summary: Dict[str, Any]) -> None:
                     0,  # Duration will be calculated by Prefect
                     'success' if summary['failed_calculations'] == 0 else 'partial_success',
                     'prefect_workflow',
-                    f'{{"symbols_processed": {summary["successful_calculations"]}, "total_symbols": {summary["total_symbols"]}}}'
+                    f'{{"symbols_processed": {summary["successful_calculations"]}, '
+                    f'"total_symbols": {summary["total_symbols"]}}}'
                 ))
                 conn.commit()
 
@@ -278,6 +281,7 @@ def feature_engineering_flow(initial_run: bool = False) -> Dict[str, Any]:
         'summary': summary,
         'timestamp': datetime.now(MARKET_TIMEZONE).isoformat()
     }
+
 
 # Standalone execution for testing
 if __name__ == "__main__":

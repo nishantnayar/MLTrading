@@ -3,7 +3,6 @@ Yahoo Finance Market Hours Data Collection Workflow
 Collects market data every hour during trading hours on weekdays
 """
 
-import os
 import sys
 from datetime import datetime, time
 from pathlib import Path
@@ -126,6 +125,7 @@ def get_active_symbols() -> List[str]:
         logger.info(f"Using fallback symbols: {fallback_symbols}")
         return fallback_symbols
 
+
 @task(retries=3, retry_delay_seconds=120)
 def collect_symbol_data(symbol: str, period: str = "1d") -> Dict[str, Any]:
     """
@@ -199,6 +199,7 @@ def collect_symbol_data(symbol: str, period: str = "1d") -> Dict[str, Any]:
             'message': str(e)
         }
 
+
 @task
 def generate_collection_summary(results: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
@@ -233,6 +234,7 @@ def generate_collection_summary(results: List[Dict[str, Any]]) -> Dict[str, Any]
 
     logger.info(f"Collection summary: {summary}")
     return summary
+
 
 @task
 def log_workflow_metrics(summary: Dict[str, Any]) -> None:
@@ -277,9 +279,11 @@ def log_workflow_metrics(summary: Dict[str, Any]) -> None:
     except Exception as e:
         logger.error(f"Failed to log workflow metrics: {e}")
 
+
 @flow(
     name="yahoo-market-hours-data-collection",
-    description="Collects Yahoo Finance data during market hours with sequential processing (default) to prevent connection exhaustion",
+    description="Collects Yahoo Finance data during market hours with sequential processing (default) to prevent "
+                "connection exhaustion",
     log_prints=True,
     flow_run_name=generate_flow_run_name
 )
@@ -346,6 +350,7 @@ def yahoo_market_hours_collection_flow(data_period: str = "3d") -> Dict[str, Any
         'summary': summary,
         'timestamp': datetime.now(MARKET_TIMEZONE).isoformat()
     }
+
 
 # Standalone execution for testing
 if __name__ == "__main__":

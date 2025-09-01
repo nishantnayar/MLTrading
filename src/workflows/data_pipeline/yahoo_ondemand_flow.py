@@ -3,7 +3,6 @@ Yahoo Finance On-Demand Data Collection Workflow
 Can be run anytime regardless of market hours - useful for testing and manual data collection
 """
 
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -81,6 +80,7 @@ def get_symbols_for_collection(limit: int = 20) -> List[str]:
         logger.info(f"Using fallback symbols: {fallback_symbols}")
         return fallback_symbols
 
+
 @task(retries=3, retry_delay_seconds=60)
 def collect_symbol_data_ondemand(symbol: str, period: str = "1d") -> Dict[str, Any]:
     """
@@ -154,6 +154,7 @@ def collect_symbol_data_ondemand(symbol: str, period: str = "1d") -> Dict[str, A
             'message': str(e)
         }
 
+
 @task
 def generate_ondemand_summary(results: List[Dict[str, Any]], run_type: str = "manual") -> Dict[str, Any]:
     """
@@ -191,9 +192,11 @@ def generate_ondemand_summary(results: List[Dict[str, Any]], run_type: str = "ma
     logger.info(f"On-demand collection summary: {summary}")
     return summary
 
+
 @flow(
     name="yahoo-ondemand-data-collection",
-    description="On-demand Yahoo Finance data collection with sequential processing (default) to prevent connection exhaustion",
+    description="On-demand Yahoo Finance data collection with sequential processing (default) to prevent connection "
+                "exhaustion",
     log_prints=True,
     flow_run_name=generate_ondemand_run_name
 )
@@ -244,6 +247,7 @@ def yahoo_ondemand_collection_flow(
         'summary': summary,
         'timestamp': datetime.now(MARKET_TIMEZONE).isoformat()
     }
+
 
 # Standalone execution for testing
 if __name__ == "__main__":

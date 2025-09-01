@@ -17,6 +17,7 @@ from concurrent.futures import ThreadPoolExecutor
 # Import database logging components
 try:
     from .database_logging import DatabaseLogHandler
+
     DATABASE_LOGGING_AVAILABLE = True
 except ImportError:
     DATABASE_LOGGING_AVAILABLE = False
@@ -25,7 +26,6 @@ except ImportError:
 
 class SanitizingFormatter(logging.Formatter):
     """Custom formatter that sanitizes sensitive information"""
-
 
     def format(self, record):
         # Sanitize the message
@@ -92,7 +92,7 @@ def setup_logger(name: str, log_file: str = None, level: str = "INFO",
         from .concurrent_safe_logging import ConcurrentSafeRotatingFileHandler
         combined_handler = ConcurrentSafeRotatingFileHandler(
             logs_dir / "mltrading_combined.log",
-            maxBytes=50*1024*1024,  # 50MB
+            maxBytes=50 * 1024 * 1024,  # 50MB
             backupCount=3
         )
     except ImportError:
@@ -109,7 +109,7 @@ def setup_logger(name: str, log_file: str = None, level: str = "INFO",
             from .concurrent_safe_logging import ConcurrentSafeRotatingFileHandler
             file_handler = ConcurrentSafeRotatingFileHandler(
                 logs_dir / log_file,
-                maxBytes=10*1024*1024,  # 10MB
+                maxBytes=10 * 1024 * 1024,  # 10MB
                 backupCount=5
             )
         except ImportError:
@@ -184,7 +184,7 @@ def get_combined_logger(name: str, enable_database_logging: bool = True) -> logg
 
 
 def log_structured_event(component: str, level: str, message: str,
-                        metadata: Dict[str, Any] = None, logger: logging.Logger = None):
+                         metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
     Log structured events with metadata for better parsing and analytics
 
@@ -213,7 +213,7 @@ def log_structured_event(component: str, level: str, message: str,
 
 
 def log_trading_event(event_type: str, symbol: str, details: str,
-                     metadata: Dict[str, Any] = None, logger: logging.Logger = None):
+                      metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
     Log trading-specific events with structured data
 
@@ -234,7 +234,7 @@ def log_trading_event(event_type: str, symbol: str, details: str,
 
 
 def log_system_event(event_type: str, details: str,
-                    metadata: Dict[str, Any] = None, logger: logging.Logger = None):
+                     metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
     Log system-level events with structured data
 
@@ -253,7 +253,7 @@ def log_system_event(event_type: str, details: str,
 
 
 def log_performance_event(operation: str, duration_ms: float,
-                         metadata: Dict[str, Any] = None, logger: logging.Logger = None):
+                          metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
     Log performance metrics with structured data and resilient database storage
 
@@ -271,8 +271,8 @@ def log_performance_event(operation: str, duration_ms: float,
 
     # Log to regular logs (file)
     log_structured_event('performance', 'INFO',
-                       f"Operation '{operation}' completed in {duration_ms:.2f}ms",
-                       perf_metadata, logger)
+                         f"Operation '{operation}' completed in {duration_ms:.2f}ms",
+                         perf_metadata, logger)
 
     # Use resilient database logger (async with circuit breaker)
     try:
@@ -284,7 +284,7 @@ def log_performance_event(operation: str, duration_ms: float,
 
         # Clean metadata to avoid conflicts with explicit parameters
         clean_perf_metadata = {k: v for k, v in (metadata or {}).items()
-                              if k not in ['component', 'correlation_id']}
+                               if k not in ['component', 'correlation_id']}
 
         perf_logger.log_performance(
             operation_name=operation,
@@ -325,9 +325,9 @@ def log_request(request_info: dict, logger: logging.Logger = None):
 
     # Log as structured event
     log_structured_event('api', 'INFO',
-                       f"Request: {metadata['method']} {metadata['path']} - "
-                       f"Status: {status_code} - Duration: {duration}ms",
-                       metadata, logger)
+                         f"Request: {metadata['method']} {metadata['path']} - "
+                         f"Status: {status_code} - Duration: {duration}ms",
+                         metadata, logger)
 
     # Also log to database API request logs
     try:
@@ -351,9 +351,9 @@ def log_request(request_info: dict, logger: logging.Logger = None):
 
 
 def log_data_collection_event(operation_type: str, data_source: str,
-                             symbol: str = None, records_processed: int = None,
-                             duration_ms: float = None, status: str = 'success',
-                             logger: logging.Logger = None, **metadata: Any):
+                              symbol: str = None, records_processed: int = None,
+                              duration_ms: float = None, status: str = 'success',
+                              logger: logging.Logger = None, **metadata: Any):
     """
     Log data collection events with structured data and resilient database storage
 
@@ -414,8 +414,8 @@ def log_data_collection_event(operation_type: str, data_source: str,
 
 
 def log_ui_interaction_event(component: str, action: str = None,
-                           duration_ms: float = None, user_id: str = None,
-                           session_id: str = None, logger: logging.Logger = None, **metadata: Any):
+                             duration_ms: float = None, user_id: str = None,
+                             session_id: str = None, logger: logging.Logger = None, **metadata: Any):
     """
     Log UI interaction events with structured data and database storage
 
@@ -468,10 +468,10 @@ def log_ui_interaction_event(component: str, action: str = None,
 
 
 def log_error_event(error_type: str, error_message: str, component: str = None,
-                   severity: str = 'MEDIUM', stack_trace: str = None,
-                   source_file: str = None, source_line: int = None,
-                   source_function: str = None, user_impact: bool = False,
-                   logger: logging.Logger = None, **metadata: Any):
+                    severity: str = 'MEDIUM', stack_trace: str = None,
+                    source_file: str = None, source_line: int = None,
+                    source_function: str = None, user_impact: bool = False,
+                    logger: logging.Logger = None, **metadata: Any):
     """
     Log error events with structured data and resilient database storage
 
@@ -534,7 +534,7 @@ def log_error_event(error_type: str, error_message: str, component: str = None,
 
 
 def log_dashboard_event(event_type: str, details: str,
-                       metadata: Dict[str, Any] = None, logger: logging.Logger = None):
+                        metadata: Dict[str, Any] = None, logger: logging.Logger = None):
     """
     Log dashboard events with structured data
 
@@ -550,8 +550,9 @@ def log_dashboard_event(event_type: str, details: str,
     }
 
     log_structured_event('dashboard', 'INFO',
-                       f"Dashboard Event - {event_type}: {details}",
-                       dashboard_metadata, logger)
+                         f"Dashboard Event - {event_type}: {details}",
+                         dashboard_metadata, logger)
+
 
 # Global variables for log management
 _log_cleanup_thread = None
@@ -605,11 +606,10 @@ def set_correlation_id(correlation_id: str):
     """
     _correlation_context.correlation_id = correlation_id
 
+
 @contextmanager
-
-
 def log_operation(operation_name: str, logger: logging.Logger = None,
-                 log_args: bool = False, **metadata: Any):
+                  log_args: bool = False, **metadata: Any):
     """
     Context manager for logging operations with automatic timing and error handling
 
@@ -630,26 +630,26 @@ def log_operation(operation_name: str, logger: logging.Logger = None,
 
     try:
         logger.info(f"[{correlation_id}] Starting operation: {operation_name}",
-                   extra={'correlation_id': correlation_id, 'operation': operation_name,
-                         'metadata': clean_metadata if log_args else {}})
+                    extra={'correlation_id': correlation_id, 'operation': operation_name,
+                           'metadata': clean_metadata if log_args else {}})
         yield
 
         duration_ms = (time.time() - start_time) * 1000
         logger.info(f"[{correlation_id}] Completed operation: {operation_name} in {duration_ms:.2f}ms",
-                   extra={'correlation_id': correlation_id, 'operation': operation_name,
-                         'duration_ms': duration_ms, 'status': 'success'})
+                    extra={'correlation_id': correlation_id, 'operation': operation_name,
+                           'duration_ms': duration_ms, 'status': 'success'})
 
         # Log performance event
         log_performance_event(operation_name, duration_ms,
-                            {**clean_metadata, 'correlation_id': correlation_id}, logger)
+                              {**clean_metadata, 'correlation_id': correlation_id}, logger)
 
     except Exception as e:
         duration_ms = (time.time() - start_time) * 1000
         error_msg = sanitize_log_message(str(e))
         logger.error(f"[{correlation_id}] Failed operation: {operation_name} after {duration_ms:.2f}ms - {error_msg}",
-                    extra={'correlation_id': correlation_id, 'operation': operation_name,
-                          'duration_ms': duration_ms, 'status': 'error', 'error': error_msg},
-                    exc_info=True)
+                     extra={'correlation_id': correlation_id, 'operation': operation_name,
+                            'duration_ms': duration_ms, 'status': 'error', 'error': error_msg},
+                     exc_info=True)
 
         # Log performance event for failed operations too
         try:
@@ -658,7 +658,7 @@ def log_operation(operation_name: str, logger: logging.Logger = None,
 
             # Clean metadata to avoid conflicts
             error_metadata = {k: v for k, v in clean_metadata.items()
-                            if k not in ['component', 'correlation_id']}
+                              if k not in ['component', 'correlation_id']}
             error_metadata['error'] = error_msg
 
             perf_logger.log_performance(
@@ -789,7 +789,8 @@ def consolidate_logs(logs_dir: Path = None, max_age_days: int = 7) -> Dict[str, 
                     results['failed_files'].append(str(log_file))
 
         results['status'] = 'success'
-        results['message'] = f"Compressed {len(results['compressed_files'])} files, saved {results['total_space_saved']} bytes"
+        results[
+            'message'] = f"Compressed {len(results['compressed_files'])} files, saved {results['total_space_saved']} bytes"
 
     except Exception as e:
         results['status'] = 'error'
@@ -800,7 +801,7 @@ def consolidate_logs(logs_dir: Path = None, max_age_days: int = 7) -> Dict[str, 
 
 
 def cleanup_old_logs(logs_dir: Path = None, max_age_days: int = 30,
-                    max_compressed_age_days: int = 90) -> Dict[str, Any]:
+                     max_compressed_age_days: int = 90) -> Dict[str, Any]:
     """
     Clean up old log files and compressed archives
 
@@ -852,7 +853,8 @@ def cleanup_old_logs(logs_dir: Path = None, max_age_days: int = 30,
                     results['errors'].append(f"Failed to delete {compressed_file}: {e}")
 
         results['status'] = 'success'
-        results['message'] = f"Deleted {len(results['deleted_files'])} log files and {len(results['deleted_compressed'])} compressed files, freed {results['total_space_freed']} bytes"
+        results[
+            'message'] = f"Deleted {len(results['deleted_files'])} log files and {len(results['deleted_compressed'])} compressed files, freed {results['total_space_freed']} bytes"
 
     except Exception as e:
         results['status'] = 'error'
@@ -863,9 +865,9 @@ def cleanup_old_logs(logs_dir: Path = None, max_age_days: int = 30,
 
 
 def start_log_cleanup_scheduler(cleanup_interval_hours: int = 24,
-                              consolidate_after_days: int = 7,
-                              delete_after_days: int = 30,
-                              delete_compressed_after_days: int = 90):
+                                consolidate_after_days: int = 7,
+                                delete_after_days: int = 30,
+                                delete_compressed_after_days: int = 90):
     """
     Start a background thread for periodic log cleanup
 
@@ -879,7 +881,6 @@ def start_log_cleanup_scheduler(cleanup_interval_hours: int = 24,
 
     if _cleanup_running:
         return
-
 
     def cleanup_worker():
         global _cleanup_running
@@ -989,4 +990,3 @@ def get_log_statistics(logs_dir: Path = None) -> Dict[str, Any]:
         stats['message'] = f"Error getting log statistics: {e}"
 
     return stats
-

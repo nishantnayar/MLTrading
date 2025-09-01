@@ -4,7 +4,6 @@ Triggered after Yahoo data collection to calculate technical indicators
 Uses proven subprocess isolation for reliable connection management
 """
 
-import os
 import sys
 import subprocess
 import time
@@ -88,6 +87,7 @@ def get_symbols_needing_features() -> List[str]:
     except Exception as e:
         logger.error(f"Failed to get symbols needing features: {e}")
         return []
+
 
 @task(retries=3, retry_delay_seconds=120)
 def calculate_features_for_symbol_subprocess(symbol: str, initial_run: bool = False) -> Dict[str, Any]:
@@ -180,6 +180,7 @@ except Exception as e:
             'message': str(e)
         }
 
+
 @task
 def calculate_features_batch_subprocess(symbols: List[str], initial_run: bool = False, batch_size: int = 5) -> List[Dict[str, Any]]:
     """
@@ -215,6 +216,7 @@ def calculate_features_batch_subprocess(symbols: List[str], initial_run: bool = 
 
     return all_results
 
+
 @task
 def generate_feature_summary(results: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Generate summary of feature calculation results"""
@@ -239,6 +241,7 @@ def generate_feature_summary(results: List[Dict[str, Any]]) -> Dict[str, Any]:
 
     logger.info(f"Feature calculation summary: {summary}")
     return summary
+
 
 @task
 def log_feature_workflow_metrics(summary: Dict[str, Any]) -> None:
@@ -344,6 +347,7 @@ def feature_engineering_flow_subprocess(initial_run: bool = False) -> Dict[str, 
         'summary': summary,
         'timestamp': datetime.now(MARKET_TIMEZONE).isoformat()
     }
+
 
 # Standalone execution for testing
 if __name__ == "__main__":

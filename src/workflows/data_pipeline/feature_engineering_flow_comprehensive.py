@@ -4,7 +4,6 @@ Triggered after Yahoo data collection to calculate comprehensive technical indic
 Uses proven subprocess isolation for reliable connection management
 """
 
-import os
 import sys
 import subprocess
 import time
@@ -89,6 +88,7 @@ def get_symbols_needing_comprehensive_features() -> List[str]:
     except Exception as e:
         logger.error(f"Failed to get symbols needing comprehensive features: {e}")
         return []
+
 
 @task(retries=3, retry_delay_seconds=120)
 def calculate_comprehensive_features_for_symbol_subprocess(symbol: str, initial_run: bool = False) -> Dict[str, Any]:
@@ -181,6 +181,7 @@ except Exception as e:
             'message': str(e)
         }
 
+
 @task
 def calculate_comprehensive_features_batch_subprocess(symbols: List[str], initial_run: bool = False, batch_size: int = 3) -> List[Dict[str, Any]]:
     """
@@ -215,6 +216,7 @@ def calculate_comprehensive_features_batch_subprocess(symbols: List[str], initia
             time.sleep(3)  # Longer pause for comprehensive features
 
     return all_results
+
 
 @task
 def generate_comprehensive_feature_summary(results: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -280,6 +282,7 @@ def log_comprehensive_feature_workflow_metrics(summary: Dict[str, Any]) -> None:
 
     except Exception as e:
         logger.error(f"Failed to log comprehensive feature workflow metrics: {e}")
+
 
 @flow(
     name="comprehensive-feature-engineering-workflow-subprocess",
@@ -354,6 +357,7 @@ def comprehensive_feature_engineering_flow_subprocess(initial_run: bool = False)
         'summary': summary,
         'timestamp': datetime.now(MARKET_TIMEZONE).isoformat()
     }
+
 
 # Standalone execution for testing
 if __name__ == "__main__":
