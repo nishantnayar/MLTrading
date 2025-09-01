@@ -71,7 +71,8 @@ class MarketDataService(BaseDashboardService):
                 cleaned_count = len(df)
                 if original_count != cleaned_count:
                     self.logger.warning(
-                        f"Removed {original_count - cleaned_count} rows with missing essential data (kept {cleaned_count}/{original_count})")
+                        f"Removed {original_count - cleaned_count} rows with missing essential data (kept "
+                        f"{cleaned_count}/{original_count})")
 
                 self.logger.info(f"Retrieved {len(df)} market data points for {symbol}")
 
