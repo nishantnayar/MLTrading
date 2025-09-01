@@ -33,7 +33,7 @@ def create_pipeline_status_card(status_data: Dict) -> dbc.Card:
     # Build card using helper function
     return _build_pipeline_status_card(
         deployment, status_color, status_icon, status_text,
-        last_run_text, next_run_text, success_rate
+        last_run_text, next_run_text, success_rate, last_run
     )
 
 
@@ -154,8 +154,10 @@ def _format_time_until(time_delta, prefix=''):
 
 
 def _build_pipeline_status_card(deployment, status_color, status_icon, status_text, 
-                                last_run_text, next_run_text, success_rate):
+                                last_run_text, next_run_text, success_rate, last_run):
     """Build the main pipeline status card UI"""
+    # Determine button disabled state
+    last_run_state = last_run.get('state', {}).get('type', 'UNKNOWN') if last_run else None
     # Success rate color
     if success_rate >= 95:
         success_color = 'success'

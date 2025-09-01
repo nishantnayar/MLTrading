@@ -70,6 +70,20 @@ def register_symbol_sync_callbacks(app):
         else:
             return "AAPL"
 
+    @app.callback(
+        Output("comparison-symbol-3", "value"),
+        [Input("selected-symbol-store", "data")],
+        prevent_initial_call=True
+    )
+    def sync_comparison_symbol_3(selected_symbol):
+        """Set comparison symbol 3 to a different default when main symbol changes."""
+        if selected_symbol == "AAPL":
+            return "TSLA"
+        elif selected_symbol == "MSFT":
+            return "NVDA"
+        else:
+            return "MSFT"
+
 
 def _handle_initial_load(stored_symbol, current_tab):
     """Handle initial callback load"""
@@ -123,17 +137,3 @@ def _maintain_current_values(overview_symbol, detailed_symbol, comparison_symbol
     current_stored = stored_symbol or "AAPL"
 
     return current_stored, current_overview, current_detailed, current_comparison, current_tab or "overview-tab"
-
-    @app.callback(
-        Output("comparison-symbol-3", "value"),
-        [Input("selected-symbol-store", "data")],
-        prevent_initial_call=True
-    )
-    def sync_comparison_symbol_3(selected_symbol):
-        """Set comparison symbol 3 to a different default when main symbol changes."""
-        if selected_symbol == "AAPL":
-            return "TSLA"
-        elif selected_symbol == "MSFT":
-            return "NVDA"
-        else:
-            return "MSFT"
