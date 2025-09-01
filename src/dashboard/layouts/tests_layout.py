@@ -360,8 +360,6 @@ def format_test_output(output_text):
     [State("test-type-dropdown", "value"),
      State("test-options", "value")]
 )
-
-
 def handle_test_execution(run_clicks, stop_clicks, refresh_clicks, interval_n, test_type, options):
     """Handle test execution and display results."""
 
@@ -409,24 +407,25 @@ def get_default_test_display():
 
         # Show current status
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        default_output = format_test_output(f"Ready to run tests...\n\nLast scan found {total_tests} tests available.\nClick 'Run Tests' to execute the test suite.")
+        default_output = format_test_output(
+            f"Ready to run tests...\n\nLast scan found {total_tests} tests available.\nClick 'Run Tests' to execute the test suite.")
 
         return (
-            default_output,         # test-output-container
-            "Ready",               # test-status-badge children
-            "secondary",           # test-status-badge color
-            False,                 # run-tests-btn disabled
-            True,                  # stop-tests-btn disabled
-            True,                  # test-status-interval disabled
-            str(total_tests),      # total-tests-count (actual discovered count)
-            str(total_tests),      # passed-tests-count (show all as passed initially)
-            "0",                   # failed-tests-count (will be updated after run)
-            "0",                   # skipped-tests-count (will be updated after run)
-            "100%",                # passed-percentage
-            "0%",                  # failed-percentage
-            "0%",                  # skipped-percentage
-            "--",                  # test-duration (will be updated after run)
-            current_time           # last-run-time
+            default_output,  # test-output-container
+            "Ready",  # test-status-badge children
+            "secondary",  # test-status-badge color
+            False,  # run-tests-btn disabled
+            True,  # stop-tests-btn disabled
+            True,  # test-status-interval disabled
+            str(total_tests),  # total-tests-count (actual discovered count)
+            str(total_tests),  # passed-tests-count (show all as passed initially)
+            "0",  # failed-tests-count (will be updated after run)
+            "0",  # skipped-tests-count (will be updated after run)
+            "100%",  # passed-percentage
+            "0%",  # failed-percentage
+            "0%",  # skipped-percentage
+            "--",  # test-duration (will be updated after run)
+            current_time  # last-run-time
         )
 
     except Exception:
@@ -449,7 +448,8 @@ def execute_tests(test_type, options):
     project_dir = Path(__file__).parent.parent.parent.parent
     if not (project_dir / "tests").exists():
         return (
-            format_test_output("Error: Tests directory not found. Please ensure you're in the correct project directory."),
+            format_test_output(
+                "Error: Tests directory not found. Please ensure you're in the correct project directory."),
             "Error", "danger", False, True, True, "0", "0", "0", "0", "0%", "0%", "0%", "0s",
             datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         )
@@ -536,9 +536,9 @@ def execute_tests(test_type, options):
             status_color = "success"
 
         # Calculate percentages
-        passed_pct = f"{(passed_tests/total_tests*100):.1f}%" if total_tests > 0 else "0%"
-        failed_pct = f"{(failed_tests/total_tests*100):.1f}%" if total_tests > 0 else "0%"
-        skipped_pct = f"{(skipped_tests/total_tests*100):.1f}%" if total_tests > 0 else "0%"
+        passed_pct = f"{(passed_tests / total_tests * 100):.1f}%" if total_tests > 0 else "0%"
+        failed_pct = f"{(failed_tests / total_tests * 100):.1f}%" if total_tests > 0 else "0%"
+        skipped_pct = f"{(skipped_tests / total_tests * 100):.1f}%" if total_tests > 0 else "0%"
 
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -546,22 +546,22 @@ def execute_tests(test_type, options):
             format_test_output(output),
             status,
             status_color,
-            False,          # run-tests-btn disabled
-            True,           # stop-tests-btn disabled
-            True,           # test-status-interval disabled
+            False,  # run-tests-btn disabled
+            True,  # stop-tests-btn disabled
+            True,  # test-status-interval disabled
             str(total_tests),
             str(passed_tests),
             str(failed_tests),
             str(skipped_tests),
-            passed_pct,     # passed-percentage
-            failed_pct,     # failed-percentage
-            skipped_pct,    # skipped-percentage
+            passed_pct,  # passed-percentage
+            failed_pct,  # failed-percentage
+            skipped_pct,  # skipped-percentage
             duration,
             current_time
         )
 
     except subprocess.TimeoutExpired:
-        timeout_msg = f"Test execution timed out after {actual_timeout//60} minutes."
+        timeout_msg = f"Test execution timed out after {actual_timeout // 60} minutes."
         if test_type == "all":
             timeout_msg += " Try running specific test suites for better performance."
 
@@ -569,7 +569,8 @@ def execute_tests(test_type, options):
             format_test_output(timeout_msg),
             "Timeout",
             "danger",
-            False, True, True, "0", "0", "0", "0", "0%", "0%", "0%", f"{actual_timeout//60}m+", datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            False, True, True, "0", "0", "0", "0", "0%", "0%", "0%", f"{actual_timeout // 60}m+",
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         )
     except Exception as e:
         return (
@@ -625,4 +626,3 @@ def parse_test_results(output):
 def refresh_test_results():
     """Refresh test results display with current values."""
     return get_default_test_display()
-

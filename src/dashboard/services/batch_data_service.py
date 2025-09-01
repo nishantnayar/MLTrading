@@ -13,10 +13,10 @@ from .cache_service import cached
 class BatchDataService(BaseDashboardService):
     """Service for efficient batch data operations."""
 
-    @cached(ttl=180, key_func=lambda self, symbols, days=30, source='yahoo': f"batch_market_{len(symbols)}_{days}_{source}")
-
-
-    def get_batch_market_data(self, symbols: List[str], days: int = 30, source: str = 'yahoo') -> Dict[str, pd.DataFrame]:
+    @cached(ttl=180,
+            key_func=lambda self, symbols, days=30, source='yahoo': f"batch_market_{len(symbols)}_{days}_{source}")
+    def get_batch_market_data(self, symbols: List[str], days: int = 30, source: str = 'yahoo') -> Dict[
+        str, pd.DataFrame]:
         """
         Get market data for multiple symbols in a single query.
 
@@ -103,8 +103,6 @@ class BatchDataService(BaseDashboardService):
             return {}
 
     @cached(ttl=300, key_func=lambda self, symbols, source='yahoo': f"batch_info_{len(symbols)}_{source}")
-
-
     def get_batch_stock_info(self, symbols: List[str], source: str = 'yahoo') -> Dict[str, Dict[str, Any]]:
         """
         Get stock info for multiple symbols in a single query.
@@ -158,7 +156,6 @@ class BatchDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting batch stock info: {e}")
             return {}
-
 
     def get_batch_latest_prices(self, symbols: List[str], source: str = 'yahoo') -> Dict[str, Dict[str, Any]]:
         """
@@ -217,7 +214,6 @@ class BatchDataService(BaseDashboardService):
             self.logger.error(f"Error getting batch latest prices: {e}")
             return {}
 
-
     def preload_dashboard_data(self, source: str = 'yahoo') -> Dict[str, Any]:
         """
         Preload all commonly used dashboard data in optimized batch queries.
@@ -271,4 +267,3 @@ class BatchDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error preloading dashboard data: {e}")
             return {}
-

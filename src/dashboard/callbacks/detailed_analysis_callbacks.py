@@ -12,7 +12,6 @@ import dash_bootstrap_components as dbc
 from ..services.unified_data_service import MarketDataService
 from ..services.feature_data_service import FeatureDataService
 
-
 # Initialize services
 market_service = MarketDataService()
 feature_service = FeatureDataService()
@@ -22,14 +21,12 @@ feature_service = FeatureDataService()
     Output("detailed-analysis-symbol", "options"),
     [Input("detailed-analysis-symbol", "search_value")]
 )
-
-
 def update_detailed_analysis_symbols(search_value):
     """Update symbol options for detailed analysis dropdown."""
     try:
         symbols = market_service.get_available_symbols()
         options = [{"label": f"{s['symbol']} - {s['company_name']}", "value": s['symbol']}
-                  for s in symbols[:100]]  # Limit to first 100
+                   for s in symbols[:100]]  # Limit to first 100
 
         return options
     except Exception:
@@ -41,8 +38,6 @@ def update_detailed_analysis_symbols(search_value):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
-
-
 def update_macd_detailed_chart(symbol, days):
     """Create comprehensive MACD chart with all MACD indicators."""
     if not symbol:
@@ -134,8 +129,6 @@ def update_macd_detailed_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
-
-
 def update_ma_ratios_chart(symbol, days):
     """Create moving averages and ratios chart."""
     if not symbol:
@@ -150,7 +143,9 @@ def update_ma_ratios_chart(symbol, days):
 
         # Find moving average and ratio columns
         ma_columns = [col for col in df.columns if any(ma_term in col.lower()
-                     for ma_term in ['ma_', 'price_ma', 'price_to_ma', 'ma_short', 'ma_med', 'ma_long'])]
+                                                       for ma_term in
+                                                       ['ma_', 'price_ma', 'price_to_ma', 'ma_short', 'ma_med',
+                                                        'ma_long'])]
         ratio_columns = [col for col in df.columns if 'ratio' in col.lower() and 'ma' in col.lower()]
 
         if not ma_columns and not ratio_columns:
@@ -220,8 +215,6 @@ def update_ma_ratios_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
-
-
 def update_vol_ratios_chart(symbol, days):
     """Create volatility ratios and regime chart."""
     if not symbol:
@@ -237,7 +230,8 @@ def update_vol_ratios_chart(symbol, days):
         # Find volatility ratio columns
         vol_ratio_columns = [col for col in df.columns if 'vol_ratio' in col.lower() or 'vol_of_vol' in col.lower()]
         vol_columns = [col for col in df.columns if any(vol_term in col.lower()
-                      for vol_term in ['realized_vol', 'gk_volatility', 'returns_squared'])]
+                                                        for vol_term in
+                                                        ['realized_vol', 'gk_volatility', 'returns_squared'])]
 
         if not vol_ratio_columns and not vol_columns:
             return create_empty_chart("No volatility ratios found")
@@ -298,8 +292,6 @@ def update_vol_ratios_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
-
-
 def update_advanced_vol_chart(symbol, days):
     """Create advanced volatility estimators chart."""
     if not symbol:
@@ -314,7 +306,8 @@ def update_advanced_vol_chart(symbol, days):
 
         # Find advanced volatility columns
         advanced_vol_columns = [col for col in df.columns if any(vol_term in col.lower()
-                               for vol_term in ['gk_volatility', 'atr', 'realized_vol'])]
+                                                                 for vol_term in
+                                                                 ['gk_volatility', 'atr', 'realized_vol'])]
 
         if not advanced_vol_columns:
             return create_empty_chart("No advanced volatility estimators found")
@@ -407,8 +400,6 @@ def update_advanced_vol_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
-
-
 def update_money_flow_chart(symbol, days):
     """Create money flow analysis chart with MFI and volume indicators."""
     if not symbol:
@@ -503,8 +494,6 @@ def update_money_flow_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
-
-
 def update_vpt_chart(symbol, days):
     """Create Volume Price Trend (VPT) chart."""
     if not symbol:
@@ -589,8 +578,6 @@ def update_vpt_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
-
-
 def update_intraday_features_chart(symbol, days):
     """Create intraday reference points chart."""
     if not symbol:
@@ -605,7 +592,9 @@ def update_intraday_features_chart(symbol, days):
 
         # Find intraday columns
         intraday_columns = [col for col in df.columns if any(term in col.lower()
-                           for term in ['intraday', 'overnight_gap', 'returns_from_daily_open', 'position_in_range'])]
+                                                             for term in
+                                                             ['intraday', 'overnight_gap', 'returns_from_daily_open',
+                                                              'position_in_range'])]
 
         if not intraday_columns:
             return create_empty_chart("No intraday features found")
@@ -681,8 +670,6 @@ def update_intraday_features_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
-
-
 def update_lagged_features_heatmap(symbol, days):
     """Create lagged features correlation heatmap."""
     if not symbol:
@@ -748,8 +735,6 @@ def update_lagged_features_heatmap(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
-
-
 def update_rolling_stats_chart(symbol, days):
     """Create rolling statistics chart (Mean, Std, Skew, Kurtosis)."""
     if not symbol:
@@ -764,7 +749,8 @@ def update_rolling_stats_chart(symbol, days):
 
         # Find rolling statistics columns
         rolling_columns = [col for col in df.columns if any(stat in col.lower()
-                          for stat in ['_mean_', '_std_', '_skew_', '_kurt_']) and 'returns' in col.lower()]
+                                                            for stat in ['_mean_', '_std_', '_skew_',
+                                                                         '_kurt_']) and 'returns' in col.lower()]
 
         if not rolling_columns:
             return create_empty_chart("No rolling statistics found")
@@ -847,8 +833,6 @@ def create_empty_chart(message):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
-
-
 def update_rsi_multi_chart(symbol, days):
     """Create RSI multiple timeframes chart."""
     if not symbol:
@@ -923,8 +907,6 @@ def update_rsi_multi_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
-
-
 def update_bollinger_detailed_chart(symbol, days):
     """Create detailed Bollinger Bands chart with position and squeeze."""
     if not symbol:
@@ -1020,8 +1002,6 @@ def update_bollinger_detailed_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
-
-
 def update_volatility_spectrum_chart(symbol, days):
     """Create comprehensive volatility spectrum chart."""
     if not symbol:
@@ -1097,8 +1077,6 @@ def update_volatility_spectrum_chart(symbol, days):
     [Input("detailed-analysis-symbol", "value"),
      Input("detailed-analysis-period", "value")]
 )
-
-
 def update_volume_indicators_chart(symbol, days):
     """Create volume indicators chart."""
     if not symbol:
@@ -1192,8 +1170,6 @@ def update_volume_indicators_chart(symbol, days):
     Output("data-availability-summary", "children"),
     [Input("detailed-analysis-symbol", "value")]
 )
-
-
 def update_data_availability_summary(symbol):
     """Update data availability summary."""
     if not symbol:
@@ -1241,8 +1217,6 @@ def update_data_availability_summary(symbol):
     Output("feature-categories-overview", "children"),
     [Input("detailed-analysis-symbol", "value")]
 )
-
-
 def update_feature_categories_overview(symbol):
     """Update feature categories overview."""
     try:
@@ -1271,9 +1245,11 @@ def update_feature_categories_overview(symbol):
                         html.Div([
                             html.P("Sample features:", className="mb-1 small text-muted"),
                             html.Ul([
-                                html.Li(feature, className="small") for feature in info['features'][:8]  # Show first 8
-                            ] + ([html.Li(f"... and {len(info['features']) - 8} more", className="small text-muted")]
-                                if len(info['features']) > 8 else []), className="mb-0")
+                                        html.Li(feature, className="small") for feature in info['features'][:8]
+                                        # Show first 8
+                                    ] + ([html.Li(f"... and {len(info['features']) - 8} more",
+                                                  className="small text-muted")]
+                                         if len(info['features']) > 8 else []), className="mb-0")
                         ])
                     ])
                 ], className="mb-3", color="light", outline=True)
@@ -1310,4 +1286,3 @@ def register_detailed_analysis_callbacks(app):
     # The callbacks are already registered using the @callback decorator
     # This function exists for consistency with other callback modules
     pass
-

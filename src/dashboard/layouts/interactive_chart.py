@@ -21,7 +21,6 @@ logger = get_ui_logger("interactive_chart")
 class InteractiveChartBuilder:
     """Builder for creating interactive charts with technical indicators."""
 
-
     def __init__(self):
         self.indicator_service = TechnicalIndicatorService()
         self.market_service = MarketDataService()
@@ -34,21 +33,19 @@ class InteractiveChartBuilder:
         else:
             logger.warning("Bollinger Bands config not found!")
 
-
     def get_chart_colors(self):
         """Get chart colors from constants"""
         from ..config.constants import CHART_COLORS
         return CHART_COLORS
 
-
     def create_advanced_price_chart(self,
-                                  df: pd.DataFrame,
-                                  symbol: str,
-                                  indicators: List[str] = None,
-                                  show_volume: bool = True,
-                                  chart_type: str = 'candlestick',
-                                  volume_display: str = 'bars_ma',
-                                  color_by_price: bool = True) -> go.Figure:
+                                    df: pd.DataFrame,
+                                    symbol: str,
+                                    indicators: List[str] = None,
+                                    show_volume: bool = True,
+                                    chart_type: str = 'candlestick',
+                                    volume_display: str = 'bars_ma',
+                                    color_by_price: bool = True) -> go.Figure:
         """
         Create advanced price chart with technical indicators and volume.
 
@@ -76,7 +73,7 @@ class InteractiveChartBuilder:
             oscillator_indicators = []
             if indicators:
                 oscillator_indicators = [ind for ind in indicators
-                                       if self.chart_config.get(ind, {}).get('type') == 'oscillator']
+                                         if self.chart_config.get(ind, {}).get('type') == 'oscillator']
 
             # Improved height allocation with more generous space for volume
             total_rows = 1
@@ -136,7 +133,6 @@ class InteractiveChartBuilder:
             logger.error(f"Error creating advanced chart: {e}")
             return self._create_empty_chart(f"Error loading chart for {symbol}")
 
-
     def _add_price_chart(self, fig: go.Figure, df: pd.DataFrame, symbol: str, chart_type: str, row: int):
         """Add main price chart (candlestick, OHLC, or line)."""
         colors = self.get_chart_colors()
@@ -190,7 +186,7 @@ class InteractiveChartBuilder:
                 if df['close'].iloc[i] >= df['open'].iloc[i]:
                     bar_colors.append(colors['success'])  # Green for up days
                 else:
-                    bar_colors.append(colors['danger'])   # Red for down days
+                    bar_colors.append(colors['danger'])  # Red for down days
 
             fig.add_trace(
                 go.Bar(
@@ -204,8 +200,8 @@ class InteractiveChartBuilder:
                 row=row, col=1
             )
 
-
-    def _add_overlay_indicators(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, indicators: List[str], row: int):
+    def _add_overlay_indicators(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, indicators: List[str],
+                                row: int):
         """Add overlay indicators (SMA, EMA, Bollinger Bands, etc.)."""
         logger.info(f"Adding overlay indicators: {indicators}")
         logger.info(f"Available indicator data: {list(indicator_data.keys())}")
@@ -256,7 +252,8 @@ class InteractiveChartBuilder:
 
                 # Debug logging
                 logger.info(f"Adding Bollinger Bands: {bb.keys()}")
-                logger.info(f"Bollinger Bands data sample: upper={bb['upper'].iloc[-5:].tolist() if not bb['upper'].empty else 'empty'}")
+                logger.info(
+                    f"Bollinger Bands data sample: upper={bb['upper'].iloc[-5:].tolist() if not bb['upper'].empty else 'empty'}")
                 logger.info(f"Bollinger Bands colors: {colors}")
 
                 # Check if we have valid data
@@ -316,8 +313,8 @@ class InteractiveChartBuilder:
                     row=row, col=1
                 )
 
-
-    def _add_volume_chart(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, row: int, volume_display: str = 'bars_ma', color_by_price: bool = True):
+    def _add_volume_chart(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, row: int,
+                          volume_display: str = 'bars_ma', color_by_price: bool = True):
         """Add volume chart with configurable display options."""
         colors = self.get_chart_colors()
 
@@ -329,7 +326,7 @@ class InteractiveChartBuilder:
                     bar_colors.append(colors['primary'])
                 else:
                     # Color based on price direction
-                    color = colors['success'] if df.iloc[i]['close'] >= df.iloc[i-1]['close'] else colors['danger']
+                    color = colors['success'] if df.iloc[i]['close'] >= df.iloc[i - 1]['close'] else colors['danger']
                     bar_colors.append(color)
         else:
             # Use single color for all bars
@@ -363,7 +360,6 @@ class InteractiveChartBuilder:
                 ),
                 row=row, col=1
             )
-
 
     def _add_oscillator_chart(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, indicator: str, row: int):
         """Add oscillator charts (RSI, MACD, Stochastic)."""
@@ -465,8 +461,8 @@ class InteractiveChartBuilder:
             fig.add_hline(y=80, line_dash="dash", line_color="red", opacity=0.5, row=row, col=1)
             fig.add_hline(y=20, line_dash="dash", line_color="green", opacity=0.5, row=row, col=1)
 
-
-    def _add_oscillator_charts(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, indicators: List[str], row: int):
+    def _add_oscillator_charts(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, indicators: List[str],
+                               row: int):
         """Add multiple oscillator charts in one subplot with normalized scaling."""
         # We'll normalize oscillators to 0-100 range for better visualization
         for indicator in indicators:
@@ -583,7 +579,6 @@ class InteractiveChartBuilder:
             pass
         # If both, they'll share the space with different y-axes
 
-
     def _update_chart_layout(self, fig: go.Figure, symbol: str, total_rows: int):
         """Update chart layout with advanced features."""
         colors = self.get_chart_colors()
@@ -650,7 +645,6 @@ class InteractiveChartBuilder:
             )
         )
 
-
     def _create_empty_chart(self, message: str) -> go.Figure:
         """Create empty chart with message."""
         fig = go.Figure()
@@ -713,17 +707,17 @@ def create_chart_controls() -> html.Div:
                     html.Label("Chart Type:", className="form-label small"),
                     dbc.ButtonGroup([
                         dbc.Button("📈", id="chart-type-candlestick", size="sm",
-                                 color="primary", outline=False, className="chart-type-btn",
-                                 title="Candlestick"),
+                                   color="primary", outline=False, className="chart-type-btn",
+                                   title="Candlestick"),
                         dbc.Button("📊", id="chart-type-ohlc", size="sm",
-                                 color="primary", outline=True, className="chart-type-btn",
-                                 title="OHLC"),
+                                   color="primary", outline=True, className="chart-type-btn",
+                                   title="OHLC"),
                         dbc.Button("📉", id="chart-type-line", size="sm",
-                                 color="primary", outline=True, className="chart-type-btn",
-                                 title="Line"),
+                                   color="primary", outline=True, className="chart-type-btn",
+                                   title="Line"),
                         dbc.Button("📋", id="chart-type-bar", size="sm",
-                                 color="primary", outline=True, className="chart-type-btn",
-                                 title="Bar")
+                                   color="primary", outline=True, className="chart-type-btn",
+                                   title="Bar")
                     ], className="w-100"),
                     # Hidden stores
                     dcc.Store(id="chart-type-store", data='candlestick'),
@@ -737,14 +731,14 @@ def create_chart_controls() -> html.Div:
                     html.Div([
                         dbc.ButtonGroup([
                             dbc.Button("SMA", id="indicator-sma-btn", size="sm",
-                                     color="success", outline=False, className="indicator-btn"),
+                                       color="success", outline=False, className="indicator-btn"),
                             dbc.Button("EMA", id="indicator-ema-btn", size="sm",
-                                     color="success", outline=False, className="indicator-btn"),
+                                       color="success", outline=False, className="indicator-btn"),
                             dbc.Button("BB", id="indicator-bollinger-btn", size="sm",
-                                     color="info", outline=True, className="indicator-btn",
-                                     title="Bollinger Bands"),
+                                       color="info", outline=True, className="indicator-btn",
+                                       title="Bollinger Bands"),
                             dbc.Button("RSI", id="indicator-rsi-btn", size="sm",
-                                     color="warning", outline=False, className="indicator-btn")
+                                       color="warning", outline=False, className="indicator-btn")
                         ], className="w-100")
                     ])
                 ], width=6),
@@ -755,14 +749,14 @@ def create_chart_controls() -> html.Div:
                     html.Div([
                         dbc.ButtonGroup([
                             dbc.Button("📊", id="volume-toggle-btn", size="sm",
-                                     color="info", outline=False, className="volume-btn",
-                                     title="Toggle Volume"),
+                                       color="info", outline=False, className="volume-btn",
+                                       title="Toggle Volume"),
                             dbc.Button("⚙️", id="chart-settings-btn", size="sm",
-                                     color="secondary", outline=True,
-                                     title="Chart Settings"),
+                                       color="secondary", outline=True,
+                                       title="Chart Settings"),
                             dbc.Button("📤", id="export-chart-btn", size="sm",
-                                     color="secondary", outline=True,
-                                     title="Export Chart")
+                                       color="secondary", outline=True,
+                                       title="Export Chart")
                         ], className="w-100")
                     ])
                 ], width=3)
@@ -778,10 +772,10 @@ def create_chart_controls() -> html.Div:
                         html.Div([
                             html.Div([
                                 dbc.Button(opt['label'],
-                                         id=f"overlay-{opt['value']}-btn",
-                                         size="sm",
-                                         color="success" if opt['value'] in ['sma', 'ema'] else "outline-success",
-                                         className="me-1 mb-1 overlay-indicator-btn")
+                                           id=f"overlay-{opt['value']}-btn",
+                                           size="sm",
+                                           color="success" if opt['value'] in ['sma', 'ema'] else "outline-success",
+                                           className="me-1 mb-1 overlay-indicator-btn")
                                 for opt in overlay_indicators
                             ])
                         ])
@@ -793,10 +787,10 @@ def create_chart_controls() -> html.Div:
                         html.Div([
                             html.Div([
                                 dbc.Button(opt['label'],
-                                         id=f"oscillator-{opt['value']}-btn",
-                                         size="sm",
-                                         color="warning" if opt['value'] == 'rsi' else "outline-warning",
-                                         className="me-1 mb-1 oscillator-indicator-btn")
+                                           id=f"oscillator-{opt['value']}-btn",
+                                           size="sm",
+                                           color="warning" if opt['value'] == 'rsi' else "outline-warning",
+                                           className="me-1 mb-1 oscillator-indicator-btn")
                                 for opt in oscillator_indicators
                             ])
                         ])
@@ -809,11 +803,11 @@ def create_chart_controls() -> html.Div:
                         html.Label("Volume Display:", className="form-label small fw-bold"),
                         dbc.ButtonGroup([
                             dbc.Button("Hide", id="volume-hide-btn", size="sm",
-                                     color="outline-secondary", className="volume-display-btn"),
+                                       color="outline-secondary", className="volume-display-btn"),
                             dbc.Button("Bars", id="volume-bars-btn", size="sm",
-                                     color="info", outline=False, className="volume-display-btn"),
+                                       color="info", outline=False, className="volume-display-btn"),
                             dbc.Button("Bars + MA", id="volume-bars-ma-btn", size="sm",
-                                     color="outline-info", className="volume-display-btn")
+                                       color="outline-info", className="volume-display-btn")
                         ], className="w-100"),
                         dcc.Store(id="volume-display-store", data="bars_ma")
                     ], width=4),
@@ -823,11 +817,11 @@ def create_chart_controls() -> html.Div:
                         html.Label("Chart Tools:", className="form-label small fw-bold"),
                         dbc.ButtonGroup([
                             dbc.Button("🖊️", id="trend-line-btn", size="sm", outline=True,
-                                     title="Trend Line", className="chart-tool-btn"),
+                                       title="Trend Line", className="chart-tool-btn"),
                             dbc.Button("📏", id="support-resistance-btn", size="sm", outline=True,
-                                     title="Support/Resistance", className="chart-tool-btn"),
+                                       title="Support/Resistance", className="chart-tool-btn"),
                             dbc.Button("🗑️", id="clear-drawings-btn", size="sm", outline=True,
-                                     color="danger", title="Clear All", className="chart-tool-btn")
+                                       color="danger", title="Clear All", className="chart-tool-btn")
                         ], className="w-100")
                     ], width=4),
 
@@ -836,11 +830,11 @@ def create_chart_controls() -> html.Div:
                         html.Label("Export Format:", className="form-label small fw-bold"),
                         dbc.ButtonGroup([
                             dbc.Button("PNG", id="export-png-btn", size="sm", outline=True,
-                                     className="export-btn"),
+                                       className="export-btn"),
                             dbc.Button("PDF", id="export-pdf-btn", size="sm", outline=True,
-                                     className="export-btn"),
+                                       className="export-btn"),
                             dbc.Button("SVG", id="export-svg-btn", size="sm", outline=True,
-                                     className="export-btn")
+                                       className="export-btn")
                         ], className="w-100")
                     ], width=4)
                 ])
@@ -872,4 +866,3 @@ def create_indicator_info_panel() -> html.Div:
         html.H5("Technical Indicators Guide", className="mb-3"),
         html.Div(indicator_cards)
     ], id="indicator-info-collapse", is_open=False)
-

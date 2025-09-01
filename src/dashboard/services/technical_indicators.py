@@ -20,7 +20,6 @@ class TechnicalIndicatorService(BaseDashboardService):
     instead of real-time calculations. Falls back to calculations when needed.
     """
 
-
     def __init__(self):
         super().__init__()
         # Initialize the new feature data service for database queries
@@ -28,7 +27,6 @@ class TechnicalIndicatorService(BaseDashboardService):
         self.logger.info("TechnicalIndicatorService initialized with database feature optimization")
         # Clear any existing cached calculations to ensure fresh data
         self._clear_cache()
-
 
     def _clear_cache(self):
         """Clear cached calculations to ensure fresh data."""
@@ -39,9 +37,8 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.warning(f"Could not clear cache: {e}")
 
-    @cached(ttl=300, key_func=lambda self, df, period: f"sma_{df['close'].iloc[0]:.2f}_{df['close'].iloc[-1]:.2f}_{period}")
-
-
+    @cached(ttl=300,
+            key_func=lambda self, df, period: f"sma_{df['close'].iloc[0]:.2f}_{df['close'].iloc[-1]:.2f}_{period}")
     def calculate_sma(self, df: pd.DataFrame, period: int = 20) -> pd.Series:
         """Calculate Simple Moving Average."""
         try:
@@ -51,7 +48,8 @@ class TechnicalIndicatorService(BaseDashboardService):
 
             # Debug: Check what data we're working with
             close_data = df['close']
-            self.logger.info(f"SMA({period}) - Input data: length={len(close_data)}, range={close_data.min():.2f}-{close_data.max():.2f}, mean={close_data.mean():.2f}")
+            self.logger.info(
+                f"SMA({period}) - Input data: length={len(close_data)}, range={close_data.min():.2f}-{close_data.max():.2f}, mean={close_data.mean():.2f}")
 
             # Check for any NaN or invalid values
             if close_data.isna().any():
@@ -66,7 +64,8 @@ class TechnicalIndicatorService(BaseDashboardService):
 
                 # Check if SMA is reasonable compared to input data
                 if abs(sma_last - close_data.mean()) > 100:
-                    self.logger.warning(f"SMA({period}) seems out of range! Close mean: {close_data.mean():.2f}, but SMA: {sma_last:.2f}")
+                    self.logger.warning(
+                        f"SMA({period}) seems out of range! Close mean: {close_data.mean():.2f}, but SMA: {sma_last:.2f}")
 
             self.logger.debug(f"Calculated SMA({period}) for {len(df)} data points")
             return sma
@@ -76,8 +75,6 @@ class TechnicalIndicatorService(BaseDashboardService):
             return pd.Series(index=df.index)
 
     @cached(ttl=300)
-
-
     def calculate_ema(self, df: pd.DataFrame, period: int = 20) -> pd.Series:
         """Calculate Exponential Moving Average."""
         try:
@@ -92,12 +89,12 @@ class TechnicalIndicatorService(BaseDashboardService):
             self.logger.error(f"Error calculating EMA: {e}")
             return pd.Series(index=df.index)
 
-
     def calculate_bollinger_bands(self, df: pd.DataFrame, period: int = 20, std: float = 2) -> Dict[str, pd.Series]:
         """Calculate Bollinger Bands with improved logic."""
         try:
             if 'close' not in df.columns or len(df) < period + 1:
-                self.logger.warning(f"Bollinger Bands: insufficient data - columns: {list(df.columns)}, length: {len(df)}, period: {period}")
+                self.logger.warning(
+                    f"Bollinger Bands: insufficient data - columns: {list(df.columns)}, length: {len(df)}, period: {period}")
                 return {
                     'middle': pd.Series(index=df.index),
                     'upper': pd.Series(index=df.index),
@@ -109,7 +106,8 @@ class TechnicalIndicatorService(BaseDashboardService):
             close_max = df['close'].max()
             close_mean = df['close'].mean()
             close_dtype = df['close'].dtype
-            self.logger.info(f"Bollinger Bands - Close price range: min={close_min:.2f}, max={close_max:.2f}, mean={close_mean:.2f}, dtype={close_dtype}")
+            self.logger.info(
+                f"Bollinger Bands - Close price range: min={close_min:.2f}, max={close_max:.2f}, mean={close_mean:.2f}, dtype={close_dtype}")
 
             # Debug: Check for any data type issues
             if close_dtype == 'object':
@@ -137,17 +135,21 @@ class TechnicalIndicatorService(BaseDashboardService):
                 middle_last = middle.iloc[-1]
                 upper_last = upper.iloc[-1]
                 lower_last = lower.iloc[-1]
-                self.logger.info(f"Bollinger Bands calculated - Middle: {middle_last:.2f}, Upper: {upper_last:.2f}, Lower: {lower_last:.2f}")
+                self.logger.info(
+                    f"Bollinger Bands calculated - Middle: {middle_last:.2f}, Upper: {upper_last:.2f}, Lower: {lower_last:.2f}")
 
                 # Check if bands are in reasonable range compared to close price
-                if abs(middle_last - close_mean) > 100 or abs(upper_last - close_mean) > 200 or abs(lower_last - close_mean) > 200:
-                    self.logger.warning(f"Bollinger Bands seem out of range! Close mean: {close_mean:.2f}, but bands are: M={middle_last:.2f}, U={upper_last:.2f}, L={lower_last:.2f}")
+                if abs(middle_last - close_mean) > 100 or abs(upper_last - close_mean) > 200 or abs(
+                        lower_last - close_mean) > 200:
+                    self.logger.warning(
+                        f"Bollinger Bands seem out of range! Close mean: {close_mean:.2f}, but bands are: M={middle_last:.2f}, U={upper_last:.2f}, L={lower_last:.2f}")
 
             # Price reality check - ensure bands make sense
             if not upper.empty and not lower.empty:
                 # Upper band should generally be above lower band
                 if upper.iloc[-1] <= lower.iloc[-1]:
-                    self.logger.warning(f"Bollinger Bands: upper band ({upper.iloc[-1]:.2f}) <= lower band ({lower.iloc[-1]:.2f})")
+                    self.logger.warning(
+                        f"Bollinger Bands: upper band ({upper.iloc[-1]:.2f}) <= lower band ({lower.iloc[-1]:.2f})")
 
             result = {
                 'middle': middle,
@@ -155,7 +157,8 @@ class TechnicalIndicatorService(BaseDashboardService):
                 'lower': lower
             }
 
-            self.logger.info(f"Bollinger Bands calculated successfully: middle={middle.iloc[-1] if not middle.empty else 'N/A'}, upper={upper.iloc[-1] if not middle.empty else 'N/A'}, lower={lower.iloc[-1] if not middle.empty else 'N/A'}")
+            self.logger.info(
+                f"Bollinger Bands calculated successfully: middle={middle.iloc[-1] if not middle.empty else 'N/A'}, upper={upper.iloc[-1] if not middle.empty else 'N/A'}, lower={lower.iloc[-1] if not middle.empty else 'N/A'}")
             return result
 
         except Exception as e:
@@ -165,7 +168,6 @@ class TechnicalIndicatorService(BaseDashboardService):
                 'upper': pd.Series(index=df.index),
                 'lower': pd.Series(index=df.index)
             }
-
 
     def calculate_rsi(self, df: pd.DataFrame, period: int = 14) -> pd.Series:
         """Calculate Relative Strength Index."""
@@ -194,7 +196,6 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error calculating RSI: {e}")
             return pd.Series(index=df.index)
-
 
     def calculate_macd(self, df: pd.DataFrame, fast: int = 12, slow: int = 26, signal: int = 9) -> Dict[str, pd.Series]:
         """Calculate MACD (Moving Average Convergence Divergence)."""
@@ -235,7 +236,6 @@ class TechnicalIndicatorService(BaseDashboardService):
                 'histogram': pd.Series(index=df.index)
             }
 
-
     def calculate_stochastic(self, df: pd.DataFrame, k_period: int = 14, d_period: int = 3) -> Dict[str, pd.Series]:
         """Calculate Stochastic Oscillator."""
         try:
@@ -269,7 +269,6 @@ class TechnicalIndicatorService(BaseDashboardService):
                 'd_percent': pd.Series(index=df.index)
             }
 
-
     def calculate_atr(self, df: pd.DataFrame, period: int = 14) -> pd.Series:
         """Calculate Average True Range."""
         try:
@@ -295,7 +294,6 @@ class TechnicalIndicatorService(BaseDashboardService):
             self.logger.error(f"Error calculating ATR: {e}")
             return pd.Series(index=df.index)
 
-
     def calculate_volume_sma(self, df: pd.DataFrame, period: int = 20) -> pd.Series:
         """Calculate Volume Simple Moving Average."""
         try:
@@ -309,7 +307,6 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error calculating Volume SMA: {e}")
             return pd.Series(index=df.index)
-
 
     def calculate_vwap(self, df: pd.DataFrame) -> pd.Series:
         """Calculate Volume Weighted Average Price."""
@@ -334,7 +331,6 @@ class TechnicalIndicatorService(BaseDashboardService):
             self.logger.error(f"Error calculating VWAP: {e}")
             return pd.Series(index=df.index)
 
-
     def calculate_support_resistance(self, df: pd.DataFrame, window: int = 20) -> Dict[str, List[float]]:
         """Calculate support and resistance levels."""
         try:
@@ -350,14 +346,16 @@ class TechnicalIndicatorService(BaseDashboardService):
             support_levels = df.loc[support_mask, 'low'].tolist()
 
             # Identify resistance levels (local maxima)
-            resistance_mask = (df['high'] == highs) & (df['high'].shift(1) < df['high']) & (df['high'].shift(-1) < df['high'])
+            resistance_mask = (df['high'] == highs) & (df['high'].shift(1) < df['high']) & (
+                        df['high'].shift(-1) < df['high'])
             resistance_levels = df.loc[resistance_mask, 'high'].tolist()
 
             # Remove duplicates and sort
             support_levels = sorted(list(set(support_levels)))
             resistance_levels = sorted(list(set(resistance_levels)), reverse=True)
 
-            self.logger.debug(f"Calculated {len(support_levels)} support and {len(resistance_levels)} resistance levels")
+            self.logger.debug(
+                f"Calculated {len(support_levels)} support and {len(resistance_levels)} resistance levels")
 
             return {
                 'support': support_levels[:5],  # Top 5 support levels
@@ -367,7 +365,6 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error calculating support/resistance: {e}")
             return {'support': [], 'resistance': []}
-
 
     def get_all_indicators_optimized(self, symbol: str, days: int = 30) -> Dict[str, Any]:
         """
@@ -411,7 +408,6 @@ class TechnicalIndicatorService(BaseDashboardService):
             market_df = self._get_market_data_for_calculations(symbol, days)
             return self.calculate_all_indicators(market_df)
 
-
     def _get_market_data_for_calculations(self, symbol: str, days: int) -> pd.DataFrame:
         """Get market data for fallback calculations."""
         try:
@@ -424,7 +420,6 @@ class TechnicalIndicatorService(BaseDashboardService):
             return pd.DataFrame()
 
     # OPTIMIZED METHODS - Use database features when available
-
 
     def get_bollinger_bands_optimized(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """Get Bollinger Bands - OPTIMIZED with database features."""
@@ -440,7 +435,6 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error in optimized Bollinger Bands for {symbol}: {e}")
             return {}
-
 
     def get_rsi_optimized(self, symbol: str, days: int = 30, period: str = '1d') -> pd.Series:
         """Get RSI - OPTIMIZED with database features supporting multiple timeframes."""
@@ -461,7 +455,6 @@ class TechnicalIndicatorService(BaseDashboardService):
             self.logger.error(f"Error in optimized RSI for {symbol}: {e}")
             return pd.Series()
 
-
     def get_macd_optimized(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """Get MACD - OPTIMIZED with database features."""
         try:
@@ -476,7 +469,6 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error in optimized MACD for {symbol}: {e}")
             return {}
-
 
     def get_moving_averages_optimized(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """Get Moving Averages - OPTIMIZED with database features."""
@@ -498,7 +490,6 @@ class TechnicalIndicatorService(BaseDashboardService):
             self.logger.error(f"Error in optimized moving averages for {symbol}: {e}")
             return {}
 
-
     def get_atr_optimized(self, symbol: str, days: int = 30) -> pd.Series:
         """Get ATR - OPTIMIZED with database features."""
         try:
@@ -513,7 +504,6 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error in optimized ATR for {symbol}: {e}")
             return pd.Series()
-
 
     def calculate_all_indicators(self, df: pd.DataFrame) -> Dict[str, Any]:
         """
@@ -558,7 +548,6 @@ class TechnicalIndicatorService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error calculating all indicators: {e}")
             return {}
-
 
     def get_indicator_config(self) -> Dict[str, Dict[str, Any]]:
         """Get configuration for all available indicators."""
@@ -626,4 +615,3 @@ class TechnicalIndicatorService(BaseDashboardService):
                 'description': 'Volume Weighted Average Price'
             }
         }
-

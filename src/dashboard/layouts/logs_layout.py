@@ -36,7 +36,8 @@ def create_logs_layout():
                         dbc.Row([
                             dbc.Col([
                                 html.H1("System Logs", className="mb-0 text-primary fw-bold"),
-                                html.P("View and filter system logs from all components with enhanced analytics", className="text-muted mb-0")
+                                html.P("View and filter system logs from all components with enhanced analytics",
+                                       className="text-muted mb-0")
                             ], width=12)
                         ])
                     ], style={'padding': '15px 20px'})
@@ -66,10 +67,8 @@ def register_logs_callbacks(app):
          Input("log-symbol-filter", "value"),
          Input("refresh-logs-btn", "n_clicks")]
     )
-
-
     def update_logs(component_filter, level_filter, time_filter,
-                   event_type_filter, symbol_filter, refresh_clicks):
+                    event_type_filter, symbol_filter, refresh_clicks):
         """Update log display based on filters"""
         try:
             # Set default values if None
@@ -103,10 +102,8 @@ def register_logs_callbacks(app):
          State("log-event-type-filter", "value"),
          State("log-symbol-filter", "value")]
     )
-
-
     def toggle_analytics(n_clicks, component_filter, level_filter, time_filter,
-                        event_type_filter, symbol_filter):
+                         event_type_filter, symbol_filter):
         """Toggle analytics section"""
         if not n_clicks:
             return dash.no_update
@@ -136,8 +133,6 @@ def register_logs_callbacks(app):
         Output("analytics-section", "style"),
         [Input("analytics-btn", "n_clicks")]
     )
-
-
     def toggle_analytics_visibility(n_clicks):
         """Toggle analytics section visibility"""
         if not n_clicks:
@@ -158,10 +153,8 @@ def register_logs_callbacks(app):
          State("log-event-type-filter", "value"),
          State("log-symbol-filter", "value")]
     )
-
-
     def download_logs(n_clicks, component_filter, level_filter, time_filter,
-                     event_type_filter, symbol_filter):
+                      event_type_filter, symbol_filter):
         """Download filtered logs as CSV"""
         if not n_clicks:
             return None
@@ -209,8 +202,6 @@ def register_logs_callbacks(app):
         [Input("clear-logs-btn", "n_clicks")],
         prevent_initial_call=True
     )
-
-
     def clear_logs(n_clicks):
         """Clear the combined log file"""
         if not n_clicks:
@@ -233,8 +224,6 @@ def register_logs_callbacks(app):
         Output("log-symbol-filter", "options"),
         [Input("log-event-type-filter", "value")]
     )
-
-
     def update_symbol_options(event_type):
         """Update symbol dropdown options based on available trading logs"""
         try:
@@ -260,4 +249,3 @@ def register_logs_callbacks(app):
         except Exception as e:
             logging.error(f"Error updating symbol options: {e}")
             return [{"label": "All Symbols", "value": "all"}]
-

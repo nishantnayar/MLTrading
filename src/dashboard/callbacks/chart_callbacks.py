@@ -19,4 +19,3 @@ def register_chart_callbacks(app):
     # The sector/industry charts have been removed from the simplified dashboard
     # This file is kept for backwards compatibility but contains no active callbacks
     pass
-

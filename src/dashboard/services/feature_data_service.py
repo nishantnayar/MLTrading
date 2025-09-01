@@ -23,14 +23,11 @@ class FeatureDataService(BaseDashboardService):
     - Access to advanced features not available in UI calculations
     """
 
-
     def __init__(self):
         super().__init__()
         self.logger.info("FeatureDataService initialized - using pre-calculated features from database")
 
     @cached(ttl=120, key_func=lambda self, symbol, days: f"features_{symbol}_{days}")
-
-
     def get_feature_data(self, symbol: str, days: int = 30, feature_version: str = '3.0') -> pd.DataFrame:
         """
         Get comprehensive feature data for a symbol from the database.
@@ -62,21 +59,21 @@ class FeatureDataService(BaseDashboardService):
             # Convert to DataFrame
             # Get column names from query result
             columns = ['id', 'symbol', 'timestamp', 'open', 'high', 'low', 'close', 'volume',
-                      'returns', 'log_returns', 'high_low_pct', 'open_close_pct', 'price_acceleration', 'returns_sign',
-                      'returns_squared', 'realized_vol_short', 'realized_vol_med', 'realized_vol_long', 'gk_volatility', 'vol_of_vol',
-                      'price_ma_short', 'price_ma_med', 'price_ma_long', 'price_to_ma_short', 'price_to_ma_med', 'price_to_ma_long',
-                      'ma_short_to_med', 'ma_med_to_long', 'volume_ma', 'volume_ratio', 'log_volume', 'vpt', 'vpt_ma', 'vpt_normalized', 'mfi',
-                      'rsi_1d', 'rsi_3d', 'rsi_1w', 'rsi_2w', 'rsi_ema', 'hour', 'day_of_week', 'date', 'hour_sin', 'hour_cos', 'dow_sin', 'dow_cos',
-                      'is_market_open', 'is_morning', 'is_afternoon', 'hours_since_open', 'hours_to_close', 'returns_from_daily_open',
-                      'intraday_high', 'intraday_low', 'intraday_range_pct', 'position_in_range', 'overnight_gap', 'dist_from_intraday_high', 'dist_from_intraday_low',
-                      'returns_lag_1', 'vol_lag_1', 'volume_ratio_lag_1', 'returns_lag_2', 'vol_lag_2', 'volume_ratio_lag_2',
-                      'returns_lag_4', 'vol_lag_4', 'volume_ratio_lag_4', 'returns_lag_8', 'vol_lag_8', 'volume_ratio_lag_8',
-                      'returns_lag_24', 'vol_lag_24', 'volume_ratio_lag_24', 'returns_mean_6h', 'returns_std_6h', 'returns_skew_6h', 'returns_kurt_6h', 'price_momentum_6h',
-                      'returns_mean_12h', 'returns_std_12h', 'returns_skew_12h', 'returns_kurt_12h', 'price_momentum_12h',
-                      'returns_mean_24h', 'returns_std_24h', 'returns_skew_24h', 'returns_kurt_24h', 'price_momentum_24h',
-                      'bb_upper', 'bb_lower', 'bb_position', 'bb_squeeze', 'macd', 'macd_signal', 'macd_histogram', 'macd_normalized',
-                      'atr', 'atr_normalized', 'williams_r', 'source', 'feature_version', 'created_at', 'updated_at',
-                      'vol_ratio_short_med', 'vol_ratio_med_long']
+                       'returns', 'log_returns', 'high_low_pct', 'open_close_pct', 'price_acceleration', 'returns_sign',
+                       'returns_squared', 'realized_vol_short', 'realized_vol_med', 'realized_vol_long', 'gk_volatility', 'vol_of_vol',
+                       'price_ma_short', 'price_ma_med', 'price_ma_long', 'price_to_ma_short', 'price_to_ma_med', 'price_to_ma_long',
+                       'ma_short_to_med', 'ma_med_to_long', 'volume_ma', 'volume_ratio', 'log_volume', 'vpt', 'vpt_ma', 'vpt_normalized', 'mfi',
+                       'rsi_1d', 'rsi_3d', 'rsi_1w', 'rsi_2w', 'rsi_ema', 'hour', 'day_of_week', 'date', 'hour_sin', 'hour_cos', 'dow_sin', 'dow_cos',
+                       'is_market_open', 'is_morning', 'is_afternoon', 'hours_since_open', 'hours_to_close', 'returns_from_daily_open',
+                       'intraday_high', 'intraday_low', 'intraday_range_pct', 'position_in_range', 'overnight_gap', 'dist_from_intraday_high', 'dist_from_intraday_low',
+                       'returns_lag_1', 'vol_lag_1', 'volume_ratio_lag_1', 'returns_lag_2', 'vol_lag_2', 'volume_ratio_lag_2',
+                       'returns_lag_4', 'vol_lag_4', 'volume_ratio_lag_4', 'returns_lag_8', 'vol_lag_8', 'volume_ratio_lag_8',
+                       'returns_lag_24', 'vol_lag_24', 'volume_ratio_lag_24', 'returns_mean_6h', 'returns_std_6h', 'returns_skew_6h', 'returns_kurt_6h', 'price_momentum_6h',
+                       'returns_mean_12h', 'returns_std_12h', 'returns_skew_12h', 'returns_kurt_12h', 'price_momentum_12h',
+                       'returns_mean_24h', 'returns_std_24h', 'returns_skew_24h', 'returns_kurt_24h', 'price_momentum_24h',
+                       'bb_upper', 'bb_lower', 'bb_position', 'bb_squeeze', 'macd', 'macd_signal', 'macd_histogram', 'macd_normalized',
+                       'atr', 'atr_normalized', 'williams_r', 'source', 'feature_version', 'created_at', 'updated_at',
+                       'vol_ratio_short_med', 'vol_ratio_med_long']
 
             # Use only the number of columns returned by the query
             if result and len(result[0]) < len(columns):
@@ -93,7 +90,6 @@ class FeatureDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error retrieving feature data for {symbol}: {e}")
             return pd.DataFrame()
-
 
     def get_moving_averages(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """
@@ -123,7 +119,6 @@ class FeatureDataService(BaseDashboardService):
             self.logger.error(f"Error getting moving averages for {symbol}: {e}")
             return {}
 
-
     def get_bollinger_bands(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """
         Get pre-calculated Bollinger Bands from database.
@@ -148,7 +143,6 @@ class FeatureDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting Bollinger Bands for {symbol}: {e}")
             return {}
-
 
     def get_rsi_data(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """
@@ -177,7 +171,6 @@ class FeatureDataService(BaseDashboardService):
             self.logger.error(f"Error getting RSI data for {symbol}: {e}")
             return {}
 
-
     def get_macd_data(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """
         Get pre-calculated MACD data from database.
@@ -201,7 +194,6 @@ class FeatureDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting MACD data for {symbol}: {e}")
             return {}
-
 
     def get_volatility_data(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """
@@ -233,7 +225,6 @@ class FeatureDataService(BaseDashboardService):
             self.logger.error(f"Error getting volatility data for {symbol}: {e}")
             return {}
 
-
     def get_volume_data(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """
         Get comprehensive volume data from database.
@@ -260,7 +251,6 @@ class FeatureDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting volume data for {symbol}: {e}")
             return {}
-
 
     def get_advanced_features(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """
@@ -309,7 +299,6 @@ class FeatureDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting advanced features for {symbol}: {e}")
             return {}
-
 
     def get_all_indicators_from_db(self, symbol: str, days: int = 30) -> Dict[str, Any]:
         """
@@ -396,7 +385,6 @@ class FeatureDataService(BaseDashboardService):
             self.logger.error(f"Error getting all indicators for {symbol}: {e}")
             return {}
 
-
     def get_feature_metadata(self) -> Dict[str, Dict[str, Any]]:
         """
         Get metadata about available features and their descriptions.
@@ -457,21 +445,20 @@ class FeatureDataService(BaseDashboardService):
 
             'intraday': {
                 'features': ['returns_from_daily_open', 'intraday_range_pct', 'position_in_range',
-                           'overnight_gap', 'dist_from_intraday_high', 'dist_from_intraday_low'],
+                             'overnight_gap', 'dist_from_intraday_high', 'dist_from_intraday_low'],
                 'description': 'Intraday reference points and gaps',
                 'type': 'intraday'
             },
 
             'sequence_modeling': {
                 'features': [f'{feat}_lag_{lag}' for feat in ['returns', 'vol', 'volume_ratio']
-                           for lag in [1, 2, 4, 8, 24]] +
+                             for lag in [1, 2, 4, 8, 24]] +
                           [f'returns_{stat}_{window}h' for stat in ['mean', 'std', 'skew', 'kurt']
                            for window in [6, 12, 24]],
                 'description': 'Lagged features and rolling statistics for ML models',
                 'type': 'sequence'
             }
         }
-
 
     def get_data_availability(self, symbol: str) -> Dict[str, Any]:
         """
@@ -523,4 +510,3 @@ class FeatureDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error checking data availability for {symbol}: {e}")
             return {'available': False, 'error': str(e)}
-

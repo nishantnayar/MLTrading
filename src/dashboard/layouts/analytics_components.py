@@ -171,16 +171,20 @@ def create_risk_metrics_layout() -> html.Div:
                         dbc.CardBody([
                             dbc.Row([
                                 dbc.Col([
-                                    create_risk_metric_card("Sharpe Ratio", portfolio_performance.get('sharpe_ratio', 0), "primary")
+                                    create_risk_metric_card("Sharpe Ratio", portfolio_performance.get('sharpe_ratio', 0),
+                                                            "primary")
                                 ], width=3),
                                 dbc.Col([
-                                    create_risk_metric_card("Max Drawdown", f"{portfolio_performance.get('max_drawdown', 0):.1f}%", "warning")
+                                    create_risk_metric_card("Max Drawdown", f"{portfolio_performance.get('max_drawdown', 0):.1f}%",
+                                                            "warning")
                                 ], width=3),
                                 dbc.Col([
-                                    create_risk_metric_card("Win Rate", f"{portfolio_performance.get('win_rate', 0):.1f}%", "success")
+                                    create_risk_metric_card("Win Rate", f"{portfolio_performance.get('win_rate', 0):.1f}%",
+                                                            "success")
                                 ], width=3),
                                 dbc.Col([
-                                    create_risk_metric_card("Total Return", f"{portfolio_performance.get('total_return_percent', 0):.1f}%", "info")
+                                    create_risk_metric_card("Total Return", f"{portfolio_performance.get('total_return_percent', 0):.1f}%",
+                                                            "info")
                                 ], width=3)
                             ], className="mb-4")
                         ])
@@ -463,4 +467,3 @@ def create_empty_volatility_chart() -> go.Figure:
         }]
     )
     return fig
-

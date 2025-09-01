@@ -17,14 +17,12 @@ logger = get_ui_logger("lazy_loader")
 class LazyComponent:
     """Base class for lazy-loaded components."""
 
-
     def __init__(self, component_id: str, loader_func: Callable, loading_text: str = "Loading..."):
         self.component_id = component_id
         self.loader_func = loader_func
         self.loading_text = loading_text
         self.is_loaded = False
         self.cached_content = None
-
 
     def create_placeholder(self) -> html.Div:
         """Create placeholder component that triggers lazy loading."""
@@ -48,16 +46,14 @@ class LazyComponent:
             ], className="h-100")
         ], id=f"{self.component_id}-container")
 
-
     def register_callback(self, app: dash.Dash):
         """Register callback for lazy loading."""
+
         @app.callback(
             Output(f"{self.component_id}-content", "children"),
             [Input(f"{self.component_id}-trigger", "children")],
             prevent_initial_call=True
         )
-
-
         def load_component(trigger):
             """Load component when triggered."""
             if self.cached_content is not None:
@@ -89,11 +85,8 @@ class LazyAnalyticsComponents:
     """Factory for creating lazy-loaded analytics components."""
 
     @staticmethod
-
-
     def create_performance_analysis() -> LazyComponent:
         """Create lazy-loaded performance analysis component."""
-
 
         def load_performance_analysis():
             from ..layouts.analytics_components import create_performance_analysis_layout
@@ -106,11 +99,8 @@ class LazyAnalyticsComponents:
         )
 
     @staticmethod
-
-
     def create_correlation_matrix() -> LazyComponent:
         """Create lazy-loaded correlation matrix component."""
-
 
         def load_correlation_matrix():
             from ..layouts.analytics_components import create_correlation_matrix_layout
@@ -123,11 +113,8 @@ class LazyAnalyticsComponents:
         )
 
     @staticmethod
-
-
     def create_volatility_analysis() -> LazyComponent:
         """Create lazy-loaded volatility analysis component."""
-
 
         def load_volatility_analysis():
             from ..layouts.analytics_components import create_volatility_analysis_layout
@@ -140,11 +127,8 @@ class LazyAnalyticsComponents:
         )
 
     @staticmethod
-
-
     def create_risk_metrics() -> LazyComponent:
         """Create lazy-loaded risk metrics component."""
-
 
         def load_risk_metrics():
             from ..layouts.analytics_components import create_risk_metrics_layout
@@ -160,12 +144,10 @@ class LazyAnalyticsComponents:
 class LazyTabContainer:
     """Container for organizing lazy-loaded components in tabs."""
 
-
     def __init__(self, container_id: str):
         self.container_id = container_id
         self.tabs = {}
         self.lazy_components = {}
-
 
     def add_tab(self, tab_id: str, tab_label: str, lazy_component: LazyComponent):
         """Add a lazy-loaded tab."""
@@ -174,7 +156,6 @@ class LazyTabContainer:
             'component': lazy_component
         }
         self.lazy_components[tab_id] = lazy_component
-
 
     def create_tab_container(self) -> dbc.Tabs:
         """Create tabbed container with lazy-loaded content."""
@@ -195,7 +176,6 @@ class LazyTabContainer:
             active_tab=list(self.tabs.keys())[0] if self.tabs else None
         )
 
-
     def register_callbacks(self, app: dash.Dash):
         """Register all lazy loading callbacks."""
         # Register individual component callbacks
@@ -208,8 +188,6 @@ class LazyTabContainer:
             [Input(f"{self.container_id}-tabs", "active_tab")],
             prevent_initial_call=True
         )
-
-
         def trigger_tab_load(active_tab):
             """Trigger loading of active tab content."""
             if not active_tab or active_tab not in self.lazy_components:
@@ -307,4 +285,3 @@ def create_optimized_analytics_dashboard() -> html.Div:
 def register_lazy_loading_callbacks(app: dash.Dash, analytics_tabs: LazyTabContainer):
     """Register all lazy loading callbacks."""
     analytics_tabs.register_callbacks(app)
-

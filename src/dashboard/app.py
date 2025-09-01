@@ -170,10 +170,8 @@ app.layout = dbc.Container([
      Input("nav-tests", "n_clicks"),
      Input("nav-help", "n_clicks"),
      Input("nav-logs", "n_clicks"),
-    ]
+     ]
 )
-
-
 def display_page(pathname, nav_dashboard, nav_trading, nav_tests, nav_help, nav_logs):
     """Display different pages based on navigation"""
     ctx = callback_context
@@ -203,8 +201,6 @@ def display_page(pathname, nav_dashboard, nav_trading, nav_tests, nav_help, nav_
     [Input("initial-interval", "n_intervals")],
     prevent_initial_call=False
 )
-
-
 def handle_initial_load(n_intervals):
     """Enable interval for initial load, then disable it"""
     if n_intervals and n_intervals > 0:
@@ -219,14 +215,13 @@ register_interactive_chart_callbacks(app)
 register_comparison_callbacks(app)
 register_logs_callbacks(app)
 
+
 # Callback to update footer timestamp every minute
 @app.callback(
     Output("footer-timestamp", "children"),
     [Input("initial-interval", "n_intervals")],
     prevent_initial_call=False
 )
-
-
 def update_footer_timestamp(n_intervals):
     """Update footer timestamp every minute"""
     return get_current_timestamp("default", "US/Central")
@@ -245,4 +240,3 @@ if __name__ == '__main__':
         host=DASHBOARD_CONFIG['host'],
         port=DASHBOARD_CONFIG['port']
     )
-

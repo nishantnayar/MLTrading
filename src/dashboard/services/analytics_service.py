@@ -11,7 +11,6 @@ from .base_service import BaseDashboardService
 class AnalyticsService(BaseDashboardService):
     """Service to handle analytics and statistics operations."""
 
-
     def get_summary_statistics(self) -> Dict[str, Any]:
         """Get summary statistics for the dashboard."""
         try:
@@ -35,7 +34,6 @@ class AnalyticsService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting summary statistics: {e}")
             return self.get_fallback_data('statistics')
-
 
     def get_market_overview(self, days: int = 30) -> Dict[str, Any]:
         """Get market overview data for the specified period."""
@@ -267,7 +265,6 @@ class AnalyticsService(BaseDashboardService):
             self.logger.error(f"Error calculating symbol correlation: {e}")
             return {}
 
-
     def get_volatility_metrics(self, symbol: str, days: int = 30) -> Dict[str, Any]:
         """Calculate volatility metrics for a symbol."""
         try:
@@ -330,4 +327,3 @@ class AnalyticsService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error calculating volatility metrics for {symbol}: {e}")
             return {}
-

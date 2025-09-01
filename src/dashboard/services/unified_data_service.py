@@ -51,7 +51,6 @@ class MarketDataService:
         RSI: 67.45, Volume trend: increasing
     """
 
-
     def __init__(self):
         """Initialize unified service with all sub-services."""
         self.symbol_service = SymbolService()
@@ -64,31 +63,25 @@ class MarketDataService:
 
     # Symbol Service Methods (delegated)
 
-
     def get_available_symbols(self, source: str = 'yahoo') -> List[Dict[str, str]]:
         """Get list of available symbols with market data and company names."""
         return self.symbol_service.get_available_symbols(source)
-
 
     def get_symbols_by_sector(self, sector: str, source: str = 'yahoo') -> List[Dict[str, str]]:
         """Get symbols filtered by sector."""
         return self.symbol_service.get_symbols_by_sector(sector, source)
 
-
     def get_symbols_by_industry(self, industry: str, source: str = 'yahoo') -> List[Dict[str, str]]:
         """Get symbols filtered by industry."""
         return self.symbol_service.get_symbols_by_industry(industry, source)
-
 
     def get_sector_distribution(self, source: str = 'yahoo') -> Dict[str, Any]:
         """Get distribution of symbols by sector."""
         return self.symbol_service.get_sector_distribution(source)
 
-
     def get_industry_distribution(self, sector: str, source: str = 'yahoo') -> Dict[str, Any]:
         """Get distribution of symbols by industry within a sector."""
         return self.symbol_service.get_industry_distribution(sector, source)
-
 
     def search_symbols(self, query: str, limit: int = 10) -> List[Dict[str, str]]:
         """Search symbols by symbol or company name."""
@@ -96,31 +89,25 @@ class MarketDataService:
 
     # Market Data Service Methods (delegated)
 
-
     def get_market_data(self, symbol: str, days: int = 30, source: str = 'yahoo', hourly: bool = False) -> pd.DataFrame:
         """Get historical market data for a symbol."""
         return self.market_service.get_market_data(symbol, days, source, hourly)
-
 
     def get_all_available_data(self, symbol: str, source: str = 'yahoo') -> pd.DataFrame:
         """Get ALL available data for a symbol (no limits)."""
         return self.market_service.get_all_available_data(symbol, source)
 
-
     def get_latest_price(self, symbol: str, source: str = 'yahoo') -> Optional[Dict[str, Any]]:
         """Get the latest price data for a symbol."""
         return self.market_service.get_latest_price(symbol, source)
-
 
     def get_price_change(self, symbol: str, days: int = 1, source: str = 'yahoo') -> Optional[Dict[str, Any]]:
         """Get price change over specified number of days."""
         return self.market_service.get_price_change(symbol, days, source)
 
-
     def get_data_date_range(self, source: str = 'yahoo') -> str:
         """Get the date range of available data."""
         return self.market_service.get_data_date_range(source)
-
 
     def get_data_quality_metrics(self, symbol: str, source: str = 'yahoo') -> Dict[str, Any]:
         """Get data quality metrics for a symbol."""
@@ -128,33 +115,27 @@ class MarketDataService:
 
     # Analytics Service Methods (delegated)
 
-
     def get_summary_statistics(self) -> Dict[str, Any]:
         """Get summary statistics for the dashboard."""
         return self.analytics_service.get_summary_statistics()
-
 
     def get_market_overview(self, days: int = 30) -> Dict[str, Any]:
         """Get market overview data for the specified period."""
         return self.analytics_service.get_market_overview(days)
 
-
     def get_top_performers(self, days: int = 1, limit: int = 10) -> List[Dict[str, Any]]:
         """Get top performing stocks over the specified period."""
         return self.analytics_service.get_top_performers(days, limit)
 
-
     def get_recent_activity(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent trading activity."""
         return self.analytics_service.get_recent_activity(limit)
-
 
     def get_portfolio_performance(self, days: int = 30) -> Dict[str, Any]:
         """Get portfolio performance metrics."""
         return self.analytics_service.get_portfolio_performance(days)
 
     # Technical Indicator Methods (OPTIMIZED with database features)
-
 
     def get_technical_indicators(self, symbol: str, days: int = 30) -> Dict[str, Any]:
         """
@@ -172,11 +153,9 @@ class MarketDataService:
         """
         return self.technical_service.get_all_indicators_optimized(symbol, days)
 
-
     def get_bollinger_bands(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """Get Bollinger Bands - OPTIMIZED with database features."""
         return self.technical_service.get_bollinger_bands_optimized(symbol, days)
-
 
     def get_rsi(self, symbol: str, days: int = 30, period: str = '1d') -> pd.Series:
         """
@@ -189,16 +168,13 @@ class MarketDataService:
         """
         return self.technical_service.get_rsi_optimized(symbol, days, period)
 
-
     def get_macd(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """Get MACD - OPTIMIZED with database features."""
         return self.technical_service.get_macd_optimized(symbol, days)
 
-
     def get_moving_averages(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """Get Moving Averages - OPTIMIZED with database features."""
         return self.technical_service.get_moving_averages_optimized(symbol, days)
-
 
     def get_atr(self, symbol: str, days: int = 30) -> pd.Series:
         """Get Average True Range - OPTIMIZED with database features."""
@@ -206,36 +182,29 @@ class MarketDataService:
 
     # Advanced Feature Methods (NEW - not available in old UI)
 
-
     def get_volume_indicators(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """Get comprehensive volume indicators from database (VPT, MFI, etc.)."""
         return self.feature_service.get_volume_data(symbol, days)
-
 
     def get_volatility_indicators(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """Get comprehensive volatility indicators from database."""
         return self.feature_service.get_volatility_data(symbol, days)
 
-
     def get_advanced_features(self, symbol: str, days: int = 30) -> Dict[str, pd.Series]:
         """Get advanced features (lagged, rolling stats, intraday) not available in traditional UI."""
         return self.feature_service.get_advanced_features(symbol, days)
-
 
     def get_feature_metadata(self) -> Dict[str, Dict[str, Any]]:
         """Get metadata about all available features and indicators."""
         return self.feature_service.get_feature_metadata()
 
-
     def get_data_availability(self, symbol: str) -> Dict[str, Any]:
         """Check feature data availability and coverage for a symbol."""
         return self.feature_service.get_data_availability(symbol)
 
-
     def get_symbol_correlation(self, symbols: List[str], days: int = 90) -> Dict[str, Any]:
         """Calculate correlation matrix for given symbols."""
         return self.analytics_service.get_symbol_correlation(symbols, days)
-
 
     def get_volatility_metrics(self, symbol: str, days: int = 30) -> Dict[str, Any]:
         """Calculate volatility metrics for a symbol."""
@@ -243,16 +212,13 @@ class MarketDataService:
 
     # Additional convenience methods
 
-
     def get_symbol_info(self, symbol: str) -> Optional[Dict[str, Any]]:
         """Get detailed information for a specific symbol."""
         return self.symbol_service.get_symbol_info(symbol)
 
-
     def validate_symbol(self, symbol: str) -> bool:
         """Validate stock symbol format."""
         return self.symbol_service.validate_symbol(symbol)
-
 
     def get_service_status(self) -> Dict[str, Any]:
         """Get status of all sub-services."""
@@ -276,4 +242,3 @@ class MarketDataService:
                 'unified_service': 'error',
                 'error_message': str(e)
             }
-

@@ -137,7 +137,7 @@ def create_horizontal_bar_chart(data, title, color=CHART_COLORS['primary']):
     # Sort by count in ascending order for horizontal bars (so highest values appear at top)
     # In horizontal bar charts, the last item in the list appears at the top
     sorted_data = sorted(zip(data['categories'], data['counts']),
-                        key=lambda x: x[1], reverse=False)
+                         key=lambda x: x[1], reverse=False)
     categories, counts = zip(*sorted_data)
 
     fig = go.Figure(data=[
@@ -254,7 +254,8 @@ def create_volume_chart(data):
         name='Volume',
         marker=dict(color=colors),
         hovertemplate='<b>%{x}</b><br>Volume: %{y:,.0f}<br>vs 20MA: %{customdata:.1f}x<extra></extra>',
-        customdata=[data['volume'].iloc[i] / volume_ma.iloc[i] if not pd.isna(volume_ma.iloc[i]) and volume_ma.iloc[i] > 0 else 1 for i in range(len(data))]
+        customdata=[data['volume'].iloc[i] / volume_ma.iloc[i] if not pd.isna(volume_ma.iloc[i]) and volume_ma.iloc[
+            i] > 0 else 1 for i in range(len(data))]
     ))
 
     # Add volume moving average line
@@ -351,6 +352,7 @@ def create_stats_card(title, value, change=None, change_type="neutral", id=None)
 
     return html.Div(card_content, className="card-body")
 
+
 # Note: create_chart_card function moved to shared_components.py
 
 
@@ -371,14 +373,13 @@ def create_volume_summary_card(data):
 
     # Format volume function
 
-
     def format_volume(vol):
         if vol >= 1e9:
-            return f"{vol/1e9:.2f}B"
+            return f"{vol / 1e9:.2f}B"
         elif vol >= 1e6:
-            return f"{vol/1e6:.1f}M"
+            return f"{vol / 1e6:.1f}M"
         elif vol >= 1e3:
-            return f"{vol/1e3:.0f}K"
+            return f"{vol / 1e3:.0f}K"
         else:
             return f"{vol:.0f}"
 
@@ -433,7 +434,8 @@ def create_volume_heatmap_chart(data, symbol=""):
                     x=['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
                     y=[volume_by_day.get(day, 0) for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']],
                     marker=dict(
-                        color=[volume_by_day.get(day, 0) for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']],
+                        color=[volume_by_day.get(day, 0) for day in
+                               ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']],
                         colorscale='Viridis',
                         showscale=True,
                         colorbar=dict(title="Volume")
@@ -553,4 +555,3 @@ def create_signals_html(signals):
         ], className="list-group-item"))
 
     return html.Ul(signal_items, className="list-group list-group-flush")
-

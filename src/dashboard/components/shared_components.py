@@ -242,4 +242,3 @@ def create_empty_state_card(title, message, icon_class="fas fa-chart-line", heig
             ], className="text-center py-5")
         ])
     ], style={**CARD_STYLE_NONE, "height": height})
-

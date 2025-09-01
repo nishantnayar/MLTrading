@@ -157,8 +157,11 @@ def create_overview_tab():
                                     dbc.Col([
                                         html.Label("Actions:", className="form-label small"),
                                         html.Div([
-                                            dbc.Button("Apply Filters", id="apply-filters-btn", color="primary", size="sm", className="me-2"),
-                                            dbc.Button("Reset", id="reset-filters-btn", color="outline-secondary", size="sm")
+                                            dbc.Button("Apply Filters", id="apply-filters-btn", color="primary",
+                                                       size="sm",
+                                                       className="me-2"),
+                                            dbc.Button("Reset", id="reset-filters-btn", color="outline-secondary",
+                                                       size="sm")
                                         ])
                                     ], width=3)
                                 ])
@@ -880,4 +883,3 @@ def create_dashboard_content():
             create_analysis_tab()
         ], id="main-tabs", active_tab="overview-tab")
     ])
-

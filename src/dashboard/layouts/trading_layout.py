@@ -322,4 +322,3 @@ def format_trading_log_message(message: str, level: str = "info") -> html.Div:
         html.Span(f"[{timestamp}] ", className="text-muted"),
         html.Span(message, className=color_map.get(level, "text-dark"))
     ], className="mb-1")
-

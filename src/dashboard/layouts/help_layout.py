@@ -24,7 +24,8 @@ def create_help_section(title, content, icon_class="fas fa-info-circle", card_co
         dbc.CardHeader([
             html.I(className=f"{icon_class} me-2"),
             html.H5(title, className="mb-0")
-        ], className=f"bg-{card_color}" + (" text-white" if card_color in ["primary", "success", "danger", "warning", "info"] else "")),
+        ], className=f"bg-{card_color}" + (
+            " text-white" if card_color in ["primary", "success", "danger", "warning", "info"] else "")),
         dbc.CardBody(content)
     ], className="mb-4 shadow-sm")
 
@@ -74,21 +75,25 @@ def create_help_layout():
                                     html.I(className="fas fa-book-open me-3 text-primary"),
                                     "ML Trading Dashboard"
                                 ], className="mb-2 fw-bold"),
-                                                                 html.P("Complete guide to the simplified trading dashboard with advanced volume analysis and technical indicators",
-                                       className="text-muted mb-3"),
-                                 dbc.Alert([
-                                     html.I(className="fas fa-info-circle me-2"),
-                                     html.Strong("Simplified Dashboard:"), " The settings page has been removed to focus on core trading functionality and eliminate debugging complexity."
-                                 ], color="info", className="mb-3"),
+                                html.P(
+                                    "Complete guide to the simplified trading dashboard with advanced volume analysis "
+                                    "and technical indicators",
+                                    className="text-muted mb-3"),
+                                dbc.Alert([
+                                    html.I(className="fas fa-info-circle me-2"),
+                                    html.Strong("Simplified Dashboard:"),
+                                    "The settings page has been removed to focus on core trading functionality and "
+                                    "eliminate debugging complexity."
+                                ], color="info", className="mb-3"),
                                 dbc.ButtonGroup([
                                     dbc.Button([html.I(className="fas fa-rocket me-1"), "Quick Start"],
-                                              color="primary", size="sm", href="#quick-start"),
+                                               color="primary", size="sm", href="#quick-start"),
                                     dbc.Button([html.I(className="fas fa-chart-line me-1"), "Charts Guide"],
-                                              color="outline-primary", size="sm", href="#charts"),
+                                               color="outline-primary", size="sm", href="#charts"),
                                     dbc.Button([html.I(className="fas fa-volume-up me-1"), "Volume Features"],
-                                              color="outline-success", size="sm", href="#volume"),
+                                               color="outline-success", size="sm", href="#volume"),
                                     dbc.Button([html.I(className="fas fa-cogs me-1"), "Technical Analysis"],
-                                              color="outline-info", size="sm", href="#technical")
+                                               color="outline-info", size="sm", href="#technical")
                                 ])
                             ], width=12)
                         ])
@@ -96,7 +101,6 @@ def create_help_layout():
                 ], className="border-0 shadow-lg bg-gradient")
             ], width=12)
         ], className="mb-4"),
-
 
         # Quick Start Guide
         dbc.Row([
@@ -118,7 +122,8 @@ def create_help_layout():
                                 create_step_card(
                                     "2",
                                     "Select Your Symbol",
-                                    "Choose a stock symbol from the dropdown. Use sector/industry filters to narrow down options",
+                                    "Choose a stock symbol from the dropdown. Use sector/industry filters to narrow "
+                                    "down options",
                                     "fas fa-search"
                                 )
                             ], width=6)
@@ -128,7 +133,8 @@ def create_help_layout():
                                 create_step_card(
                                     "3",
                                     "Configure Chart Display",
-                                    "Choose chart type (Candlestick/OHLC/Line), select technical indicators, and set volume display options",
+                                    "Choose chart type (Candlestick/OHLC/Line), select technical indicators, and set "
+                                    "volume display options",
                                     "fas fa-sliders-h"
                                 )
                             ], width=6),
@@ -160,7 +166,9 @@ def create_help_layout():
                                     html.H5("Chart Types & Controls", className="mt-3 mb-3"),
                                     dbc.Alert([
                                         html.H6("🎛️ New Button-Based Controls", className="alert-heading mb-2"),
-                                        html.P("Chart type selection now uses intuitive button controls instead of dropdowns for better accessibility and mobile support!", className="mb-0")
+                                        html.P("Chart type selection now uses intuitive button controls instead of "
+                                               "dropdowns for better accessibility and mobile support!",
+                                               className="mb-0")
                                     ], color="success", className="mb-3"),
 
                                     html.H6("Chart Type Buttons:"),
@@ -176,7 +184,8 @@ def create_help_layout():
                                             dbc.Card([
                                                 dbc.CardBody([
                                                     html.H6("📈 Candlestick Charts"),
-                                                    html.P("Default chart type showing OHLC data with colored candles:"),
+                                                    html.P(
+                                                        "Default chart type showing OHLC data with colored candles:"),
                                                     html.Ul([
                                                         html.Li("Green candles: Close > Open (bullish)"),
                                                         html.Li("Red candles: Close < Open (bearish)"),
@@ -242,20 +251,25 @@ def create_help_layout():
                                             html.H6("Moving Averages"),
                                             html.Ul([
                                                 html.Li("SMA (20): Simple Moving Average over 20 periods"),
-                                                html.Li("EMA (12,26): Exponential Moving Averages for MACD calculation"),
+                                                html.Li(
+                                                    "EMA (12,26): Exponential Moving Averages for MACD calculation"),
                                                 html.Li("Helps identify trend direction and momentum")
                                             ]),
-                                            dbc.Alert("💡 Use moving averages to identify trend changes and potential entry/exit points", color="info")
+                                            dbc.Alert("💡 Use moving averages to identify trend changes and potential "
+                                                      "entry/exit points", color="info")
                                         ], title="📈 Moving Averages"),
 
                                         dbc.AccordionItem([
                                             html.H6("Momentum Oscillators"),
                                             html.Ul([
-                                                html.Li("RSI (14): Relative Strength Index - measures overbought/oversold conditions"),
-                                                html.Li("MACD: Moving Average Convergence Divergence - trend and momentum"),
+                                                html.Li("RSI (14): Relative Strength Index - measures "
+                                                        "overbought/oversold conditions"),
+                                                html.Li("MACD: Moving Average Convergence Divergence - trend and "
+                                                        "momentum"),
                                                 html.Li("Stochastic: Compares closing price to price range over time")
                                             ]),
-                                            dbc.Alert("⚠️ RSI > 70 suggests overbought, RSI < 30 suggests oversold conditions", color="warning")
+                                            dbc.Alert("⚠️ RSI > 70 suggests overbought, RSI < 30 suggests oversold "
+                                                      "conditions", color="warning")
                                         ], title="⚡ Momentum Indicators"),
 
                                         dbc.AccordionItem([
@@ -265,7 +279,9 @@ def create_help_layout():
                                                 html.Li("ATR: Average True Range - measures volatility"),
                                                 html.Li("VWAP: Volume Weighted Average Price - institutional benchmark")
                                             ]),
-                                            dbc.Alert("📊 VWAP is often used by institutions as a benchmark for trade execution", color="success")
+                                            dbc.Alert(
+                                                "📊 VWAP is often used by institutions as a benchmark for trade execution",
+                                                color="success")
                                         ], title="📊 Volatility & Volume")
                                     ])
                                 ])
@@ -286,7 +302,8 @@ def create_help_layout():
                     [
                         dbc.Alert([
                             html.H5("Volume is King! 👑", className="alert-heading"),
-                            html.P("Volume confirms price movements and reveals market sentiment. Our enhanced volume tools give you deep insights into trading activity.")
+                            html.P("Volume confirms price movements and reveals market sentiment. Our enhanced volume "
+                                   "tools give you deep insights into trading activity.")
                         ], color="success", className="mb-4"),
 
                         dbc.Row([
@@ -304,7 +321,7 @@ def create_help_layout():
                                         dbc.Badge("Default", color="primary", className="ms-2")
                                     ]),
                                     dbc.ListGroupItem([
-                                        html.Strong("Volume Profile"), " - Advanced volume analysis (future enhancement)"
+                                        html.Strong("Volume Profile"), "- Advanced volume analysis (future enhancement)"
                                     ])
                                 ])
                             ], width=6),
@@ -320,11 +337,14 @@ def create_help_layout():
                                         ),
                                         html.Hr(),
                                         html.Div([
-                                            dbc.Badge("🟢 Green", color="success", className="me-2"), "Volume when price closes higher",
+                                            dbc.Badge("🟢 Green", color="success", className="me-2"),
+                                            "Volume when price closes higher",
                                             html.Br(),
-                                            dbc.Badge("🔴 Red", color="danger", className="me-2"), "Volume when price closes lower",
+                                            dbc.Badge("🔴 Red", color="danger", className="me-2"),
+                                            "Volume when price closes lower",
                                             html.Br(),
-                                            dbc.Badge("🔵 Bright", color="info", className="me-2"), "High volume (>1.5x average)",
+                                            dbc.Badge("🔵 Bright", color="info", className="me-2"),
+                                            "High volume (>1.5x average)",
                                             html.Br(),
                                             dbc.Badge("⚪ Dim", color="secondary", className="me-2"), "Normal volume"
                                         ])
@@ -373,7 +393,8 @@ def create_help_layout():
                 create_help_section(
                     "🔬 Technical Analysis Summary",
                     [
-                        html.P("The Technical Analysis Summary provides instant insights into key metrics:", className="lead"),
+                        html.P("The Technical Analysis Summary provides instant insights into key metrics:",
+                               className="lead"),
 
                         dbc.Row([
                             dbc.Col([
@@ -419,10 +440,12 @@ def create_help_layout():
                                         html.Strong("Current Price: "), "Real-time or latest available price"
                                     ]),
                                     dbc.ListGroupItem([
-                                        html.Strong("30D Change: "), "Percentage change over 30 days (green=positive, red=negative)"
+                                        html.Strong("30D Change: "),
+                                        "Percentage change over 30 days (green=positive, red=negative)"
                                     ]),
                                     dbc.ListGroupItem([
-                                        html.Strong("RSI(14): "), "Relative Strength Index - overbought (>70), oversold (<30), neutral (30-70)"
+                                        html.Strong("RSI(14): "),
+                                        "Relative Strength Index - overbought (>70), oversold (<30), neutral (30-70)"
                                     ]),
                                     dbc.ListGroupItem([
                                         html.Strong("Volume: "), "Current volume vs 20-day average with color coding"
@@ -456,7 +479,7 @@ def create_help_layout():
                                     ]),
                                     dbc.ListGroupItem([
                                         html.I(className="fas fa-chart-line me-2"),
-                                        html.Strong("Interactive Charts"), " - Advanced charting with technical analysis"
+                                        html.Strong("Interactive Charts"), "- Advanced charting with technical analysis"
                                     ]),
                                     dbc.ListGroupItem([
                                         html.I(className="fas fa-brain me-2"),
@@ -539,7 +562,8 @@ def create_help_layout():
                     [
                         dbc.Alert([
                             html.H5("Latest Updates - August 2025", className="alert-heading"),
-                            html.P("The ML Trading Dashboard has received significant improvements for better usability and reliability.")
+                            html.P("The ML Trading Dashboard has received significant improvements for better "
+                                   "usability and reliability.")
                         ], color="primary", className="mb-4"),
 
                         dbc.Row([
@@ -551,7 +575,8 @@ def create_help_layout():
                                     ]),
                                     dbc.CardBody([
                                         html.Ul([
-                                            html.Li("Replaced problematic dropdown menus with accessible button controls"),
+                                            html.Li("Replaced problematic dropdown menus with accessible button "
+                                                    "controls"),
                                             html.Li("Improved mobile and touch device compatibility"),
                                             html.Li("Better visual feedback for selected chart types"),
                                             html.Li("Enhanced keyboard navigation support")
@@ -633,7 +658,8 @@ def create_help_layout():
                                     html.Li("Try selecting a different symbol"),
                                     html.Li("Clear browser cache and cookies")
                                 ]),
-                                dbc.Alert("If problems persist, check the Logs page for detailed error messages.", color="warning")
+                                dbc.Alert("If problems persist, check the Logs page for detailed error messages.",
+                                          color="warning")
                             ], title="Charts Not Loading"),
 
                             dbc.AccordionItem([
@@ -644,7 +670,8 @@ def create_help_layout():
                                     html.Li("Data provider temporary issue"),
                                     html.Li("Time range too narrow")
                                 ]),
-                                dbc.Alert("Try expanding the time range or selecting a more active symbol.", color="info")
+                                dbc.Alert("Try expanding the time range or selecting a more active symbol.",
+                                          color="info")
                             ], title="No Data Displayed"),
 
                             dbc.AccordionItem([
@@ -673,7 +700,9 @@ def create_help_layout():
                         dbc.Row([
                             dbc.Col([
                                 html.H5([html.I(className="fas fa-rocket me-2"), "Ready to Trade?"]),
-                                html.P("You're now equipped with all the knowledge to use the ML Trading Dashboard effectively. Start with the Overview tab, then explore Interactive Charts for detailed analysis.")
+                                html.P("You're now equipped with all the knowledge to use the ML Trading Dashboard "
+                                       "effectively. Start with the Overview tab, then explore Interactive Charts for "
+                                       "detailed analysis.")
                             ], width=8),
                             dbc.Col([
                                 dbc.Button([
@@ -688,4 +717,3 @@ def create_help_layout():
         ], className="mt-4 mb-5")
 
     ], fluid=True, className="py-4")
-

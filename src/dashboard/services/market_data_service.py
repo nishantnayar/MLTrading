@@ -12,7 +12,6 @@ from .base_service import BaseDashboardService
 class MarketDataService(BaseDashboardService):
     """Service to handle market data operations."""
 
-
     def get_market_data(self, symbol: str, days: int = 30, source: str = 'yahoo', hourly: bool = False) -> pd.DataFrame:
         """Get historical market data for a symbol."""
         try:
@@ -71,7 +70,8 @@ class MarketDataService(BaseDashboardService):
 
                 cleaned_count = len(df)
                 if original_count != cleaned_count:
-                    self.logger.warning(f"Removed {original_count - cleaned_count} rows with missing essential data (kept {cleaned_count}/{original_count})")
+                    self.logger.warning(
+                        f"Removed {original_count - cleaned_count} rows with missing essential data (kept {cleaned_count}/{original_count})")
 
                 self.logger.info(f"Retrieved {len(df)} market data points for {symbol}")
 
@@ -80,7 +80,6 @@ class MarketDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting market data for {symbol}: {e}")
             return pd.DataFrame()
-
 
     def get_all_available_data(self, symbol: str, source: str = 'yahoo') -> pd.DataFrame:
         """Get ALL available data for a symbol (no limits)."""
@@ -132,7 +131,6 @@ class MarketDataService(BaseDashboardService):
             self.logger.error(f"Error getting all available data for {symbol}: {e}")
             return pd.DataFrame()
 
-
     def get_any_available_data(self, symbol: str, source: str = 'yahoo') -> pd.DataFrame:
         """Get any available data for a symbol (fallback when no recent data exists)."""
         try:
@@ -179,7 +177,6 @@ class MarketDataService(BaseDashboardService):
             self.logger.error(f"Error getting any available data for {symbol}: {e}")
             return pd.DataFrame()
 
-
     def get_latest_price(self, symbol: str, source: str = 'yahoo') -> Optional[Dict[str, Any]]:
         """Get the latest price data for a symbol."""
         try:
@@ -218,7 +215,6 @@ class MarketDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting latest price for {symbol}: {e}")
             return None
-
 
     def get_price_change(self, symbol: str, days: int = 1, source: str = 'yahoo') -> Optional[Dict[str, Any]]:
         """Get price change over specified number of days."""
@@ -272,7 +268,6 @@ class MarketDataService(BaseDashboardService):
             self.logger.error(f"Error calculating price change for {symbol}: {e}")
             return None
 
-
     def get_data_date_range(self, source: str = 'yahoo') -> str:
         """Get the date range of available data."""
         try:
@@ -303,7 +298,6 @@ class MarketDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting data date range: {e}")
             return "Error retrieving date range"
-
 
     def get_data_quality_metrics(self, symbol: str, source: str = 'yahoo') -> Dict[str, Any]:
         """Get data quality metrics for a symbol."""
@@ -352,7 +346,6 @@ class MarketDataService(BaseDashboardService):
             self.logger.error(f"Error getting data quality metrics for {symbol}: {e}")
             return {}
 
-
     def get_available_symbols(self, source: str = 'yahoo') -> List[Dict[str, str]]:
         """Get list of available symbols with market data and company names."""
         try:
@@ -385,7 +378,6 @@ class MarketDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error getting available symbols: {e}")
             return []
-
 
     def search_symbols(self, query: str, limit: int = 10) -> List[Dict[str, str]]:
         """Search symbols by symbol or company name."""
@@ -433,7 +425,6 @@ class MarketDataService(BaseDashboardService):
             self.logger.error(f"Error searching symbols with query '{query}': {e}")
             return []
 
-
     def validate_market_data(self, data: List[Dict]) -> bool:
         """Validate market data format and completeness."""
         try:
@@ -465,4 +456,3 @@ class MarketDataService(BaseDashboardService):
         except Exception as e:
             self.logger.error(f"Error validating market data: {e}")
             return False
-
