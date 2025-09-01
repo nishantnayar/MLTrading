@@ -24,7 +24,18 @@ symbol_service = SymbolService()
 
 def register_overview_callbacks(app):
     """Register all overview-related callbacks with the app"""
+    
+    # Register individual callback groups
+    _register_market_overview_callbacks(app)
+    _register_stats_callbacks(app)
+    _register_time_and_market_callbacks(app)
+    _register_chart_callbacks(app)
+    _register_filtering_callbacks(app)
 
+
+def _register_market_overview_callbacks(app):
+    """Register market overview and activity callbacks"""
+    
     @app.callback(
         Output("market-overview-chart", "figure"),
         [Input("refresh-data-btn", "n_clicks"),
@@ -141,6 +152,10 @@ def register_overview_callbacks(app):
             logger.error(f"Error updating recent activity: {e}")
             return html.P("Error loading data", className="text-danger")
 
+
+def _register_stats_callbacks(app):
+    """Register statistics and database callbacks"""
+
     @app.callback(
         [Output("total-symbols", "children"),
          Output("active-trades", "children"),
@@ -169,6 +184,43 @@ def register_overview_callbacks(app):
         except Exception as e:
             logger.error(f"Error updating summary stats: {e}")
             return "0", "0", "$0", "$0"
+
+    @app.callback(
+        [Output("total-symbols-db", "children"),
+         Output("data-range", "children")],
+        [Input("refresh-stats-btn", "n_clicks")],
+        prevent_initial_call=False
+    )
+    def update_database_stats(refresh_clicks):
+        """Update database statistics"""
+        try:
+            # Get total symbols in database
+            symbols_data = data_service.get_available_symbols()
+            total_symbols = len(symbols_data) if symbols_data else 0
+
+            # Get data range from database
+            data_range = data_service.get_data_date_range()
+
+            return str(total_symbols), data_range
+
+        except Exception as e:
+            logger.error(f"Error updating database stats: {e}")
+            return "0", "Error"
+
+    @app.callback(
+        Output("last-updated", "children"),
+        [Input("refresh-overview-btn", "n_clicks"),
+         Input("refresh-stats-btn", "n_clicks")],
+        prevent_initial_call=False
+    )
+    def update_last_updated_timestamp(overview_refresh, stats_refresh):
+        """Update the last updated timestamp"""
+        from datetime import datetime
+        return datetime.now().strftime("%H:%M:%S")
+
+
+def _register_time_and_market_callbacks(app):
+    """Register time and market hours callbacks"""
 
     @app.callback(
         [Output("current-time", "children"),
@@ -296,27 +348,9 @@ def register_overview_callbacks(app):
             logger.error(f"Error updating time and market info: {e}")
             return "Error", "Error", "Error"
 
-    @app.callback(
-        [Output("total-symbols-db", "children"),
-         Output("data-range", "children")],
-        [Input("refresh-stats-btn", "n_clicks")],
-        prevent_initial_call=False
-    )
-    def update_database_stats(refresh_clicks):
-        """Update database statistics"""
-        try:
-            # Get total symbols in database
-            symbols_data = data_service.get_available_symbols()
-            total_symbols = len(symbols_data) if symbols_data else 0
 
-            # Get data range from database
-            data_range = data_service.get_data_date_range()
-
-            return str(total_symbols), data_range
-
-        except Exception as e:
-            logger.error(f"Error updating database stats: {e}")
-            return "0", "Error"
+def _register_chart_callbacks(app):
+    """Register chart-related callbacks"""
 
     @app.callback(
         [Output("sector-distribution-chart", "figure"),
@@ -562,16 +596,9 @@ def register_overview_callbacks(app):
             logger.error(f"Error updating market activity chart: {e}")
             return create_empty_chart("Error Loading Activity Data")
 
-    @app.callback(
-        Output("last-updated", "children"),
-        [Input("refresh-overview-btn", "n_clicks"),
-         Input("refresh-stats-btn", "n_clicks")],
-        prevent_initial_call=False
-    )
-    def update_last_updated_timestamp(overview_refresh, stats_refresh):
-        """Update the last updated timestamp"""
-        from datetime import datetime
-        return datetime.now().strftime("%H:%M:%S")
+
+def _register_filtering_callbacks(app):
+    """Register symbol filtering callbacks"""
 
     @app.callback(
         [Output("filtered-symbols-display", "children"),

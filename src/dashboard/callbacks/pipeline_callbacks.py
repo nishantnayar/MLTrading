@@ -24,6 +24,15 @@ logger = get_ui_logger("pipeline_callbacks")
 
 def register_pipeline_callbacks(app):
     """Register all pipeline-related callbacks"""
+    
+    # Register individual callback groups
+    _register_status_callbacks(app)
+    _register_control_callbacks(app)
+    _register_health_monitoring_callbacks(app)
+
+
+def _register_status_callbacks(app):
+    """Register status and data display callbacks"""
 
     @app.callback(
         Output("pipeline-status-card", "children"),
@@ -95,6 +104,43 @@ def register_pipeline_callbacks(app):
 
             # Return empty div on error to avoid breaking the layout
             return html.Div()
+
+    @app.callback(
+        Output("multi-deployment-status", "children"),
+        [Input("pipeline-status-interval", "n_intervals")]
+    )
+    def update_multi_deployment_status(n_intervals):
+        """Update status for multiple deployments"""
+        try:
+            prefect_service = get_prefect_service()
+            config_manager = get_deployment_config()
+
+            # Get all configured deployments
+            primary_deployments = config_manager.get_primary_deployments()
+            if not primary_deployments:
+                return html.Div([
+                    dbc.Alert([
+                        html.I(className="fas fa-info-circle me-2"),
+                        "No deployments configured for monitoring"
+                    ], color="info")
+                ])
+
+            # Get status for multiple deployments
+            deployments_status = prefect_service.get_multiple_deployment_status(primary_deployments)
+
+            return create_multi_deployment_status_card(deployments_status)
+
+        except Exception as e:
+            logger.error(f"Error updating multi-deployment status: {e}")
+
+            return dbc.Alert([
+                html.I(className="fas fa-exclamation-triangle me-2"),
+                "Error loading deployment status"
+            ], color="warning", className="mb-0")
+
+
+def _register_control_callbacks(app):
+    """Register pipeline control and interaction callbacks"""
 
     @app.callback(
         [Output("pipeline-history-modal", "is_open"),
@@ -200,6 +246,10 @@ def register_pipeline_callbacks(app):
                 style={"position": "fixed", "top": 66, "right": 10, "width": 350}
             )
 
+
+def _register_health_monitoring_callbacks(app):
+    """Register health monitoring and alert callbacks"""
+
     @app.callback(
         Output("pipeline-status-alert", "children"),
         [Input("pipeline-status-interval", "n_intervals")]
@@ -265,37 +315,3 @@ def register_pipeline_callbacks(app):
         except Exception as e:
             logger.error(f"Error checking pipeline health alerts: {e}")
             return html.Div()  # Don't show errors for health checks
-
-    # New callback for multiple deployments overview
-    @app.callback(
-        Output("multi-deployment-status", "children"),
-        [Input("pipeline-status-interval", "n_intervals")]
-    )
-    def update_multi_deployment_status(n_intervals):
-        """Update status for multiple deployments"""
-        try:
-            prefect_service = get_prefect_service()
-            config_manager = get_deployment_config()
-
-            # Get all configured deployments
-            primary_deployments = config_manager.get_primary_deployments()
-            if not primary_deployments:
-                return html.Div([
-                    dbc.Alert([
-                        html.I(className="fas fa-info-circle me-2"),
-                        "No deployments configured for monitoring"
-                    ], color="info")
-                ])
-
-            # Get status for multiple deployments
-            deployments_status = prefect_service.get_multiple_deployment_status(primary_deployments)
-
-            return create_multi_deployment_status_card(deployments_status)
-
-        except Exception as e:
-            logger.error(f"Error updating multi-deployment status: {e}")
-
-            return dbc.Alert([
-                html.I(className="fas fa-exclamation-triangle me-2"),
-                "Error loading deployment status"
-            ], color="warning", className="mb-0")

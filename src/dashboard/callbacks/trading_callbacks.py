@@ -20,6 +20,15 @@ logger = get_ui_logger("trading_callbacks")
 
 def register_trading_callbacks(app):
     """Register all trading-related callbacks"""
+    
+    # Register individual callback groups
+    _register_status_callbacks(app)
+    _register_data_callbacks(app)
+    _register_trading_action_callbacks(app)
+
+
+def _register_status_callbacks(app):
+    """Register status monitoring callbacks"""
 
     @app.callback(
         [Output("trading-connection-status", "children"),
@@ -52,6 +61,10 @@ def register_trading_callbacks(app):
                 f"⚠️ Connection error: {str(e)}",
                 "warning"
             )
+
+
+def _register_data_callbacks(app):
+    """Register data display callbacks"""
 
     @app.callback(
         Output("account-info-display", "children"),
@@ -100,6 +113,10 @@ def register_trading_callbacks(app):
         except Exception as e:
             logger.error(f"Error updating orders: {e}")
             return html.P(f"Error loading orders: {e}", className="text-danger")
+
+
+def _register_trading_action_callbacks(app):
+    """Register trading action and interaction callbacks"""
 
     @app.callback(
         [Output("order-confirmation-modal", "is_open"),
