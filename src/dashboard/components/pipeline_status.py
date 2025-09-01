@@ -23,135 +23,139 @@ def create_pipeline_status_card(status_data: Dict) -> dbc.Card:
     next_run = status_data.get('next_run')
     success_rate = status_data.get('success_rate', 0.0)
 
-    # Determine status color and icon
+    # Determine status using helper function
+    status_color, status_icon, status_text = _determine_pipeline_status(last_run)
+
+    # Format time displays using helper functions
+    last_run_text = _format_last_run_time(last_run, next_run)
+    next_run_text = _format_next_run_time(next_run)
+
+    # Build card using helper function
+    return _build_pipeline_status_card(
+        deployment, status_color, status_icon, status_text,
+        last_run_text, next_run_text, success_rate
+    )
+
+
+def _determine_pipeline_status(last_run):
+    """Determine status color, icon and text based on last run"""
     if last_run:
         last_run_state = last_run.get('state', {}).get('type', 'UNKNOWN')
-        if last_run_state == 'COMPLETED':
-            status_color = 'success'
-            status_icon = 'fas fa-check-circle'
-            status_text = 'Healthy'
-        elif last_run_state == 'FAILED':
-            status_color = 'danger'
-            status_icon = 'fas fa-exclamation-circle'
-            status_text = 'Failed'
-        elif last_run_state == 'RUNNING':
-            status_color = 'info'
-            status_icon = 'fas fa-sync fa-spin'
-            status_text = 'Running'
-        elif last_run_state == 'SCHEDULED':
-            status_color = 'warning'
-            status_icon = 'fas fa-clock'
-            status_text = 'Scheduled'
-        else:
-            status_color = 'secondary'
-            status_icon = 'fas fa-question-circle'
-            status_text = 'Unknown'
+        status_map = {
+            'COMPLETED': ('success', 'fas fa-check-circle', 'Healthy'),
+            'FAILED': ('danger', 'fas fa-exclamation-circle', 'Failed'),
+            'RUNNING': ('info', 'fas fa-sync fa-spin', 'Running'),
+            'SCHEDULED': ('warning', 'fas fa-clock', 'Scheduled')
+        }
+        return status_map.get(last_run_state, ('secondary', 'fas fa-question-circle', 'Unknown'))
     else:
-        status_color = 'info'
-        status_icon = 'fas fa-clock'
-        status_text = 'Scheduled'
+        return 'info', 'fas fa-clock', 'Scheduled'
 
-    # Format last run time - handle both completed and scheduled runs
+
+def _format_last_run_time(last_run, next_run):
+    """Format the last run time display"""
     last_run_text = 'No runs yet'
+    
     if last_run:
         try:
             # For completed/failed runs, use end_time
             if last_run.get('end_time'):
-                end_time = last_run['end_time']
-                if isinstance(end_time, str):
-                    end_time = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
-
-                now = datetime.now().astimezone()
-                time_diff = now - end_time.astimezone()
-
-                if time_diff.total_seconds() < 60:
-                    last_run_text = 'Just now'
-                elif time_diff.total_seconds() < 3600:
-                    minutes = int(time_diff.total_seconds() / 60)
-                    last_run_text = f'{minutes}m ago'
-                elif time_diff.total_seconds() < 86400:
-                    hours = int(time_diff.total_seconds() / 3600)
-                    last_run_text = f'{hours}h ago'
-                else:
-                    days = int(time_diff.total_seconds() / 86400)
-                    last_run_text = f'{days}d ago'
-
+                end_time = _parse_datetime(last_run['end_time'])
+                last_run_text = _format_time_ago(end_time)
+            
             # For scheduled/running runs, use created time with status
             elif last_run.get('created'):
-                created_time = last_run['created']
-                if isinstance(created_time, str):
-                    created_time = datetime.fromisoformat(created_time.replace('Z', '+00:00'))
-
-                now = datetime.now().astimezone()
-                time_diff = now - created_time.astimezone()
-
-                if time_diff.total_seconds() < 3600:
-                    minutes = int(time_diff.total_seconds() / 60)
-                    last_run_text = f'Scheduled {minutes}m ago'
-                elif time_diff.total_seconds() < 86400:
-                    hours = int(time_diff.total_seconds() / 3600)
-                    last_run_text = f'Scheduled {hours}h ago'
-                else:
-                    days = int(time_diff.total_seconds() / 86400)
-                    last_run_text = f'Scheduled {days}d ago'
-
+                created_time = _parse_datetime(last_run['created'])
+                last_run_text = _format_time_ago(created_time, prefix='Scheduled ')
         except Exception:
             last_run_text = 'Unknown'
 
     # If no runs yet but we have a next run, show that information
     if last_run_text == 'No runs yet' and next_run:
         try:
-            if isinstance(next_run, str):
-                next_run_dt = datetime.fromisoformat(next_run.replace('Z', '+00:00'))
-            else:
-                next_run_dt = next_run
-
+            next_run_dt = _parse_datetime(next_run)
             now = datetime.now().astimezone()
+            
             if hasattr(next_run_dt, 'astimezone'):
                 time_until = next_run_dt.astimezone() - now
             else:
                 time_until = next_run_dt - now.replace(tzinfo=None)
 
             if time_until.total_seconds() > 0:
-                if time_until.total_seconds() < 3600:  # Less than 1 hour
-                    minutes = int(time_until.total_seconds() / 60)
-                    last_run_text = f'First run in {minutes}m'
-                elif time_until.total_seconds() < 86400:  # Less than 1 day
-                    hours = int(time_until.total_seconds() / 3600)
-                    last_run_text = f'First run in {hours}h'
-                else:
-                    days = int(time_until.total_seconds() / 86400)
-                    last_run_text = f'First run in {days}d'
+                last_run_text = _format_time_until(time_until, prefix='First run in ')
         except Exception:
             pass  # Keep default "No runs yet"
 
-    # Format next run time
+    return last_run_text
+
+
+def _format_next_run_time(next_run):
+    """Format the next run time display"""
     next_run_text = 'Not scheduled'
+    
     if next_run:
         try:
-            if isinstance(next_run, str):
-                next_run = datetime.fromisoformat(next_run)
-
+            next_run_dt = _parse_datetime(next_run)
             now = datetime.now()
-            time_until = next_run - now
+            time_until = next_run_dt - now
 
             if time_until.total_seconds() < 0:
                 next_run_text = 'Overdue'
             elif time_until.total_seconds() < 60:
                 next_run_text = 'Starting soon'
-            elif time_until.total_seconds() < 3600:
-                minutes = int(time_until.total_seconds() / 60)
-                next_run_text = f'In {minutes}m'
-            elif time_until.total_seconds() < 86400:
-                hours = int(time_until.total_seconds() / 3600)
-                next_run_text = f'In {hours}h'
             else:
-                days = int(time_until.total_seconds() / 86400)
-                next_run_text = f'In {days}d'
-
+                next_run_text = _format_time_until(time_until, prefix='In ')
         except Exception:
-            next_run_text = 'Unknown'
+            next_run_text = 'Error parsing time'
 
+    return next_run_text
+
+
+def _parse_datetime(dt_input):
+    """Parse datetime from string or datetime object"""
+    if isinstance(dt_input, str):
+        return datetime.fromisoformat(dt_input.replace('Z', '+00:00'))
+    return dt_input
+
+
+def _format_time_ago(dt, prefix=''):
+    """Format time difference as 'X ago' or with custom prefix"""
+    now = datetime.now().astimezone()
+    time_diff = now - dt.astimezone()
+    
+    seconds = time_diff.total_seconds()
+    
+    if seconds < 60:
+        return 'Just now' if not prefix else f'{prefix}just now'
+    elif seconds < 3600:
+        minutes = int(seconds / 60)
+        return f'{prefix}{minutes}m ago'
+    elif seconds < 86400:
+        hours = int(seconds / 3600)
+        return f'{prefix}{hours}h ago'
+    else:
+        days = int(seconds / 86400)
+        return f'{prefix}{days}d ago'
+
+
+def _format_time_until(time_delta, prefix=''):
+    """Format time delta as 'In X' or with custom prefix"""
+    seconds = time_delta.total_seconds()
+    
+    if seconds < 3600:
+        minutes = int(seconds / 60)
+        return f'{prefix}{minutes}m'
+    elif seconds < 86400:
+        hours = int(seconds / 3600)
+        return f'{prefix}{hours}h'
+    else:
+        days = int(seconds / 86400)
+        return f'{prefix}{days}d'
+
+
+def _build_pipeline_status_card(deployment, status_color, status_icon, status_text, 
+                                last_run_text, next_run_text, success_rate):
+    """Build the main pipeline status card UI"""
     # Success rate color
     if success_rate >= 95:
         success_color = 'success'
@@ -504,70 +508,69 @@ def create_deployment_summary_row(deployment_name: str, status_data: Dict) -> ht
     config = status_data.get('config')
     display_name = config.display_name if config else deployment_name.replace('-', ' ').title()
 
+    # Create status badge using helper function
+    status_badge = _create_deployment_status_badge(status_data)
+    
+    # Format next run time using helper function
+    next_run_text = _format_deployment_next_run(status_data.get('next_run'))
+    
+    success_rate = status_data.get('success_rate', 0.0)
+
+    return _build_deployment_summary_ui(deployment_name, display_name, status_badge, 
+                                       next_run_text, success_rate)
+
+
+def _create_deployment_status_badge(status_data):
+    """Create status badge for deployment summary"""
     if not status_data.get('connected', False):
-        status_badge = dbc.Badge([
+        return dbc.Badge([
             html.I(className="fas fa-unlink me-1"),
             "Disconnected"
         ], color="secondary")
-    else:
-        last_run = status_data.get('last_run')
-        if last_run:
-            last_run_state = last_run.get('state', {}).get('type', 'UNKNOWN')
-            if last_run_state == 'COMPLETED':
-                status_badge = dbc.Badge([
-                    html.I(className="fas fa-check-circle me-1"),
-                    "Healthy"
-                ], color="success")
-            elif last_run_state == 'FAILED':
-                status_badge = dbc.Badge([
-                    html.I(className="fas fa-exclamation-circle me-1"),
-                    "Failed"
-                ], color="danger")
-            elif last_run_state == 'RUNNING':
-                status_badge = dbc.Badge([
-                    html.I(className="fas fa-sync fa-spin me-1"),
-                    "Running"
-                ], color="info")
-            else:
-                status_badge = dbc.Badge([
-                    html.I(className="fas fa-clock me-1"),
-                    "Scheduled"
-                ], color="warning")
-        else:
-            status_badge = dbc.Badge([
-                html.I(className="fas fa-question-circle me-1"),
-                "Unknown"
-            ], color="secondary")
 
-    # Calculate next run display
-    next_run = status_data.get('next_run')
-    if next_run:
-        if isinstance(next_run, str):
-            next_run = datetime.fromisoformat(next_run.replace('Z', '+00:00'))
-        elif isinstance(next_run, datetime):
-            pass
-        else:
-            next_run = None
+    last_run = status_data.get('last_run')
+    if not last_run:
+        return dbc.Badge([
+            html.I(className="fas fa-question-circle me-1"),
+            "Unknown"
+        ], color="secondary")
 
-    next_run_text = ""
-    if next_run:
+    last_run_state = last_run.get('state', {}).get('type', 'UNKNOWN')
+    
+    status_config = {
+        'COMPLETED': ('fas fa-check-circle me-1', 'Healthy', 'success'),
+        'FAILED': ('fas fa-exclamation-circle me-1', 'Failed', 'danger'),
+        'RUNNING': ('fas fa-sync fa-spin me-1', 'Running', 'info'),
+        'SCHEDULED': ('fas fa-clock me-1', 'Scheduled', 'warning')
+    }
+    
+    icon, text, color = status_config.get(last_run_state, 
+                                        ('fas fa-clock me-1', 'Scheduled', 'warning'))
+    
+    return dbc.Badge([html.I(className=icon), text], color=color)
+
+
+def _format_deployment_next_run(next_run):
+    """Format next run time for deployment summary"""
+    if not next_run:
+        return ""
+
+    try:
+        next_run_dt = _parse_datetime(next_run)
         now = datetime.now().astimezone()
-        if hasattr(next_run, 'astimezone'):
-            time_until = next_run.astimezone() - now
+        
+        if hasattr(next_run_dt, 'astimezone'):
+            time_until = next_run_dt.astimezone() - now
         else:
-            time_until = next_run - now.replace(tzinfo=None)
+            time_until = next_run_dt - now.replace(tzinfo=None)
 
-        if time_until.total_seconds() < 3600:  # Less than 1 hour
-            minutes = int(time_until.total_seconds() / 60)
-            next_run_text = f"Next: {minutes}m"
-        elif time_until.total_seconds() < 86400:  # Less than 1 day
-            hours = int(time_until.total_seconds() / 3600)
-            next_run_text = f"Next: {hours}h"
-        else:
-            days = int(time_until.total_seconds() / 86400)
-            next_run_text = f"Next: {days}d"
+        return _format_time_until(time_until, prefix="Next: ")
+    except Exception:
+        return ""
 
-    success_rate = status_data.get('success_rate', 0.0)
+
+def _build_deployment_summary_ui(deployment_name, display_name, status_badge, 
+                                next_run_text, success_rate):
 
     return html.Div([
         dbc.Row([

@@ -151,7 +151,17 @@ def generate_migration_report() -> str:
     report.append("=" * 50)
     report.append("")
 
-    # Legacy configuration status
+    _add_legacy_config_section(report, legacy_results)
+    _add_environment_vars_section(report, legacy_results)
+    _add_unified_config_section(report, unified_results)
+    _add_compatibility_section(report, unified_results)
+    _add_recommendations_section(report, unified_results)
+
+    return "\n".join(report)
+
+
+def _add_legacy_config_section(report: list, legacy_results: dict):
+    """Add legacy configuration status to report"""
     report.append("## Legacy Configuration Files")
     for file_name, info in legacy_results['config_files'].items():
         status = info['status']
@@ -161,19 +171,21 @@ def generate_migration_report() -> str:
             report.append(f"[WARN] {file_name}: Not found")
         else:
             report.append(f"[FAIL] {file_name}: Error - {info.get('error', 'Unknown')}")
-
     report.append("")
 
-    # Environment variables status
+
+def _add_environment_vars_section(report: list, legacy_results: dict):
+    """Add environment variables status to report"""
     report.append("## Environment Variables")
     for var, info in legacy_results['environment_vars'].items():
         status = "[PASS]" if info['present'] else "[WARN]"
         value = info['masked_value'] or "Not set"
         report.append(f"{status} {var}: {value}")
-
     report.append("")
 
-    # Unified configuration status
+
+def _add_unified_config_section(report: list, unified_results: dict):
+    """Add unified configuration status to report"""
     report.append("## Unified Configuration System")
     if unified_results['status'] == 'success':
         unified = unified_results['unified_config']
@@ -187,10 +199,11 @@ def generate_migration_report() -> str:
             report.append(f"[WARN] Validation issues: {unified['validation_issues']}")
     else:
         report.append(f"[FAIL] System failed to load: {unified_results.get('error', 'Unknown error')}")
-
     report.append("")
 
-    # Backward compatibility
+
+def _add_compatibility_section(report: list, unified_results: dict):
+    """Add backward compatibility status to report"""
     report.append("## Backward Compatibility")
     compat = unified_results.get('backward_compatibility', {})
     if compat.get('legacy_config_works'):
@@ -201,10 +214,11 @@ def generate_migration_report() -> str:
             report.append("[WARN] Legacy and unified configurations differ")
     else:
         report.append("[WARN] Legacy configuration system has issues")
-
     report.append("")
 
-    # Recommendations
+
+def _add_recommendations_section(report: list, unified_results: dict):
+    """Add recommendations section to report"""
     recommendations = unified_results.get('recommendations', [])
     if recommendations:
         report.append("## Recommendations")
@@ -213,8 +227,6 @@ def generate_migration_report() -> str:
     else:
         report.append("## Status: Configuration Ready!")
         report.append("No immediate actions required.")
-
-    return "\n".join(report)
 
 
 if __name__ == "__main__":

@@ -1,13 +1,16 @@
 """
-Interactive chart callbacks - Refactored version
-Breaking down the large register_interactive_chart_callbacks into smaller functions
+Interactive chart callbacks for advanced chart features.
+Handles technical indicators, zoom controls, and chart interactions.
 """
 
-from dash import Input, Output, State, callback_context
-from ..services.unified_data_service import MarketDataService
-from ..services.technical_analysis import TechnicalIndicatorService
+from dash import Input, Output, State, callback_context, html
+import dash_bootstrap_components as dbc
+
 from ..layouts.interactive_chart import InteractiveChartBuilder
+from ..services.market_data_service import MarketDataService
+from ..services.technical_indicators import TechnicalIndicatorService
 from ...utils.logging_config import get_ui_logger
+from ..utils.date_formatters import format_date_range
 
 logger = get_ui_logger("interactive_chart_callbacks")
 
@@ -46,6 +49,8 @@ def _register_chart_control_callbacks(app):
 
 def _register_chart_type_callbacks(app):
     """Register chart type selection callbacks"""
+
+    # NEW: Chart type button handlers
     @app.callback(
         [Output("chart-type-store", "data"),
          Output("chart-type-candlestick", "outline"),
@@ -74,10 +79,7 @@ def _register_chart_type_callbacks(app):
 
         return chart_types.get(trigger_id, ('candlestick', False, True, True, True))
 
-
-def _register_indicator_callbacks(app, indicator_service):
-    """Register indicator selection callbacks"""
-    # Basic indicator toggles
+    # NEW: Quick indicator toggles
     @app.callback(
         [Output("overlay-indicators-store", "data"),
          Output("indicator-sma-btn", "outline"),
@@ -117,7 +119,7 @@ def _register_indicator_callbacks(app, indicator_service):
                 'ema' not in indicators,
                 'bollinger' not in indicators)
 
-    # RSI toggle
+    # NEW: RSI toggle
     @app.callback(
         [Output("oscillator-indicators-store", "data"),
          Output("indicator-rsi-btn", "outline")],
@@ -139,91 +141,7 @@ def _register_indicator_callbacks(app, indicator_service):
         oscillators_list = list(oscillators)
         return oscillators_list, 'rsi' not in oscillators
 
-    # Dynamic advanced indicator callbacks
-    _register_advanced_indicator_callbacks(app, indicator_service)
-
-
-def _register_advanced_indicator_callbacks(app, indicator_service):
-    """Register advanced indicator callbacks dynamically"""
-    chart_config = indicator_service.get_indicator_config()
-
-    # Get overlay indicators
-    overlay_indicators = [key for key, config in chart_config.items() if config.get('type') == 'overlay']
-    
-    if overlay_indicators:
-        overlay_inputs = [Input(f"overlay-{ind}-btn", "n_clicks") for ind in overlay_indicators]
-        overlay_outputs = [Output(f"overlay-{ind}-btn", "outline") for ind in overlay_indicators]
-
-        @app.callback(
-            [Output("overlay-indicators-store", "data", allow_duplicate=True)] + overlay_outputs,
-            overlay_inputs,
-            [State("overlay-indicators-store", "data")],
-            prevent_initial_call=True
-        )
-        def toggle_advanced_overlay_indicators(*args):
-            """Handle advanced overlay indicator toggles."""
-            ctx = callback_context
-            if not ctx.triggered:
-                default_indicators = ['sma', 'ema']
-                outlines = [ind not in default_indicators for ind in overlay_indicators]
-                return [default_indicators] + outlines
-
-            trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-            current_indicators = args[-1] or ['sma', 'ema']
-            indicators = set(current_indicators)
-
-            for ind in overlay_indicators:
-                if trigger_id == f"overlay-{ind}-btn":
-                    if ind in indicators:
-                        indicators.discard(ind)
-                    else:
-                        indicators.add(ind)
-                    break
-
-            indicators_list = list(indicators)
-            outlines = [ind not in indicators for ind in overlay_indicators]
-            return [indicators_list] + outlines
-
-    # Get oscillator indicators
-    oscillator_indicators = [key for key, config in chart_config.items() if config.get('type') == 'oscillator']
-    
-    if oscillator_indicators:
-        oscillator_inputs = [Input(f"oscillator-{ind}-btn", "n_clicks") for ind in oscillator_indicators]
-        oscillator_outputs = [Output(f"oscillator-{ind}-btn", "outline") for ind in oscillator_indicators]
-
-        @app.callback(
-            [Output("oscillator-indicators-store", "data", allow_duplicate=True)] + oscillator_outputs,
-            oscillator_inputs,
-            [State("oscillator-indicators-store", "data")],
-            prevent_initial_call=True
-        )
-        def toggle_advanced_oscillator_indicators(*args):
-            """Handle advanced oscillator indicator toggles."""
-            ctx = callback_context
-            if not ctx.triggered:
-                default_indicators = ['rsi']
-                outlines = [ind not in default_indicators for ind in oscillator_indicators]
-                return [default_indicators] + outlines
-
-            trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-            current_oscillators = args[-1] or ['rsi']
-            oscillators = set(current_oscillators)
-
-            for ind in oscillator_indicators:
-                if trigger_id == f"oscillator-{ind}-btn":
-                    if ind in oscillators:
-                        oscillators.discard(ind)
-                    else:
-                        oscillators.add(ind)
-                    break
-
-            oscillators_list = list(oscillators)
-            outlines = [ind not in oscillators for ind in oscillator_indicators]
-            return [oscillators_list] + outlines
-
-
-def _register_volume_callbacks(app):
-    """Register volume display callbacks"""
+    # NEW: Volume display controls
     @app.callback(
         [Output("volume-display-store", "data"),
          Output("volume-hide-btn", "outline"),
@@ -246,8 +164,9 @@ def _register_volume_callbacks(app):
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
         if trigger_id == 'volume-toggle-btn':
-            current_mode = clicks[-1] if len(clicks) > 0 else 'bars_ma'
-            new_mode = 'hide' if current_mode != 'hide' else 'bars_ma'
+            # Quick toggle between hide and bars_ma
+            current = clicks[-1] or 'bars_ma'
+            new_mode = 'hide' if current != 'hide' else 'bars_ma'
         else:
             volume_modes = {
                 'volume-hide-btn': 'hide',
@@ -257,14 +176,101 @@ def _register_volume_callbacks(app):
             new_mode = volume_modes.get(trigger_id, 'bars_ma')
 
         return (new_mode,
-                new_mode != 'hide',
-                new_mode != 'bars',
-                new_mode != 'bars_ma',
-                new_mode == 'hide')
+                new_mode != 'hide',  # hide outline
+                new_mode != 'bars',  # bars outline
+                new_mode != 'bars_ma',  # bars_ma outline
+                new_mode == 'hide')  # toggle outline
 
+    # NEW: Dynamic advanced indicator callbacks
+    # This creates callbacks for all available indicators dynamically
+    indicator_service_temp = TechnicalIndicatorService()
+    chart_config = indicator_service_temp.get_indicator_config()
 
-def _register_symbol_callbacks(app, market_service):
-    """Register symbol search callbacks"""
+    # Get overlay indicators
+    overlay_indicators = [key for key, config in chart_config.items() if config.get('type') == 'overlay']
+    oscillator_indicators = [key for key, config in chart_config.items() if config.get('type') == 'oscillator']
+
+    # Create a callback for overlay indicator buttons in advanced section
+    if overlay_indicators:
+        overlay_inputs = [Input(f"overlay-{ind}-btn", "n_clicks") for ind in overlay_indicators]
+        overlay_outputs = [Output(f"overlay-{ind}-btn", "outline") for ind in overlay_indicators]
+
+        @app.callback(
+            [Output("overlay-indicators-store", "data", allow_duplicate=True)] + overlay_outputs,
+            overlay_inputs,
+            [State("overlay-indicators-store", "data")],
+            prevent_initial_call=True
+        )
+        def toggle_advanced_overlay_indicators(*args):
+            """Handle advanced overlay indicator toggles."""
+            ctx = callback_context
+            if not ctx.triggered:
+                # Default state - SMA and EMA active
+                default_indicators = ['sma', 'ema']
+                outlines = [ind not in default_indicators for ind in overlay_indicators]
+                return [default_indicators] + outlines
+
+            # Get current state (last argument is the state)
+            current_indicators = set(args[-1] or ['sma', 'ema'])
+
+            # Find which button was clicked
+            trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+            # Extract indicator name from button ID
+            if trigger_id.startswith('overlay-') and trigger_id.endswith('-btn'):
+                indicator = trigger_id[8:-4]  # Remove 'overlay-' and '-btn'
+
+                if indicator in current_indicators:
+                    current_indicators.discard(indicator)
+                else:
+                    current_indicators.add(indicator)
+
+            indicators_list = list(current_indicators)
+            outlines = [ind not in current_indicators for ind in overlay_indicators]
+
+            return [indicators_list] + outlines
+
+    # Create a callback for oscillator indicator buttons in advanced section
+    if oscillator_indicators:
+        oscillator_inputs = [Input(f"oscillator-{ind}-btn", "n_clicks") for ind in oscillator_indicators]
+        oscillator_outputs = [Output(f"oscillator-{ind}-btn", "outline") for ind in oscillator_indicators]
+
+        @app.callback(
+            [Output("oscillator-indicators-store", "data", allow_duplicate=True)] + oscillator_outputs,
+            oscillator_inputs,
+            [State("oscillator-indicators-store", "data")],
+            prevent_initial_call=True
+        )
+        def toggle_advanced_oscillator_indicators(*args):
+            """Handle advanced oscillator indicator toggles."""
+            ctx = callback_context
+            if not ctx.triggered:
+                # Default state - RSI active
+                default_indicators = ['rsi']
+                outlines = [ind not in default_indicators for ind in oscillator_indicators]
+                return [default_indicators] + outlines
+
+            # Get current state (last argument is the state)
+            current_indicators = set(args[-1] or ['rsi'])
+
+            # Find which button was clicked
+            trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+            # Extract indicator name from button ID
+            if trigger_id.startswith('oscillator-') and trigger_id.endswith('-btn'):
+                indicator = trigger_id[11:-4]  # Remove 'oscillator-' and '-btn'
+
+                if indicator in current_indicators:
+                    current_indicators.discard(indicator)
+                else:
+                    current_indicators.add(indicator)
+
+            indicators_list = list(current_indicators)
+            outlines = [ind not in current_indicators for ind in oscillator_indicators]
+
+            return [indicators_list] + outlines
+
+    # Initial symbol options callback
     @app.callback(
         Output("symbol-search", "options"),
         [Input("symbol-search", "search_value"),
@@ -276,22 +282,30 @@ def _register_symbol_callbacks(app, market_service):
         try:
             # Prioritize filtered symbols if available
             if filtered_symbols and len(filtered_symbols) > 0:
+                # Get detailed info for filtered symbols
                 all_symbols = market_service.get_available_symbols()
                 symbols = [s for s in all_symbols if s['symbol'] in filtered_symbols][:20]
 
+                # If user is searching, filter the already filtered symbols
                 if search_value and len(search_value) >= 1:
                     symbols = [s for s in symbols
                                if search_value.upper() in s['symbol'].upper() or
                                search_value.upper() in s.get('company_name', '').upper()]
 
             elif not search_value or len(search_value) < 1:
+                # Return top 10 symbols by default
                 symbols = market_service.get_available_symbols()[:10]
             else:
+                # Search for symbols matching the query
                 symbols = market_service.search_symbols(search_value, limit=20)
 
+            if not symbols:
+                return [{"label": "No symbols found", "value": "", "disabled": True}]
+
+            # Format options for dropdown
             options = []
             for symbol_data in symbols:
-                symbol = symbol_data['symbol']
+                symbol = symbol_data.get('symbol', '')
                 company_name = symbol_data.get('company_name', '')
 
                 if company_name and company_name != symbol:
@@ -307,9 +321,6 @@ def _register_symbol_callbacks(app, market_service):
             logger.error(f"Error updating symbol options: {e}")
             return [{"label": "Error loading symbols", "value": "", "disabled": True}]
 
-
-def _register_chart_update_callbacks(app, chart_builder, market_service):
-    """Register chart update callbacks"""
     @app.callback(
         Output("interactive-price-chart", "figure"),
         [
@@ -330,7 +341,11 @@ def _register_chart_update_callbacks(app, chart_builder, market_service):
             if not symbol:
                 symbol = "ADBE"
 
-            # Get ALL available market data
+            # Combine overlay and oscillator indicators
+            # indicators = (overlay_indicators or []) + (oscillator_indicators or [])  # Currently unused
+
+            # Get ALL available market data (no artificial date limit)
+            # Let users see the complete data range they have
             df = market_service.get_all_available_data(symbol)
 
             if df is None or df.empty:
@@ -341,11 +356,15 @@ def _register_chart_update_callbacks(app, chart_builder, market_service):
                 actual_start = df['timestamp'].min()
                 actual_end = df['timestamp'].max()
 
+                # Debug: Log raw dates before formatting
                 logger.info(f"Raw date range for {symbol}: {actual_start} to {actual_end}")
+
+                data_range_str = format_date_range(actual_start, actual_end, "compact")
+                logger.info(f"Chart data for {symbol}: {len(df)} records from {data_range_str}")
 
             # Determine volume display settings
             show_volume = volume_display and volume_display != "hide"
-            color_by_price = True
+            color_by_price = True  # Always color by price for better visuals
 
             # Use indicators or default
             indicators = (overlay_indicators or []) + (oscillator_indicators or [])
@@ -355,6 +374,7 @@ def _register_chart_update_callbacks(app, chart_builder, market_service):
             fig = chart_builder.create_advanced_price_chart(
                 df=df,
                 symbol=symbol,
+                # indicators=chart_indicators,  # Currently unused
                 show_volume=show_volume,
                 chart_type=chart_type or 'candlestick',
                 volume_display=volume_display or 'bars_ma',
@@ -368,9 +388,6 @@ def _register_chart_update_callbacks(app, chart_builder, market_service):
             logger.error(f"Error updating interactive chart: {e}")
             return chart_builder._create_empty_chart(f"Error loading chart: {str(e)}")
 
-
-def _register_technical_analysis_callbacks(app, market_service):
-    """Register technical analysis summary callbacks"""
     @app.callback(
         Output("technical-analysis-summary", "children"),
         [
@@ -386,47 +403,64 @@ def _register_technical_analysis_callbacks(app, market_service):
             if not symbol:
                 symbol = "ADBE"
 
-            # Get market data for analysis
-            df = market_service.get_all_available_data(symbol)
+            # Combine indicators for analysis
+            # indicators = (overlay_indicators or []) + (oscillator_indicators or [])  # Currently unused
+
+            # Get recent market data for analysis
+            df = market_service.get_market_data(symbol, days=30)
 
             if df is None or df.empty:
-                return "No data available for technical analysis"
+                return html.P(f"No data available for {symbol}", className="text-muted text-center")
 
-            # Get current price and calculate basic metrics
+            # Calculate basic technical indicators
+            analysis_indicators = indicator_service.calculate_all_indicators(df)
+
+            # Create summary cards
             current_price = df['close'].iloc[-1]
-            price_change = ((current_price - df['close'].iloc[-30]) / df['close'].iloc[-30] * 100) if len(df) >= 30 else 0
-
-            # Get technical indicators
-            analysis_indicators = market_service.get_technical_indicators(symbol)
+            price_change = ((current_price - df['close'].iloc[0]) / df['close'].iloc[0]) * 100
 
             summary_items = [
-                # Current Price
-                {
-                    "title": "Current Price",
-                    "value": f"${current_price:.2f}",
-                    "change": f"{price_change:+.2f}%",
-                    "color": "success" if price_change >= 0 else "danger"
-                }
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardBody([
+                            html.H6("Current Price", className="text-muted mb-1"),
+                            html.H5(f"${current_price:.2f}", className="text-primary mb-0")
+                        ])
+                    ])
+                ], width=2),  # Reduced from 3 to 2 to make room for volume
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardBody([
+                            html.H6("30D Change", className="text-muted mb-1"),
+                            html.H5(f"{price_change:+.2f}%",
+                                    className="text-success" if price_change >= 0 else "text-danger")
+                        ])
+                    ])
+                ], width=2),  # Reduced from 3 to 2 to make room for volume
             ]
 
             # Add RSI if available
             if 'rsi' in analysis_indicators:
                 rsi_value = analysis_indicators['rsi'].iloc[-1]
-                rsi_status = "Overbought" if rsi_value > 70 else "Oversold" if rsi_value < 30 else "Neutral"
-                rsi_color = "danger" if rsi_value > 70 else "warning" if rsi_value < 30 else "success"
+                rsi_color = "text-danger" if rsi_value > 70 else "text-success" if rsi_value < 30 else "text-warning"
+                summary_items.append(
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardBody([
+                                html.H6("RSI(14)", className="text-muted mb-1"),
+                                html.H5(f"{rsi_value:.1f}", className=f"{rsi_color} mb-0")
+                            ])
+                        ])
+                    ], width=2)  # Changed from 3 to 2 for consistency
+                )
 
-                summary_items.append({
-                    "title": "RSI (14)",
-                    "value": f"{rsi_value:.1f}",
-                    "status": rsi_status,
-                    "color": rsi_color
-                })
-
-            # Add volume analysis if available
+            # Add volume analysis
             if 'volume' in df.columns:
                 current_volume = df['volume'].iloc[-1]
                 avg_volume = df['volume'].rolling(window=20).mean().iloc[-1]
                 volume_ratio = (current_volume / avg_volume) if avg_volume > 0 else 0
+
+                # Format volume in millions/billions
 
                 def format_volume(vol):
                     if vol >= 1e9:
@@ -438,18 +472,38 @@ def _register_technical_analysis_callbacks(app, market_service):
                     else:
                         return f"{vol:.0f}"
 
-                volume_color = "success" if volume_ratio > 1.5 else "warning" if volume_ratio > 0.8 else "muted"
-                volume_status = "High" if volume_ratio > 1.5 else "Normal" if volume_ratio > 0.8 else "Low"
+                volume_color = "text-success" if volume_ratio > 1.5 else "text-warning" if volume_ratio > 0.8 else "text-muted"
 
-                summary_items.append({
-                    "title": "Volume",
-                    "value": format_volume(current_volume),
-                    "status": f"{volume_ratio:.1f}x avg ({volume_status})",
-                    "color": volume_color
-                })
+                summary_items.append(
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardBody([
+                                html.H6("Volume", className="text-muted mb-1"),
+                                html.H5(format_volume(current_volume), className=f"{volume_color} mb-0"),
+                                html.Small(f"{volume_ratio:.1f}x avg", className="text-muted")
+                            ])
+                        ])
+                    ], width=2)
+                )
 
-            return summary_items
+            # Add trend analysis
+            if 'sma_20' in analysis_indicators:
+                sma_20 = analysis_indicators['sma_20'].iloc[-1]
+                trend = "Bullish" if current_price > sma_20 else "Bearish"
+                trend_color = "text-success" if trend == "Bullish" else "text-danger"
+                summary_items.append(
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardBody([
+                                html.H6("Trend", className="text-muted mb-1"),
+                                html.H5(trend, className=f"{trend_color} mb-0")
+                            ])
+                        ])
+                    ], width=2)
+                )
+
+            return dbc.Row(summary_items)
 
         except Exception as e:
             logger.error(f"Error updating technical analysis summary: {e}")
-            return f"Error loading analysis: {str(e)}"
+            return html.P(f"Error loading analysis: {str(e)}", className="text-danger text-center")

@@ -4,7 +4,7 @@ Handles market overview, statistics, and time-related information.
 """
 
 import plotly.graph_objs as go
-from dash import Input, Output, html, dcc, State, callback_context
+from dash import Input, Output, html, callback_context
 import dash_bootstrap_components as dbc
 from datetime import datetime, timedelta
 import pytz

@@ -210,155 +210,173 @@ class Settings(BaseSettings):
     def _load_yaml_configs(self):
         """Load configuration from unified config file"""
         config_dir = Path("config")
-
-        # Try to load unified config first
         unified_config_file = config_dir / "config.yaml"
+        
         if unified_config_file.exists():
-            try:
-                with open(unified_config_file, 'r') as f:
-                    config_data = yaml.safe_load(f)
-
-                # Load all sections from unified config
-                if 'database' in config_data:
-                    self.database = DatabaseConfig(**config_data['database'])
-
-                if 'alpaca' in config_data:
-                    self.alpaca = AlpacaConfig(**config_data['alpaca'])
-
-                if 'trading' in config_data:
-                    self.trading = TradingConfig(**config_data['trading'])
-
-                if 'risk' in config_data:
-                    self.risk = RiskConfig(**config_data['risk'])
-
-                if 'execution' in config_data:
-                    self.execution = ExecutionConfig(**config_data['execution'])
-
-                if 'backtesting' in config_data:
-                    self.backtesting = BacktestingConfig(**config_data['backtesting'])
-
-                if 'feature_engineering' in config_data:
-                    self.feature_engineering = FeatureEngineeringConfig(**config_data['feature_engineering'])
-
-                if 'logging' in config_data:
-                    self.logging = LoggingConfig(**config_data['logging'])
-
-                if 'strategies' in config_data:
-                    self.strategies = {
-                        name: StrategyConfig(**config)
-                        for name, config in config_data['strategies'].items()
-                    }
-
-                if 'deployments' in config_data:
-                    self.deployments = {
-                        name: DeploymentConfig(**config)
-                        for name, config in config_data['deployments'].items()
-                    }
-
-                if 'schedule_types' in config_data:
-                    self.schedule_types = {
-                        name: ScheduleConfig(**config)
-                        for name, config in config_data['schedule_types'].items()
-                    }
-
-                if 'dashboard' in config_data:
-                    self.dashboard = DashboardConfig(**config_data['dashboard'])
-
+            config_data = self._load_unified_config_file(unified_config_file)
+            if config_data:
+                self._apply_unified_config_data(config_data)
                 print("Loaded unified configuration from config.yaml")
                 return
-
-            except Exception as e:
-                print(f"Warning: Could not load unified config: {e}")
 
         # Fallback to legacy config files if unified config not available
         print("Loading from legacy configuration files...")
         self._load_legacy_configs()
 
+    def _load_unified_config_file(self, config_file: Path) -> dict:
+        """Load and parse unified config file"""
+        try:
+            with open(config_file, 'r') as f:
+                return yaml.safe_load(f)
+        except Exception as e:
+            print(f"Warning: Could not load unified config: {e}")
+            return None
+
+    def _apply_unified_config_data(self, config_data: dict):
+        """Apply configuration data to settings attributes"""
+        config_mappings = {
+            'database': (DatabaseConfig, 'database'),
+            'alpaca': (AlpacaConfig, 'alpaca'),
+            'trading': (TradingConfig, 'trading'),
+            'risk': (RiskConfig, 'risk'),
+            'execution': (ExecutionConfig, 'execution'),
+            'backtesting': (BacktestingConfig, 'backtesting'),
+            'feature_engineering': (FeatureEngineeringConfig, 'feature_engineering'),
+            'logging': (LoggingConfig, 'logging'),
+            'dashboard': (DashboardConfig, 'dashboard'),
+        }
+
+        # Apply simple config sections
+        for section_name, (config_class, attr_name) in config_mappings.items():
+            if section_name in config_data:
+                setattr(self, attr_name, config_class(**config_data[section_name]))
+
+        # Apply dict-based config sections
+        if 'strategies' in config_data:
+            self.strategies = {
+                name: StrategyConfig(**config)
+                for name, config in config_data['strategies'].items()
+            }
+
+        if 'deployments' in config_data:
+            self.deployments = {
+                name: DeploymentConfig(**config)
+                for name, config in config_data['deployments'].items()
+            }
+
+        if 'schedule_types' in config_data:
+            self.schedule_types = {
+                name: ScheduleConfig(**config)
+                for name, config in config_data['schedule_types'].items()
+            }
+
     def _load_legacy_configs(self):
         """Load from legacy configuration files (backward compatibility)"""
         config_dir = Path("config")
+        
+        self._load_deployments_config(config_dir)
+        self._load_strategies_config(config_dir)
+        self._load_alpaca_config(config_dir)
 
-        # Load deployments config
+    def _load_deployments_config(self, config_dir: Path):
+        """Load deployments configuration file"""
         deployments_file = config_dir / "deployments_config.yaml"
-        if deployments_file.exists():
-            try:
-                with open(deployments_file, 'r') as f:
-                    deployments_data = yaml.safe_load(f)
+        if not deployments_file.exists():
+            return
 
-                if 'deployments' in deployments_data:
-                    self.deployments = {
-                        name: DeploymentConfig(**config)
-                        for name, config in deployments_data['deployments'].items()
-                    }
+        try:
+            with open(deployments_file, 'r') as f:
+                deployments_data = yaml.safe_load(f)
 
-                if 'schedule_types' in deployments_data:
-                    self.schedule_types = {
-                        name: ScheduleConfig(**config)
-                        for name, config in deployments_data['schedule_types'].items()
-                    }
+            if 'deployments' in deployments_data:
+                self.deployments = {
+                    name: DeploymentConfig(**config)
+                    for name, config in deployments_data['deployments'].items()
+                }
 
-                if 'dashboard' in deployments_data:
-                    self.dashboard = DashboardConfig(**deployments_data['dashboard'])
+            if 'schedule_types' in deployments_data:
+                self.schedule_types = {
+                    name: ScheduleConfig(**config)
+                    for name, config in deployments_data['schedule_types'].items()
+                }
 
-            except Exception as e:
-                print(f"Warning: Could not load deployments config: {e}")
+            if 'dashboard' in deployments_data:
+                self.dashboard = DashboardConfig(**deployments_data['dashboard'])
 
-        # Load strategies config
+        except Exception as e:
+            print(f"Warning: Could not load deployments config: {e}")
+
+    def _load_strategies_config(self, config_dir: Path):
+        """Load strategies configuration file"""
         strategies_file = config_dir / "strategies_config.yaml"
-        if strategies_file.exists():
-            try:
-                with open(strategies_file, 'r') as f:
-                    strategies_data = yaml.safe_load(f)
+        if not strategies_file.exists():
+            return
 
-                if 'strategies' in strategies_data:
-                    self.strategies = {
-                        name: StrategyConfig(class_name=config.get('class', ''), **config)
-                        for name, config in strategies_data['strategies'].items()
-                    }
+        try:
+            with open(strategies_file, 'r') as f:
+                strategies_data = yaml.safe_load(f)
 
-                # Load global risk settings
-                if 'global_risk' in strategies_data:
-                    global_risk = strategies_data['global_risk']
-                    self.risk = RiskConfig(
-                        max_total_positions=global_risk.get('max_total_positions', self.risk.max_total_positions),
-                        max_daily_orders=global_risk.get('max_daily_orders', self.risk.max_daily_orders),
-                        max_portfolio_risk=global_risk.get('max_portfolio_risk', self.risk.max_portfolio_risk),
-                        emergency_stop_loss=global_risk.get('emergency_stop_loss', self.risk.emergency_stop_loss)
-                    )
+            if 'strategies' in strategies_data:
+                self.strategies = {
+                    name: StrategyConfig(class_name=config.get('class', ''), **config)
+                    for name, config in strategies_data['strategies'].items()
+                }
 
-                # Load execution settings
-                if 'execution' in strategies_data:
-                    exec_data = strategies_data['execution']
-                    self.execution = ExecutionConfig(**exec_data)
+            self._apply_legacy_risk_config(strategies_data)
+            self._apply_legacy_execution_config(strategies_data)
+            self._apply_legacy_backtesting_config(strategies_data)
 
-                # Load backtesting settings
-                if 'backtesting' in strategies_data:
-                    backtest_data = strategies_data['backtesting']
-                    self.backtesting = BacktestingConfig(**backtest_data)
+        except Exception as e:
+            print(f"Warning: Could not load strategies config: {e}")
 
-            except Exception as e:
-                print(f"Warning: Could not load strategies config: {e}")
+    def _apply_legacy_risk_config(self, strategies_data: dict):
+        """Apply global risk settings from strategies config"""
+        if 'global_risk' not in strategies_data:
+            return
 
-        # Load alpaca config
+        global_risk = strategies_data['global_risk']
+        self.risk = RiskConfig(
+            max_total_positions=global_risk.get('max_total_positions', self.risk.max_total_positions),
+            max_daily_orders=global_risk.get('max_daily_orders', self.risk.max_daily_orders),
+            max_portfolio_risk=global_risk.get('max_portfolio_risk', self.risk.max_portfolio_risk),
+            emergency_stop_loss=global_risk.get('emergency_stop_loss', self.risk.emergency_stop_loss)
+        )
+
+    def _apply_legacy_execution_config(self, strategies_data: dict):
+        """Apply execution settings from strategies config"""
+        if 'execution' in strategies_data:
+            exec_data = strategies_data['execution']
+            self.execution = ExecutionConfig(**exec_data)
+
+    def _apply_legacy_backtesting_config(self, strategies_data: dict):
+        """Apply backtesting settings from strategies config"""
+        if 'backtesting' in strategies_data:
+            backtest_data = strategies_data['backtesting']
+            self.backtesting = BacktestingConfig(**backtest_data)
+
+    def _load_alpaca_config(self, config_dir: Path):
+        """Load alpaca configuration file"""
         alpaca_file = config_dir / "alpaca_config.yaml"
-        if alpaca_file.exists():
-            try:
-                with open(alpaca_file, 'r') as f:
-                    alpaca_data = yaml.safe_load(f)
+        if not alpaca_file.exists():
+            return
 
-                if 'trading' in alpaca_data:
-                    trading_data = alpaca_data['trading']
-                    self.trading = TradingConfig(**trading_data)
+        try:
+            with open(alpaca_file, 'r') as f:
+                alpaca_data = yaml.safe_load(f)
 
-                if 'risk' in alpaca_data:
-                    risk_data = alpaca_data['risk']
-                    # Merge with existing risk config
-                    current_risk = self.risk.dict()
-                    current_risk.update(risk_data)
-                    self.risk = RiskConfig(**current_risk)
+            if 'trading' in alpaca_data:
+                trading_data = alpaca_data['trading']
+                self.trading = TradingConfig(**trading_data)
 
-            except Exception as e:
-                print(f"Warning: Could not load alpaca config: {e}")
+            if 'risk' in alpaca_data:
+                risk_data = alpaca_data['risk']
+                # Merge with existing risk config
+                current_risk = self.risk.dict()
+                current_risk.update(risk_data)
+                self.risk = RiskConfig(**current_risk)
+
+        except Exception as e:
+            print(f"Warning: Could not load alpaca config: {e}")
 
     def _load_environment_overrides(self):
         """Load environment variable overrides"""

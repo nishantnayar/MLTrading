@@ -68,61 +68,18 @@ class InteractiveChartBuilder:
             # Calculate technical indicators
             indicator_data = self.indicator_service.calculate_all_indicators(df)
 
-            # Determine subplot configuration with better height allocation
-
-            oscillator_indicators = []
-            if indicators:
-                oscillator_indicators = [ind for ind in indicators
-                                         if self.chart_config.get(ind, {}).get('type') == 'oscillator']
-
-            # Improved height allocation with more generous space for volume
-            total_rows = 1
-            if show_volume and oscillator_indicators:
-                # Price: 60%, Volume: 25%, Oscillators: 15% (more volume space)
-                row_heights = [0.60, 0.25, 0.15]
-                total_rows = 3
-            elif show_volume:
-                # Price: 70%, Volume: 30% (even more space for volume when no oscillators)
-                row_heights = [0.70, 0.30]
-                total_rows = 2
-            elif oscillator_indicators:
-                # Price: 75%, Oscillators: 25%
-                row_heights = [0.75, 0.25]
-                total_rows = 2
-            else:
-                # Price only: 100%
-                row_heights = [1.0]
+            # Determine subplot configuration
+            oscillator_indicators = self._get_oscillator_indicators(indicators)
+            total_rows, row_heights = self._determine_subplot_layout(show_volume, oscillator_indicators)
 
             # Create subplots
-            fig = make_subplots(
-                rows=total_rows,
-                cols=1,
-                shared_xaxes=True,
-                vertical_spacing=0.05,
-                row_heights=row_heights,
-                specs=[[{"secondary_y": False}] for _ in range(total_rows)]
-            )
+            fig = self._create_subplots(total_rows, row_heights)
 
-            # Add main price chart
+            # Add chart components
             self._add_price_chart(fig, df, symbol, chart_type, 1)
-
-            # Add technical indicators overlays
-            if indicators:
-                logger.info(f"Adding overlay indicators: {indicators}")
-                self._add_overlay_indicators(fig, df, indicator_data, indicators, 1)
-            else:
-                logger.info("No indicators specified for overlay")
-
-            # Add volume chart
-            current_row = 2
-            if show_volume:
-                self._add_volume_chart(fig, df, indicator_data, current_row, volume_display, color_by_price)
-                current_row += 1
-
-            # Add oscillator charts (all in one subplot)
-            if oscillator_indicators:
-                self._add_oscillator_charts(fig, df, indicator_data, oscillator_indicators, current_row)
-                current_row += 1
+            self._add_indicators_if_needed(fig, df, indicator_data, indicators)
+            self._add_volume_and_oscillators(fig, df, indicator_data, show_volume, oscillator_indicators, 
+                                           volume_display, color_by_price)
 
             # Update layout with advanced features
             self._update_chart_layout(fig, symbol, total_rows)
@@ -132,6 +89,62 @@ class InteractiveChartBuilder:
         except Exception as e:
             logger.error(f"Error creating advanced chart: {e}")
             return self._create_empty_chart(f"Error loading chart for {symbol}")
+
+    def _get_oscillator_indicators(self, indicators):
+        """Get oscillator indicators from the indicators list"""
+        if not indicators:
+            return []
+        return [ind for ind in indicators if self.chart_config.get(ind, {}).get('type') == 'oscillator']
+
+    def _determine_subplot_layout(self, show_volume, oscillator_indicators):
+        """Determine subplot layout configuration"""
+        total_rows = 1
+        if show_volume and oscillator_indicators:
+            # Price: 60%, Volume: 25%, Oscillators: 15%
+            row_heights = [0.60, 0.25, 0.15]
+            total_rows = 3
+        elif show_volume:
+            # Price: 70%, Volume: 30%
+            row_heights = [0.70, 0.30]
+            total_rows = 2
+        elif oscillator_indicators:
+            # Price: 75%, Oscillators: 25%
+            row_heights = [0.75, 0.25]
+            total_rows = 2
+        else:
+            # Price only: 100%
+            row_heights = [1.0]
+        return total_rows, row_heights
+
+    def _create_subplots(self, total_rows, row_heights):
+        """Create subplot figure with specified configuration"""
+        return make_subplots(
+            rows=total_rows,
+            cols=1,
+            shared_xaxes=True,
+            vertical_spacing=0.05,
+            row_heights=row_heights,
+            specs=[[{"secondary_y": False}] for _ in range(total_rows)]
+        )
+
+    def _add_indicators_if_needed(self, fig, df, indicator_data, indicators):
+        """Add technical indicators if specified"""
+        if indicators:
+            logger.info(f"Adding overlay indicators: {indicators}")
+            self._add_overlay_indicators(fig, df, indicator_data, indicators, 1)
+        else:
+            logger.info("No indicators specified for overlay")
+
+    def _add_volume_and_oscillators(self, fig, df, indicator_data, show_volume, oscillator_indicators,
+                                   volume_display, color_by_price):
+        """Add volume chart and oscillator charts"""
+        current_row = 2
+        if show_volume:
+            self._add_volume_chart(fig, df, indicator_data, current_row, volume_display, color_by_price)
+            current_row += 1
+
+        if oscillator_indicators:
+            self._add_oscillator_charts(fig, df, indicator_data, oscillator_indicators, current_row)
 
     def _add_price_chart(self, fig: go.Figure, df: pd.DataFrame, symbol: str, chart_type: str, row: int):
         """Add main price chart (candlestick, OHLC, or line)."""
@@ -214,104 +227,122 @@ class InteractiveChartBuilder:
                 logger.info(f"Skipping {indicator} - not an overlay indicator")
                 continue
 
+            # Delegate to specific indicator handler
             if indicator == 'sma':
-                # Add multiple SMA periods
-                for period in [20, 50]:
-                    if f'sma_{period}' in indicator_data:
-                        fig.add_trace(
-                            go.Scatter(
-                                x=df['timestamp'],
-                                y=indicator_data[f'sma_{period}'],
-                                mode='lines',
-                                name=f'SMA({period})',
-                                line=dict(color=config['color'], width=1.5),
-                                opacity=0.8
-                            ),
-                            row=row, col=1
-                        )
-
+                self._add_sma_indicators(fig, df, indicator_data, config, row)
             elif indicator == 'ema':
-                # Add multiple EMA periods
-                for period in [12, 26]:
-                    if f'ema_{period}' in indicator_data:
-                        fig.add_trace(
-                            go.Scatter(
-                                x=df['timestamp'],
-                                y=indicator_data[f'ema_{period}'],
-                                mode='lines',
-                                name=f'EMA({period})',
-                                line=dict(color=config['color'], width=1.5, dash='dot'),
-                                opacity=0.8
-                            ),
-                            row=row, col=1
-                        )
+                self._add_ema_indicators(fig, df, indicator_data, config, row)
+            elif indicator == 'bollinger':
+                self._add_bollinger_bands(fig, df, indicator_data, config, row)
+            elif indicator == 'vwap':
+                self._add_vwap_indicator(fig, df, indicator_data, config, row)
 
-            elif indicator == 'bollinger' and 'bollinger' in indicator_data:
-                bb = indicator_data['bollinger']
-                colors = config.get('colors', {})
-
-                # Debug logging
-                logger.info(f"Adding Bollinger Bands: {bb.keys()}")
-                logger.info(
-                    f"Bollinger Bands data sample: upper={bb['upper'].iloc[-5:].tolist() if not bb['upper'].empty else 'empty'}")
-                logger.info(f"Bollinger Bands colors: {colors}")
-
-                # Check if we have valid data
-                if bb['upper'].empty or bb['lower'].empty or bb['middle'].empty:
-                    logger.warning("Bollinger Bands data is empty, skipping")
-                    continue
-
-                # Add Bollinger Bands
+    def _add_sma_indicators(self, fig, df, indicator_data, config, row):
+        """Add SMA indicators for multiple periods"""
+        for period in [20, 50]:
+            if f'sma_{period}' in indicator_data:
                 fig.add_trace(
                     go.Scatter(
                         x=df['timestamp'],
-                        y=bb['upper'],
+                        y=indicator_data[f'sma_{period}'],
                         mode='lines',
-                        name='BB Upper',
-                        line=dict(color=colors.get('upper', '#dc3545'), width=1),
-                        opacity=0.6
-                    ),
-                    row=row, col=1
-                )
-
-                fig.add_trace(
-                    go.Scatter(
-                        x=df['timestamp'],
-                        y=bb['lower'],
-                        mode='lines',
-                        name='BB Lower',
-                        line=dict(color=colors.get('lower', '#dc3545'), width=1),
-                        fill='tonexty',
-                        fillcolor='rgba(220, 53, 69, 0.1)',
-                        opacity=0.6
-                    ),
-                    row=row, col=1
-                )
-
-                fig.add_trace(
-                    go.Scatter(
-                        x=df['timestamp'],
-                        y=bb['middle'],
-                        mode='lines',
-                        name='BB Middle',
-                        line=dict(color=colors.get('middle', '#6c757d'), width=1, dash='dash'),
+                        name=f'SMA({period})',
+                        line=dict(color=config['color'], width=1.5),
                         opacity=0.8
                     ),
                     row=row, col=1
                 )
 
-            elif indicator == 'vwap' and 'vwap' in indicator_data:
+    def _add_ema_indicators(self, fig, df, indicator_data, config, row):
+        """Add EMA indicators for multiple periods"""
+        for period in [12, 26]:
+            if f'ema_{period}' in indicator_data:
                 fig.add_trace(
                     go.Scatter(
                         x=df['timestamp'],
-                        y=indicator_data['vwap'],
+                        y=indicator_data[f'ema_{period}'],
                         mode='lines',
-                        name='VWAP',
-                        line=dict(color=config['color'], width=2),
+                        name=f'EMA({period})',
+                        line=dict(color=config['color'], width=1.5, dash='dot'),
                         opacity=0.8
                     ),
                     row=row, col=1
                 )
+
+    def _add_bollinger_bands(self, fig, df, indicator_data, config, row):
+        """Add Bollinger Bands indicator"""
+        if 'bollinger' not in indicator_data:
+            return
+
+        bb = indicator_data['bollinger']
+        colors = config.get('colors', {})
+
+        # Debug logging
+        logger.info(f"Adding Bollinger Bands: {bb.keys()}")
+        logger.info(
+            f"Bollinger Bands data sample: upper={bb['upper'].iloc[-5:].tolist() if not bb['upper'].empty else 'empty'}")
+        logger.info(f"Bollinger Bands colors: {colors}")
+
+        # Check if we have valid data
+        if bb['upper'].empty or bb['lower'].empty or bb['middle'].empty:
+            logger.warning("Bollinger Bands data is empty, skipping")
+            return
+
+        # Add upper band
+        fig.add_trace(
+            go.Scatter(
+                x=df['timestamp'],
+                y=bb['upper'],
+                mode='lines',
+                name='BB Upper',
+                line=dict(color=colors.get('upper', '#dc3545'), width=1),
+                opacity=0.6
+            ),
+            row=row, col=1
+        )
+
+        # Add lower band with fill
+        fig.add_trace(
+            go.Scatter(
+                x=df['timestamp'],
+                y=bb['lower'],
+                mode='lines',
+                name='BB Lower',
+                line=dict(color=colors.get('lower', '#dc3545'), width=1),
+                fill='tonexty',
+                fillcolor='rgba(220, 53, 69, 0.1)',
+                opacity=0.6
+            ),
+            row=row, col=1
+        )
+
+        # Add middle band
+        fig.add_trace(
+            go.Scatter(
+                x=df['timestamp'],
+                y=bb['middle'],
+                mode='lines',
+                name='BB Middle',
+                line=dict(color=colors.get('middle', '#6c757d'), width=1, dash='dash'),
+                opacity=0.8
+            ),
+            row=row, col=1
+        )
+
+    def _add_vwap_indicator(self, fig, df, indicator_data, config, row):
+        """Add VWAP indicator"""
+        if 'vwap' in indicator_data:
+            fig.add_trace(
+                go.Scatter(
+                    x=df['timestamp'],
+                    y=indicator_data['vwap'],
+                    mode='lines',
+                    name='VWAP',
+                    line=dict(color=config['color'], width=2),
+                    opacity=0.8
+                ),
+                row=row, col=1
+            )
 
     def _add_volume_chart(self, fig: go.Figure, df: pd.DataFrame, indicator_data: Dict, row: int,
                           volume_display: str = 'bars_ma', color_by_price: bool = True):

@@ -321,78 +321,66 @@ def update_advanced_vol_chart(symbol, days):
             row_heights=[0.5, 0.5]
         )
 
-        # Add GK vs Realized Volatility comparison
-        if 'gk_volatility' in df.columns:
-            fig.add_trace(
-                go.Scatter(
-                    x=df['timestamp'], y=df['gk_volatility'],
-                    name='Garman-Klass Volatility',
-                    line=dict(color='blue', width=2)
-                ), row=1, col=1
-            )
-
-        if 'realized_vol_short' in df.columns:
-            fig.add_trace(
-                go.Scatter(
-                    x=df['timestamp'], y=df['realized_vol_short'],
-                    name='Realized Vol (Short)',
-                    line=dict(color='red', width=2)
-                ), row=1, col=1
-            )
-
-        if 'realized_vol_med' in df.columns:
-            fig.add_trace(
-                go.Scatter(
-                    x=df['timestamp'], y=df['realized_vol_med'],
-                    name='Realized Vol (Med)',
-                    line=dict(color='orange', width=1, dash='dash')
-                ), row=1, col=1
-            )
-
-        # Add ATR and other advanced estimators
-        if 'atr' in df.columns:
-            fig.add_trace(
-                go.Scatter(
-                    x=df['timestamp'], y=df['atr'],
-                    name='ATR',
-                    line=dict(color='green', width=2)
-                ), row=2, col=1
-            )
-
-        if 'atr_normalized' in df.columns:
-            fig.add_trace(
-                go.Scatter(
-                    x=df['timestamp'], y=df['atr_normalized'],
-                    name='ATR Normalized',
-                    line=dict(color='purple', width=1)
-                ), row=2, col=1
-            )
-
-        if 'vol_of_vol' in df.columns:
-            fig.add_trace(
-                go.Scatter(
-                    x=df['timestamp'], y=df['vol_of_vol'],
-                    name='Vol of Vol',
-                    line=dict(color='brown', width=1, dash='dot')
-                ), row=2, col=1
-            )
-
-        # Update layout
-        fig.update_layout(
-            title=f"Advanced Volatility Estimators - {symbol}",
-            height=600,
-            showlegend=True,
-            template="plotly_white"
-        )
-
-        fig.update_xaxes(title_text="Date", row=2, col=1)
-        fig.update_yaxes(title_text="Volatility %", row=1, col=1)
-        fig.update_yaxes(title_text="Estimator Values", row=2, col=1)
+        # Add volatility traces using helper function
+        _add_volatility_traces(fig, df)
+        _update_volatility_chart_layout(fig, symbol)
 
         return fig
 
     except Exception as e:
         return create_empty_chart(f"Error loading advanced volatility: {str(e)}")
+
+
+def _add_volatility_traces(fig, df):
+    """Add volatility traces to the chart"""
+    # Define trace configurations for better maintainability
+    row1_traces = [
+        ('gk_volatility', 'Garman-Klass Volatility', {'color': 'blue', 'width': 2}),
+        ('realized_vol_short', 'Realized Vol (Short)', {'color': 'red', 'width': 2}),
+        ('realized_vol_med', 'Realized Vol (Med)', {'color': 'orange', 'width': 1, 'dash': 'dash'})
+    ]
+    
+    row2_traces = [
+        ('atr', 'ATR', {'color': 'green', 'width': 2}),
+        ('atr_normalized', 'ATR Normalized', {'color': 'purple', 'width': 1}),
+        ('vol_of_vol', 'Vol of Vol', {'color': 'brown', 'width': 1, 'dash': 'dot'})
+    ]
+
+    # Add row 1 traces (GK vs Realized Volatility)
+    for col_name, trace_name, line_style in row1_traces:
+        if col_name in df.columns:
+            fig.add_trace(
+                go.Scatter(
+                    x=df['timestamp'], y=df[col_name],
+                    name=trace_name,
+                    line=dict(**line_style)
+                ), row=1, col=1
+            )
+
+    # Add row 2 traces (ATR & Advanced Estimators)
+    for col_name, trace_name, line_style in row2_traces:
+        if col_name in df.columns:
+            fig.add_trace(
+                go.Scatter(
+                    x=df['timestamp'], y=df[col_name],
+                    name=trace_name,
+                    line=dict(**line_style)
+                ), row=2, col=1
+            )
+
+
+def _update_volatility_chart_layout(fig, symbol):
+    """Update layout for volatility chart"""
+    fig.update_layout(
+        title=f"Advanced Volatility Estimators - {symbol}",
+        height=600,
+        showlegend=True,
+        template="plotly_white"
+    )
+
+    fig.update_xaxes(title_text="Date", row=2, col=1)
+    fig.update_yaxes(title_text="Volatility %", row=1, col=1)
+    fig.update_yaxes(title_text="Estimator Values", row=2, col=1)
 
 
 @callback(
@@ -839,7 +827,6 @@ def update_rsi_multi_chart(symbol, days):
         symbol = "AAPL"
 
     try:
-        rsi_data = market_service.get_rsi(symbol, days, '1d')  # Get base data
         feature_data = market_service.feature_service.get_feature_data(symbol, days)
 
         if feature_data.empty:
